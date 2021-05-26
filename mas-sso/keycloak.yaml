@@ -1,0 +1,35 @@
+apiVersion: keycloak.org/v1alpha1
+kind: Keycloak
+metadata:
+  name: mas-sso
+  labels:
+    app: mas-sso
+spec:
+  instances: 1
+  extensions:
+    - https://github.com/aerogear/keycloak-metrics-spi/releases/download/2.3.1/keycloak-metrics-spi-2.3.1.jar
+  migration:
+    strategy: "rolling"
+  externalDatabase:
+    enabled: False
+  podDisruptionBudget:
+    enabled: False
+  multiAvailablityZones:
+    enabled: False
+  externalAccess:
+    enabled: True
+  profile: "RHSSO"
+  keycloakDeploymentSpec:
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1"
+      limits:
+        memory: "2Gi"
+        cpu: "1"
+    experimental:
+      env:
+        - name: JAVA_OPTS_APPEND
+          value: "-Dkeycloak.profile.feature.authorization=disabled -Dkeycloak.client.searchableAttributes=rh-org-id,rh-user-id -Dkeycloak.connectionsHttpClient.default.reuse-connections=false"
+        - name: DB_TX_TIMEOUT
+          value: "15"

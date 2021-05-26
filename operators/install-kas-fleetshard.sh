@@ -1,24 +1,21 @@
 #!/bin/bash
 
-FLEETSHARD_NS=kas-fleetshard
+NAMESPACE=${KAS_FLEETSHARD_OPERATOR_NAMESPACE:-redhat-kas-fleetshard-operator}
+KUBECTL=$(which kubectl)
 
-. _olm_setup.sh
+${KUBECTL} create ns ${NAMESPACE}
+${KUBECTL} create -f kas-fleetshard/resources -n ${NAMESPACE}
 
-export IMAGE_TAG="$1"
+${KUBECTL} create clusterrolebinding kas-fleetshard-operator \
+    --clusterrole=kas-fleetshard-operator \
+    --serviceaccount ${NAMESPACE}:kas-fleetshard-operator
 
-(cd kas-fleetshard/bundle/ && \
-    echo "****** Creating bundle image: ${IMAGE_TAG}" && \
-    docker build -t ${IMAGE_TAG} -f bundle.Dockerfile . && \
-    echo "****** Pushing bundle image" && \
-    docker push ${IMAGE_TAG} && \
-    cd ../..)
+${KUBECTL} create clusterrolebinding kas-fleetshard-sync \
+    --clusterrole=kas-fleetshard-sync \
+    --serviceaccount ${NAMESPACE}:kas-fleetshard-sync
 
-kubectl get ns ${FLEETSHARD_NS}
-
-if [ $? -ne 0 ] ; then
-    echo "Creating Fleetshard namespace"
-    kubectl create ns ${FLEETSHARD_NS}
-fi
-
-echo "****** Running bundle: ${IMAGE_TAG}"
-${OPSDK} run bundle ${IMAGE_TAG} --install-mode=AllNamespaces --namespace=${FLEETSHARD_NS}
+echo "Waiting until KAS Fleet Shard Deployment is available..."
+${KUBECTL} wait --timeout=90s \
+    --for=condition=available \
+    deployment/kas-fleetshard-operator \
+    --namespace=${NAMESPACE}

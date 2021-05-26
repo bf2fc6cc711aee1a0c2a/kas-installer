@@ -1,7 +1,9 @@
 #!/bin/bash
 
-FLEETSHARD_NS=kas-fleetshard
+NAMESPACE=${KAS_FLEETSHARD_OPERATOR_NAMESPACE:-redhat-kas-fleetshard-operator}
+KUBECTL=$(which kubectl)
 
-. _olm_setup.sh
-
-${OPSDK} cleanup kas-fleetshard --delete-all --namespace=${FLEETSHARD_NS}
+${KUBECTL} delete -f kas-fleetshard/resources -n ${NAMESPACE}
+${KUBECTL} delete ns ${NAMESPACE}
+${KUBECTL} delete clusterrolebinding kas-fleetshard-operator
+${KUBECTL} delete clusterrolebinding kas-fleetshard-sync

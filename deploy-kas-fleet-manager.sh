@@ -43,6 +43,16 @@ generate_kasfleetmanager_manual_terraforming_k8s_resources() {
     s/#placeholder_observatorium_dex_secret#/${DEX_SECRET}/" \
     ${TERRAFORM_TEMPLATES_DIR}/004-observatorium-dex-secret.yml.template > ${TERRAFORM_GENERATED_DIR}/004-observatorium-dex-secret.yml
 
+  # Generate KAS Fleet Shard Operator Addon parameters secret K8s file
+  CONTROL_PLANE_API_HOSTNAME="kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}-${DATA_PLANE_CLUSTER_DNS_NAME}"
+  ${SED} \
+  "s|#placeholder_data_plane_cluster_id#|${DATA_PLANE_CLUSTER_CLUSTER_ID}| ; \
+    s|#placeholder_control_plane_url#|https://${CONTROL_PLANE_API_HOSTNAME}| ; \
+    s|#placeholder_sso_auth_server_url#|${MAS_SSO_BASE_URL}/auth/realms/${MAS_SSO_DATA_PLANE_CLUSTER_REALM}| ; \
+    s|#placeholder_sso_client_id#|${MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID}| ; \
+    s|#placeholder_sso_secret#|${MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_SECRET}|" \
+    ${TERRAFORM_TEMPLATES_DIR}/009-addon-kas-fleetshard-operator-parameters.yml.template > ${TERRAFORM_GENERATED_DIR}/009-addon-kas-fleetshard-operator-parameters.yml
+
   # Generate Strimzi Operator Image Pull Secret K8s file
   ${SED} \
   "s/#placeholder_strimzi_imagepull_secret_dockercfg#/${STRIMZI_OPERATOR_IMAGEPULL_SECRET}/" \

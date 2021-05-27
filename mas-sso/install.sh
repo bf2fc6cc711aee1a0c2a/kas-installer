@@ -4,6 +4,8 @@ NAMESPACE=mas-sso
 
 oc create ns ${NAMESPACE}
 
+oc project ${NAMESPACE}
+
 oc create secret docker-registry rhoas-pull-docker  \
     --docker-server=quay.io \
     --docker-username=${DOCKER_USER_NAME} \

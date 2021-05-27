@@ -1,0 +1,9 @@
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: observability-operator-manifests
+  namespace: managed-application-services-observability
+spec:
+  sourceType: grpc
+  image: quay.io/integreatly/observability-operator-index:v3.0.1

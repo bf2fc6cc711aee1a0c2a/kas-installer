@@ -139,6 +139,8 @@ spec:
               fieldPath: metadata.namespace
         - name: QUARKUS_PROFILE
           value: prod
+        - name: QUARKUS_TLS_TRUST_ALL
+          value: "true"
         - name: QUARKUS_KUBERNETES_CONFIG_ENABLED
           value: "false"
         - name: SSO_ENABLED

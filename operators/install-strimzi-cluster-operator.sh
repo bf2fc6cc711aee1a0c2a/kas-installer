@@ -43,3 +43,5 @@ ${KUBECTL} wait --timeout=90s \
     --for=condition=available \
     deployment/strimzi-cluster-operator \
     --namespace=${NAMESPACE}
+
+exit ${?}

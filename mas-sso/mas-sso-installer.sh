@@ -35,9 +35,9 @@ done
 
 $OC adm policy add-role-to-user admin -z mas-sso-operator
 
-$OC create -f mas-sso/keycloak.yaml 
+$OC create -f mas-sso/keycloak.yaml
 
-while [ "$($OC get keycloak -n $NAMESPACE -o go-template={{.status.ready}})" != "true" ]
+while [ "$($OC get keycloak mas-sso -n $NAMESPACE -o go-template={{.status.ready}})" != "true" ]
 do
   sleep 3
   echo "MAS SSO is not ready. Current mas sso status nessage:"

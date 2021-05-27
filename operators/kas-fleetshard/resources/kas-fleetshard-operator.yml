@@ -167,6 +167,16 @@ spec:
         app.kubernetes.io/name: kas-fleetshard-operator
       name: kas-fleetshard-operator
     spec:
+      serviceAccount: kas-fleetshard-operator
+      serviceAccountName: kas-fleetshard-operator
+      volumes:
+      - configMap:
+          defaultMode: 384
+          name: operator-logging-config-override
+          optional: true
+        name: logging-config-volume
+      imagePullSecrets:
+      - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-operator
         image: quay.io/mk-ci-cd/kas-fleetshard-operator@sha256:7fd2aa2e2607688e1cca25a610e6331c455f0d9757688858965d7e39d1688615
@@ -217,13 +227,3 @@ spec:
           name: logging-config-volume
           readOnly: false
           subPath: ""
-      imagePullSecrets:
-      - name: medgar-pull-secret
-      serviceAccount: kas-fleetshard-operator
-      serviceAccountName: kas-fleetshard-operator
-      volumes:
-      - configMap:
-          defaultMode: 384
-          name: operator-logging-config-override
-          optional: true
-        name: logging-config-volume

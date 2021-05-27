@@ -49,13 +49,13 @@ generate_kas_fleet_manager_env_config() {
   echo "MAS_SSO_BASE_URL=https://$MAS_SSO_ROUTE" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_CLIENT_ID=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_CLIENT_SECRET=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_CRT=$MAS_SSO_CERTS" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_CRT='$MAS_SSO_CERTS'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_REALM=rhoas" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_DATA_PLANE_CLUSTER_REALM=rhoas" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_SECRET=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "OSD_IDP_MAS_SSO_REALM=rhoas-kafka-sre" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  
+
   echo "KAFKA_TLS_CERT=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "KAFKA_TLS_KEY=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
@@ -92,7 +92,14 @@ install_mas_sso() {
   echo "MAS SSO deployed"
 }
 
-
+deploy_kas_fleetshard() {
+  echo "Deploying KAS Fleet Shard ..."
+  (cd ${DIR_NAME}/operators && \
+    ./install-strimzi-cluster-operator.sh && \
+    ./install-kas-fleetshard.sh) && \
+  echo "KAS Fleet Shard deployed" || \
+  echo "KAS Fleet Shard failed to deploy"
+}
 
 ## Main body of the script starts here
 
@@ -108,4 +115,4 @@ generate_kas_fleet_manager_env_config
 deploy_kas_fleet_manager
 
 # Deploy and configure KAS Fleet Shard Operator
-
+deploy_kas_fleetshard

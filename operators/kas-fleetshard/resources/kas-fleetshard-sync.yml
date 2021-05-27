@@ -131,21 +131,27 @@ spec:
         app.kubernetes.io/name: kas-fleetshard-sync
         app.kubernetes.io/version: 0.4.0
     spec:
+      serviceAccount: kas-fleetshard-sync
+      volumes:
+      - configMap:
+          defaultMode: 384
+          name: sync-logging-config-override
+          optional: true
+        name: logging-config-volume
+      imagePullSecrets:
+      - name: rhoas-image-pull-secret
       containers:
-      - env:
+      - name: kas-fleetshard-sync
+        image: quay.io/mk-ci-cd/kas-fleetshard-sync@sha256:3f3027a744f8535c31b9927764965eeafdf831286c56c8b914d7ca3829814241
+        env:
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
         - name: QUARKUS_PROFILE
           value: prod
-        - name: QUARKUS_TLS_TRUST_ALL
-          value: "true"
         - name: QUARKUS_KUBERNETES_CONFIG_ENABLED
-          value: "false"
-        - name: SSO_ENABLED
-          value: "false"
-        image: quay.io/mk-ci-cd/kas-fleetshard-sync@sha256:3f3027a744f8535c31b9927764965eeafdf831286c56c8b914d7ca3829814241
+          value: "true"
         livenessProbe:
           failureThreshold: 3
           httpGet:
@@ -156,7 +162,6 @@ spec:
           periodSeconds: 30
           successThreshold: 1
           timeoutSeconds: 10
-        name: kas-fleetshard-sync
         ports:
         - containerPort: 8080
           name: http
@@ -183,12 +188,3 @@ spec:
           name: logging-config-volume
           readOnly: false
           subPath: ""
-      imagePullSecrets:
-      - name: medgar-pull-secret
-      serviceAccount: kas-fleetshard-sync
-      volumes:
-      - configMap:
-          defaultMode: 384
-          name: sync-logging-config-override
-          optional: true
-        name: logging-config-volume

@@ -19,3 +19,5 @@ ${KUBECTL} wait --timeout=90s \
     --for=condition=available \
     deployment/kas-fleetshard-operator \
     --namespace=${NAMESPACE}
+
+exit ${?}

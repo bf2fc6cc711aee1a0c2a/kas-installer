@@ -28,6 +28,9 @@ TERRAFORM_GENERATED_DIR="${TERRAFORM_FILES_BASE_DIR}/terraforming-generated-k8s-
 
 KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="kas-fleet-manager-deploy.env"
 
+OBSERVABILITY_OPERATOR_K8S_NAMESPACE="managed-application-services-observability"
+OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME="observability-operator-controller-manager"
+
 generate_kasfleetmanager_manual_terraforming_k8s_resources() {
   ## Generate KAS Fleet Manager manual terraforming resources from template files
 
@@ -35,13 +38,6 @@ generate_kasfleetmanager_manual_terraforming_k8s_resources() {
   ${SED} \
   "s/#placeholder_domain#/${KAFKA_SHARDED_NLB_INGRESS_CONTROLLER_DOMAIN}/" \
     ${TERRAFORM_TEMPLATES_DIR}/002-sharded-nlb-ingresscontroller.yml.template > ${TERRAFORM_GENERATED_DIR}/002-sharded-nlb-ingresscontroller.yml
-
-  # Generate Observatorium DEX secret K8s file
-  ${SED} \
-  "s/#placeholder_observatorium_dex_username#/${DEX_USERNAME}/ ; \
-    s/#placeholder_observatorium_dex_password#/${DEX_PASSWORD}/ ; \
-    s/#placeholder_observatorium_dex_secret#/${DEX_SECRET}/" \
-    ${TERRAFORM_TEMPLATES_DIR}/004-observatorium-dex-secret.yml.template > ${TERRAFORM_GENERATED_DIR}/004-observatorium-dex-secret.yml
 
   # Generate KAS Fleet Shard Operator Addon parameters secret K8s file
   CONTROL_PLANE_API_HOSTNAME="kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}-${DATA_PLANE_CLUSTER_DNS_NAME}"
@@ -144,13 +140,10 @@ deploy_kasfleetmanager() {
 	${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml \
 		-p OCM_SERVICE_CLIENT_ID="dummyclient" \
 		-p OCM_SERVICE_CLIENT_SECRET="dummysecret" \
-		-p OBSERVATORIUM_SERVICE_TOKEN="dummytoken" \
     -p OBSERVABILITY_CONFIG_ACCESS_TOKEN="${OBSERVABILITY_CONFIG_ACCESS_TOKEN}" \
 		-p MAS_SSO_CLIENT_ID="${MAS_SSO_CLIENT_ID}" \
 		-p MAS_SSO_CLIENT_SECRET="${MAS_SSO_CLIENT_SECRET}" \
 		-p MAS_SSO_CRT="${MAS_SSO_CRT}" \
-		-p DEX_SECRET="dummysecret" \
-		-p DEX_PASSWORD="dummypassword" \
 		-p KAFKA_TLS_CERT="${KAFKA_TLS_CERT}" \
 		-p KAFKA_TLS_KEY="${KAFKA_TLS_KEY}" \
 		-p DATABASE_HOST="$(${KUBECTL} get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
@@ -216,12 +209,7 @@ wait_for_sharded_nlb_ingresscontroller_availability() {
   # TODO check some states of the IngressController status sections? related to DNS stuff? related to AWS LB stuff?
 }
 
-wait_for_observability_operator_availability() {
-  OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME="observability-operator-controller-manager"
-  OBSERVABILITY_OPERATOR_PROMETHEUS_OPERATOR_DEPLOYMENT_NAME="prometheus-operator"
-  OBSERVABILITY_OPERATOR_K8S_NAMESPACE="managed-application-services-observability"
-  OBSERVABILITY_OPERATOR_GRAFANA_OPERATOR_DEPLOYMENT_NAME="grafana-operator"
-  OBSERVABILITY_OPERATOR_GRAFANA_DEPLOYMENT_NAME="grafana-deployment"
+wait_for_observability_operator_deployment_availability() {
   echo "Waiting until Observability operator deployment is created..."
   while [ -z "$(kubectl get deployment ${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
     echo "Deployment ${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} still not created. Waiting..."
@@ -230,6 +218,39 @@ wait_for_observability_operator_availability() {
 
   echo "Waiting until Observability operator deployment is available..."
   ${KUBECTL} wait --timeout=120s --for=condition=available deployment/${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} --namespace=${OBSERVABILITY_OPERATOR_K8S_NAMESPACE}
+}
+
+disable_observability_operator_extras() {
+  wait_for_observability_operator_deployment_availability
+  echo "Waiting until Observability CR is created..."
+  OBSERVABILITY_CR_NAME="observability-stack"
+  while [ -z "$(kubectl get Observability ${OBSERVABILITY_CR_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
+    echo "Observability CR ${OBSERVABILITY_CR_NAME} still not created. Waiting..."
+    sleep 3
+  done
+
+  echo "Patching Observability CR to disable Observatorium, PagerDuty and DeadmanSnitch functionality"
+  OBSERVABILITY_MERGE_PATCH_CONTENT=$(cat << EOF
+{
+  "spec": {
+    "selfContained": {
+      "disablePagerDuty": true,
+      "disableObservatorium": true,
+      "disableDeadmansSnitch": true
+    }
+  }
+}
+EOF
+)
+  ${KUBECTL} patch Observability observability-stack --type=merge --patch "${OBSERVABILITY_MERGE_PATCH_CONTENT}" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE}
+}
+
+wait_for_observability_operator_availability() {
+  OBSERVABILITY_OPERATOR_PROMETHEUS_OPERATOR_DEPLOYMENT_NAME="prometheus-operator"
+  OBSERVABILITY_OPERATOR_GRAFANA_OPERATOR_DEPLOYMENT_NAME="grafana-operator"
+  OBSERVABILITY_OPERATOR_GRAFANA_DEPLOYMENT_NAME="grafana-deployment"
+
+  wait_for_observability_operator_deployment_availability
 
   echo "Waiting until Observability operator's Prometheus operator deployment is created..."
   while [ -z "$(kubectl get deployment ${OBSERVABILITY_OPERATOR_PROMETHEUS_OPERATOR_DEPLOYMENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
@@ -310,6 +331,7 @@ read_kasfleetmanager_env_file
 generate_kasfleetmanager_manual_terraforming_k8s_resources
 deploy_kasfleetmanager_manual_terraforming_k8s_resources
 wait_for_sharded_nlb_ingresscontroller_availability
+disable_observability_operator_extras
 wait_for_observability_operator_availability
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager

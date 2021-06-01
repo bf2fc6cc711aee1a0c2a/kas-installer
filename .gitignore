@@ -1,5 +1,6 @@
 terraforming/terraforming-generated-k8s-resources
 
+kas-installer.env
 kas-fleet-manager-deploy.env
 
 kas-fleet-manager-source

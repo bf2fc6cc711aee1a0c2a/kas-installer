@@ -75,19 +75,23 @@ deploy_kas_fleet_manager() {
 
 install_mas_sso() {
   echo "Installing MAS SSO ... "
-  sh mas-sso/install.sh
-  export MAS_SSO_ROUTE=$($OC get route keycloak -n mas-sso --template='{{ .spec.host }}')
+  export DOCKER_USER_NAME=${IMAGE_REPOSITORY_USERNAME}
+  export DOCKER_PASSWORD=${IMAGE_REPOSITORY_PASSWORD}
+  export MAS_SSO_NAMESPACE=mas-sso
+  ./mas-sso-installer.sh
+  export MAS_SSO_ROUTE=$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}')
   export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | $SED -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p')
+  echo "MAS SSO deployed"
 }
 
-## INSTALLING MAS-SSO
-install_mas_sso
+
 
 ## Main body of the script starts here
 
 read_kas_installer_env_file
 
 # Deploy and configure MAS SSO
+install_mas_sso
 
 # Deploy and configure KAS Fleet Manager and its
 # dependencies (Observability Operator, Sharded NLB, manual

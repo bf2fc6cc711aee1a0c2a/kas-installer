@@ -37,14 +37,14 @@ $OC adm policy add-role-to-user admin -z mas-sso-operator
 
 $OC create -f mas-sso/keycloak.yaml 
 
-while [ "$($OC get keycloak mas-sso -o go-template={{.status.ready}})" != "true" ]
+while [ "$($OC get keycloak -n $NAMESPACE -o go-template={{.status.ready}})" != "true" ]
 do
   sleep 3
   echo "MAS SSO is not ready. Current mas sso status nessage:"
-  $OC get keycloak mas-sso -o go-template={{.status.message}}
+  $OC get keycloak -n $NAMESPACE -o go-template={{.status.message}}
 done
 
-echo "MAS SSO is ready $($OC get route keycloak -o go-template={{.spec.host}})"
+echo "MAS SSO is ready $($OC get route keycloak -n $NAMESPACE -o go-template={{.spec.host}})"
 
 $OC create -f mas-sso/realms/realm-rhoas.yaml
 $OC create -f mas-sso/realms/realm-rhoas-kafka-sre.yaml

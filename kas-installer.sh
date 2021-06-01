@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 OS=$(uname)
 
 GIT=$(which git)

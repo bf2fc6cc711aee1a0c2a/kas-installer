@@ -19,20 +19,24 @@ fi
 
 ORIGINAL_DIR=$(pwd)
 
+DIR_NAME="$(dirname $0)"
+
 BF2_KAS_FLEET_MANAGER_REPO="git@github.com:bf2fc6cc711aee1a0c2a/kas-fleet-manager.git"
-KAS_FLEET_MANAGER_CODE_DIR="kas-fleet-manager-source"
+KAS_FLEET_MANAGER_CODE_DIR="${DIR_NAME}/kas-fleet-manager-source"
 
 TERRAFORM_FILES_BASE_DIR="terraforming"
-TERRAFORM_TEMPLATES_DIR="${TERRAFORM_FILES_BASE_DIR}/terraforming-k8s-resources-templates"
-TERRAFORM_GENERATED_DIR="${TERRAFORM_FILES_BASE_DIR}/terraforming-generated-k8s-resources"
+TERRAFORM_TEMPLATES_DIR="${DIR_NAME}/${TERRAFORM_FILES_BASE_DIR}/terraforming-k8s-resources-templates"
+TERRAFORM_GENERATED_DIR="${DIR_NAME}/${TERRAFORM_FILES_BASE_DIR}/terraforming-generated-k8s-resources"
 
-KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="kas-fleet-manager-deploy.env"
+KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="${DIR_NAME}/kas-fleet-manager-deploy.env"
 
 OBSERVABILITY_OPERATOR_K8S_NAMESPACE="managed-application-services-observability"
 OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME="observability-operator-controller-manager"
 
 generate_kasfleetmanager_manual_terraforming_k8s_resources() {
   ## Generate KAS Fleet Manager manual terraforming resources from template files
+
+  mkdir -p ${TERRAFORM_GENERATED_DIR}
 
   # Generate Sharded NLB IngressController K8s file
   ${SED} \
@@ -152,7 +156,6 @@ deploy_kasfleetmanager() {
   echo "Deploying KAS Fleet Manager Envoy ConfigMap..."
   ${OC} apply -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/envoy-config-configmap.yml -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
-
   create_kasfleetmanager_service_account
   create_kasfleetmanager_pull_credentials
 
@@ -174,7 +177,6 @@ deploy_kasfleetmanager() {
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="none" \
     -p REPLICAS=1 \
 		| ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
-
 
   echo "Waiting until KAS Fleet Manager Deployment is available..."
   ${KUBECTL} wait --timeout=90s --for=condition=available deployment/kas-fleet-manager --namespace=${KAS_FLEET_MANAGER_NAMESPACE}

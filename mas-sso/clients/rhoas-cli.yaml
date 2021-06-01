@@ -1,0 +1,17 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: rhoas-cli
+  labels:
+    app: mas-sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: rhoas
+  client:
+    clientId: rhoas-cli
+    protocol: openid-connect
+    publicClient: true
+    standardFlowEnabled: true
+    redirectUris: ["*"]
+    webOrigins: ["*"]

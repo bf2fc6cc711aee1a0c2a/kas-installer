@@ -1,0 +1,15 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: rhoas-kafka-sre
+  labels:
+    app: rhoas-kafka-sre
+spec:
+  realm:
+    id: "rhoas-kafka-sre"
+    realm: "rhoas-kafka-sre"
+    enabled: True
+    displayName: "rhoas-kafka-sre"
+  instanceSelector:
+    matchLabels:
+      app: mas-sso

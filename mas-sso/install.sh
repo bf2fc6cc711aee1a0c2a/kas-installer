@@ -44,3 +44,17 @@ do
 done
 
 echo "MAS SSO is ready $(oc get route keycloak -o go-template={{.spec.host}})"
+
+export KEYCLOAK_ROUTE=https://$(oc get route keycloak --template='{{ .spec.host }}')
+
+oc create -f realms/realm-rhoas.yaml
+oc create -f realms/realm-rhoas-kafka-sre.yaml
+
+oc create -f clients/kas-fleet-manager.yaml
+oc create -f clients/kas-fleet-manager-kafka-sre.yaml
+oc create -f clients/kas-fleetshard-agent.yaml
+oc create -f clients/strimzi-ui.yaml
+oc create -f clients/rhoas-cli.yaml
+
+sh ./kas.sh
+sh ./kas-sre.sh

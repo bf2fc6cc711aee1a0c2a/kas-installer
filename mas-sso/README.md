@@ -9,6 +9,6 @@ export DOCKER_PASSWORD=xxxx
 
 2) Ensure you have oc installed and are targeting your local cluster and have logged in with your cluster admin.
 
-3) execute the script from the root director
+3) execute the script 
 
 ` ./mas-sso-installer.sh `

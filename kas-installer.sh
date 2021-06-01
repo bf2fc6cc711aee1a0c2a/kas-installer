@@ -78,7 +78,7 @@ install_mas_sso() {
   export DOCKER_USER_NAME=${IMAGE_REPOSITORY_USERNAME}
   export DOCKER_PASSWORD=${IMAGE_REPOSITORY_PASSWORD}
   export MAS_SSO_NAMESPACE=mas-sso
-  ./mas-sso-installer.sh
+  ${DIR_NAME}/mas-sso/mas-sso-installer.sh
   export MAS_SSO_ROUTE=$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}')
   export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | $SED -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p')
   echo "MAS SSO deployed"

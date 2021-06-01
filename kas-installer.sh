@@ -6,6 +6,7 @@ GIT=$(which git)
 OC=$(which oc)
 KUBECTL=$(which kubectl)
 MAKE=$(which make)
+OPENSSL=$(which openssl)
 
 if [ "$OS" = 'Darwin' ]; then
   # for MacOS
@@ -38,7 +39,6 @@ generate_kas_fleet_manager_env_config() {
   echo "STRIMZI_OPERATOR_IMAGEPULL_SECRET=dummydockercfgsecret"  >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "KAS_FLEETSHARD_OPERATOR_IMAGEPULL_SECRET=dummydockercfgsecret" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
-  # TODO fill MAS SSO content
   echo "MAS_SSO_BASE_URL=https://$MAS_SSO_ROUTE" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_CLIENT_ID=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_CLIENT_SECRET=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
@@ -74,10 +74,10 @@ deploy_kas_fleet_manager() {
 }
 
 install_mas_sso() {
-  echo "Installating MAS SSO ... "
+  echo "Installing MAS SSO ... "
   sh mas-sso/install.sh
-  export MAS_SSO_ROUTE=$(oc get route keycloak -n mas-sso --template='{{ .spec.host }}')
-  export MAS_SSO_CERTS=$(echo "" | openssl s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p')
+  export MAS_SSO_ROUTE=$($OC get route keycloak -n mas-sso --template='{{ .spec.host }}')
+  export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | $SED -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p')
 }
 
 ## INSTALLING MAS-SSO

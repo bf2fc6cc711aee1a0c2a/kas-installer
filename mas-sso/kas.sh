@@ -42,3 +42,4 @@ echo $svcUserId
 FINAL=`curl -k --data-raw '[{"id": '$manageUser',"name": "manage-users"},{"id": '$manageRealm',"name": "manage-realm"},{"id": '$manageClients',"name": "manage-clients"}]' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/rhoas/users/$svcUserId/role-mappings/clients/$realmMgmtClientId`
 echo $FINAL
 
+

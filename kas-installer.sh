@@ -8,6 +8,7 @@ GIT=$(which git)
 OC=$(which oc)
 KUBECTL=$(which kubectl)
 MAKE=$(which make)
+OPENSSL=$(which openssl)
 
 if [ "$OS" = 'Darwin' ]; then
   # for MacOS
@@ -43,16 +44,15 @@ generate_kas_fleet_manager_env_config() {
   echo "STRIMZI_OPERATOR_IMAGEPULL_SECRET=e30="  >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "KAS_FLEETSHARD_OPERATOR_IMAGEPULL_SECRET=e30=" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
-  # TODO fill MAS SSO content
-  echo "MAS_SSO_BASE_URL=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_CLIENT_ID=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_CLIENT_SECRET=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_CRT=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_REALM=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_DATA_PLANE_CLUSTER_REALM=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_SECRET=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "OSD_IDP_MAS_SSO_REALM=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_BASE_URL=https://$MAS_SSO_ROUTE" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_CLIENT_ID=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_CLIENT_SECRET=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_CRT=$MAS_SSO_CERTS" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_REALM=rhoas" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_DATA_PLANE_CLUSTER_REALM=rhoas" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_SECRET=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "OSD_IDP_MAS_SSO_REALM=rhoas-kafka-sre" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   
   echo "KAFKA_TLS_CERT=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "KAFKA_TLS_KEY=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
@@ -78,11 +78,25 @@ deploy_kas_fleet_manager() {
   echo "KAS Fleet Manager deployed"
 }
 
+install_mas_sso() {
+  echo "Installing MAS SSO ... "
+  export DOCKER_USER_NAME=${IMAGE_REPOSITORY_USERNAME}
+  export DOCKER_PASSWORD=${IMAGE_REPOSITORY_PASSWORD}
+  export MAS_SSO_NAMESPACE=mas-sso
+  ${DIR_NAME}/mas-sso/mas-sso-installer.sh
+  export MAS_SSO_ROUTE=$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}')
+  export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | $SED -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p')
+  echo "MAS SSO deployed"
+}
+
+
+
 ## Main body of the script starts here
 
 read_kas_installer_env_file
 
 # Deploy and configure MAS SSO
+install_mas_sso
 
 # Deploy and configure KAS Fleet Manager and its
 # dependencies (Observability Operator, Sharded NLB, manual

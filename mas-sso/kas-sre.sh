@@ -27,7 +27,7 @@ manageClients=$(jq -c '.[] | select( .name | contains("manage-clients")).id' <<<
 echo $manageClients
 
 
-KAS=`curl -k --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/rhoas-kafka-sre/clients?clientId=kas-fleet-manager-kafka-sre`
+KAS=`curl -k --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/rhoas-kafka-sre/clients?clientId=kas-fleet-manager`
 kasClientId=$(jq -r '.[].id' <<< $KAS)
 
 

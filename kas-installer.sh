@@ -21,7 +21,9 @@ fi
 DIR_NAME="$(dirname $0)"
 
 KAS_INSTALLER_ENV_FILE="kas-installer.env"
-KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="kas-fleet-manager-deploy.env"
+
+KAS_FLEET_MANAGER_DIR="kas-fleet-manager"
+KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="${DIR_NAME}/${KAS_FLEET_MANAGER_DIR}/kas-fleet-manager-deploy.env"
 
 read_kas_installer_env_file() {
   if [ ! -e "${KAS_INSTALLER_ENV_FILE}" ]; then
@@ -74,7 +76,7 @@ generate_kas_fleet_manager_env_config() {
 
 deploy_kas_fleet_manager() {
   echo "Deploying KAS Fleet Manager ..."
-  ${DIR_NAME}/deploy-kas-fleet-manager.sh
+  ${DIR_NAME}/${KAS_FLEET_MANAGER_DIR}/deploy-kas-fleet-manager.sh
   echo "KAS Fleet Manager deployed"
 }
 

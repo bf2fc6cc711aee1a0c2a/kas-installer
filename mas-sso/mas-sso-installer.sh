@@ -57,3 +57,4 @@ $OC create -f mas-sso/clients/rhoas-cli.yaml
 
 sh ./mas-sso/kas.sh
 sh ./mas-sso/kas-sre.sh
+sh ./mas-sso/role-agent.sh

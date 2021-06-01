@@ -39,15 +39,15 @@ generate_kas_fleet_manager_env_config() {
   echo "KAS_FLEETSHARD_OPERATOR_IMAGEPULL_SECRET=dummydockercfgsecret" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
   # TODO fill MAS SSO content
-  echo "MAS_SSO_BASE_URL=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_CLIENT_ID=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_CLIENT_SECRET=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_CRT=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_REALM=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_DATA_PLANE_CLUSTER_REALM=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_SECRET=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "OSD_IDP_MAS_SSO_REALM=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_BASE_URL=https://$MAS_SSO_ROUTE" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_CLIENT_ID=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_CLIENT_SECRET=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_CRT=$MAS_SSO_CERTS" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_REALM=rhoas" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_DATA_PLANE_CLUSTER_REALM=rhoas" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_SECRET=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "OSD_IDP_MAS_SSO_REALM=rhoas-kafka-sre" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   
   echo "KAFKA_TLS_CERT=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "KAFKA_TLS_KEY=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
@@ -72,6 +72,16 @@ deploy_kas_fleet_manager() {
   ${DIR_NAME}/deploy-kas-fleet-manager.sh
   echo "KAS Fleet Manager deployed"
 }
+
+install_mas_sso() {
+  echo "Installating MAS SSO ... "
+  sh mas-sso/install.sh
+  export MAS_SSO_ROUTE=$(oc get route keycloak -n mas-sso --template='{{ .spec.host }}')
+  export MAS_SSO_CERTS=$(echo "" | openssl s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p')
+}
+
+## INSTALLING MAS-SSO
+install_mas_sso
 
 ## Main body of the script starts here
 

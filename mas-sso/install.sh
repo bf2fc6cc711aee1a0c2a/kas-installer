@@ -45,7 +45,7 @@ done
 
 echo "MAS SSO is ready $(oc get route keycloak -o go-template={{.spec.host}})"
 
-export KEYCLOAK_ROUTE=https://$(oc get route keycloak --template='{{ .spec.host }}')
+export KEYCLOAK_ROUTE=https://$(oc get route keycloak -n mas-sso --template='{{ .spec.host }}')
 
 oc create -f realms/realm-rhoas.yaml
 oc create -f realms/realm-rhoas-kafka-sre.yaml

@@ -35,8 +35,11 @@ generate_kas_fleet_manager_env_config() {
   > ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
   echo "OBSERVABILITY_CONFIG_ACCESS_TOKEN=${OBSERVABILITY_CONFIG_ACCESS_TOKEN}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "STRIMZI_OPERATOR_IMAGEPULL_SECRET=dummydockercfgsecret"  >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "KAS_FLEETSHARD_OPERATOR_IMAGEPULL_SECRET=dummydockercfgsecret" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  # For now image pull secrets for kas fleetshard operator
+  # and strimzi operator are not used so we base64 encode
+  # an empty json '{}'
+  echo "STRIMZI_OPERATOR_IMAGEPULL_SECRET=e30="  >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "KAS_FLEETSHARD_OPERATOR_IMAGEPULL_SECRET=e30=" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
   # TODO fill MAS SSO content
   echo "MAS_SSO_BASE_URL=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}

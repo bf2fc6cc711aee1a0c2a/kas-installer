@@ -6,7 +6,7 @@ echo $KEYCLOAK_ROUTE
 
 KEYCLOAK_URL=$KEYCLOAK_ROUTE
 REALM=rhoas
-TOKEN_PATH="/auth/realms/$REALM/protocol/openid-connect/token"
+TOKEN_PATH="/auth/realms/master/protocol/openid-connect/token"
 CLIENT_ID=admin-cli
 USERNAME=admin
 PASS=$KEYCLOAK_ADMIN_PASS

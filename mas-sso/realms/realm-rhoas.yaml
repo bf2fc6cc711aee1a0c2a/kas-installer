@@ -1,0 +1,15 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: rhoas
+  labels:
+    app: rhoas
+spec:
+  realm:
+    id: "rhoas"
+    realm: "rhoas"
+    enabled: True
+    displayName: "rhoas"
+  instanceSelector:
+    matchLabels:
+      app: mas-sso

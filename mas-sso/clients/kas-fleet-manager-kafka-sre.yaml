@@ -1,0 +1,22 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: kas-fleet-manager-kafka-sre
+  labels:
+    app: mas-sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: rhoas-kafka-sre
+  client:
+    clientId: kas-fleet-manager-kafka-sre
+    secret: kas-fleet-manager-kafka-sre
+    clientAuthenticatorType: client-secret
+    protocol: openid-connect
+    serviceAccountsEnabled: true
+    standardFlowEnabled: false
+    access: 
+       view: true
+       configure: true
+       manage: true
+     

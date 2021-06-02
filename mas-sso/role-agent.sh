@@ -30,5 +30,8 @@ SVC=`curl -k --header "Content-Type: application/json" --header "Authorization: 
 svcUserId=$(jq -r '.id' <<< $SVC)
 echo $svcUserId
 
+UPUSER=`curl -X PUT --data-raw '{"attributes": {"kas-fleetshard-operator-cluster-id": ["dev-dataplane-cluster"]}}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/users/$svcUserId`
+echo $UPUSER
+
 FINAL=`curl -k --data-raw '[{"id": '$kasfleetroleid',"name": "kas-fleet-operator"}]' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/users/$svcUserId/role-mappings/realm`
 echo $FINAL

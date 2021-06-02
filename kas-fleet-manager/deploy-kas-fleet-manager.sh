@@ -44,7 +44,7 @@ generate_kasfleetmanager_manual_terraforming_k8s_resources() {
     ${TERRAFORM_TEMPLATES_DIR}/002-sharded-nlb-ingresscontroller.yml.template > ${TERRAFORM_GENERATED_DIR}/002-sharded-nlb-ingresscontroller.yml
 
   # Generate KAS Fleet Shard Operator Addon parameters secret K8s file
-  CONTROL_PLANE_API_HOSTNAME="kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}-${DATA_PLANE_CLUSTER_DNS_NAME}"
+  CONTROL_PLANE_API_HOSTNAME="kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}"
   ${SED} \
   "s|#placeholder_data_plane_cluster_id#|${DATA_PLANE_CLUSTER_CLUSTER_ID}| ; \
     s|#placeholder_control_plane_url#|https://${CONTROL_PLANE_API_HOSTNAME}| ; \

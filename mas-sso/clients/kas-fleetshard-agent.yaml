@@ -16,7 +16,7 @@ spec:
     serviceAccountsEnabled: true
     standardFlowEnabled: false
     attributes:
-          "kas-fleetshard-operator-cluster-id": "2ieq35mpf26sq2r246sbffuvg9s380sp"
+          "kas-fleetshard-operator-cluster-id": "dev-dataplane-cluster"
     protocolMappers:
     - name: kas-fleetshard-operator-cluster-id
       protocol: openid-connect
@@ -29,9 +29,7 @@ spec:
         access.token.claim: 'true'
         claim.name: kas-fleetshard-operator-cluster-id
         jsonType.label: String
-    access: 
+    access:
        view: true
        configure: true
        manage: true
-
-     

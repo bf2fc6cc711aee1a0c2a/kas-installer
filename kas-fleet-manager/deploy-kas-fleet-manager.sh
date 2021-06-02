@@ -62,7 +62,7 @@ generate_kasfleetmanager_manual_terraforming_k8s_resources() {
   ${SED} \
   "s/#placeholder_kas_fleetshard_operator_imagepull_secret_dockercfg#/${KAS_FLEETSHARD_OPERATOR_IMAGEPULL_SECRET}/" \
     ${TERRAFORM_TEMPLATES_DIR}/011-kas-fleetshard-operator-imagepull-secret.yml.template > ${TERRAFORM_GENERATED_DIR}/011-kas-fleetshard-operator-imagepull-secret.yml
-  
+
   # Generate observability-operator configuration secret
   ${SED} \
   "s/#placeholder_observability_config_access_token#/${OBSERVABILITY_CONFIG_ACCESS_TOKEN}/" \
@@ -112,7 +112,7 @@ EOF
 )
 
   if [ -z "$(kubectl get sa ${KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ]; then
-    echo "KAS Fleet Manager service account does not exist. Creating it..."  
+    echo "KAS Fleet Manager service account does not exist. Creating it..."
     echo -n "${KAS_FLEET_MANAGER_SA_YAML}" | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
   fi
 }
@@ -126,7 +126,7 @@ create_kasfleetmanager_pull_credentials() {
       --docker-server=${IMAGE_REGISTRY}/${IMAGE_REPOSITORY} \
       --docker-username=${IMAGE_REPOSITORY_USERNAME} \
       --docker-password=${IMAGE_REPOSITORY_PASSWORD}
-    
+
     KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT="kas-fleet-manager"
     ${OC} secrets link ${KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} --for=pull
   fi
@@ -190,7 +190,7 @@ add_dataplane_cluster_to_kasfleetmanager_db() {
   INSERT_SQL_STATEMENT="INSERT INTO clusters (id, created_at, updated_at, cloud_provider, cluster_id, external_id, multi_az, region, byoc, managed, status, cluster_dns) VALUES ('${DATA_PLANE_CLUSTER_CLUSTER_ID}', '${curr_timestamp}', '${curr_timestamp}', 'aws', '${DATA_PLANE_CLUSTER_CLUSTER_ID}', '${DATA_PLANE_CLUSTER_CLUSTER_ID}', 'true', '${DATA_PLANE_CLUSTER_REGION}', 'true', 'true', 'ready', '${DATA_PLANE_CLUSTER_DNS_NAME}')"
   KAS_FLEET_MANAGER_DB_POD=$(${KUBECTL} get pod -n ${KAS_FLEET_MANAGER_NAMESPACE} -l deploymentconfig=kas-fleet-manager-db -o jsonpath="{.items[0].metadata.name}")
   echo "Adding data plane cluster '${DATA_PLANE_CLUSTER_CLUSTER_ID}' to KAS Fleet Manager database..."
-  ${KUBECTL} exec -n ${KAS_FLEET_MANAGER_NAMESPACE} ${KAS_FLEET_MANAGER_DB_POD} -- psql -d kas-fleet-manager -c "${INSERT_SQL_STATEMENT}" 
+  ${KUBECTL} exec -n ${KAS_FLEET_MANAGER_NAMESPACE} ${KAS_FLEET_MANAGER_DB_POD} -- psql -d kas-fleet-manager -c "${INSERT_SQL_STATEMENT}"
 }
 
 read_kasfleetmanager_env_file() {
@@ -277,17 +277,19 @@ wait_for_observability_operator_availability() {
     echo "Deployment ${OBSERVABILITY_OPERATOR_GRAFANA_DEPLOYMENT_NAME} still not created. Waiting..."
     sleep 10
   done
-  
+
   echo "Waiting until Observability operator's Grafana deployment is available..."
   ${KUBECTL} wait --timeout=120s --for=condition=available deployment/${OBSERVABILITY_OPERATOR_GRAFANA_DEPLOYMENT_NAME} --namespace=${OBSERVABILITY_OPERATOR_K8S_NAMESPACE}
 
   echo "Waiting until Observability CR is in configuration success stage..."
-  OBSERVABILITY_CR_STATUS="$(${KUBECTL} get -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE} observability observability-stack -o jsonpath="{.status.stage};{.status.stageStatus}")"
-  OBSERVABILITY_CR_STATUS_RECEIVED_FIELDS="$(echo -n "${OBSERVABILITY_CR_STATUS}" | tr ';' ' '| wc -w)"
-  OBSERVABILITY_CR_STAGE=$(echo -n ${OBSERVABILITY_CR_STATUS} | cut -d';' -f1)
-  OBSERVABILITY_CR_STAGE_STATUS=$(echo -n ${OBSERVABILITY_CR_STATUS} | cut -d';' -f2)
   OBSERVABILITY_CR_CONFIG_READY=0
+
   while [ ${OBSERVABILITY_CR_CONFIG_READY} -eq 0 ]; do
+    OBSERVABILITY_CR_STATUS="$(${KUBECTL} get -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE} observability observability-stack -o jsonpath="{.status.stage};{.status.stageStatus}")"
+    OBSERVABILITY_CR_STATUS_RECEIVED_FIELDS="$(echo -n "${OBSERVABILITY_CR_STATUS}" | tr ';' ' '| wc -w)"
+    OBSERVABILITY_CR_STAGE=$(echo -n ${OBSERVABILITY_CR_STATUS} | cut -d';' -f1)
+    OBSERVABILITY_CR_STAGE_STATUS=$(echo -n ${OBSERVABILITY_CR_STATUS} | cut -d';' -f2)
+
     if [ ${OBSERVABILITY_CR_STATUS_RECEIVED_FIELDS} -eq 2 ] && [ "${OBSERVABILITY_CR_STAGE}" = "configuration" ] && [ "${OBSERVABILITY_CR_STAGE_STATUS}" = "success" ]; then
       OBSERVABILITY_CR_CONFIG_READY=1
     else

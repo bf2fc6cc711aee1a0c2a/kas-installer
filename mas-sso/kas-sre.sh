@@ -26,6 +26,8 @@ ROLES=`curl -sk --header "Content-Type: application/json" --header "Authorizatio
 manageClients=$(jq -c '.[] | select( .name | contains("manage-clients")).id' <<< $ROLES)
 echo $manageClients
 
+CREATE=`curl -sk --data-raw '{ "authorizationServicesEnabled": false,"clientId": "kas-fleet-manager","name": "kas-fleet-manager","secret": "kas-fleet-manager","serviceAccountsEnabled": true,"standardFlowEnabled": false}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/rhoas-kafka-sre/clients`
+echo $CREATE
 
 KAS=`curl -sk --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/rhoas-kafka-sre/clients?clientId=kas-fleet-manager`
 kasClientId=$(jq -r '.[].id' <<< $KAS)

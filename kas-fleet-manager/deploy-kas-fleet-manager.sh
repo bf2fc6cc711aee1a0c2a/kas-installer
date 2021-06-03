@@ -63,11 +63,6 @@ generate_kasfleetmanager_manual_terraforming_k8s_resources() {
   "s/#placeholder_kas_fleetshard_operator_imagepull_secret_dockercfg#/${KAS_FLEETSHARD_OPERATOR_IMAGEPULL_SECRET}/" \
     ${TERRAFORM_TEMPLATES_DIR}/011-kas-fleetshard-operator-imagepull-secret.yml.template > ${TERRAFORM_GENERATED_DIR}/011-kas-fleetshard-operator-imagepull-secret.yml
 
-  # Generate observability-operator configuration secret
-  ${SED} \
-  "s/#placeholder_observability_config_access_token#/${OBSERVABILITY_CONFIG_ACCESS_TOKEN}/" \
-  ${TERRAFORM_TEMPLATES_DIR}/012-observability-operator-kafka-observability-configuration.yml.template > ${TERRAFORM_GENERATED_DIR}/012-observability-operator-kafka-observability-configuration.yml
-
   # Copy rest of the template files as there are no parameters to replace
   cp -a ${TERRAFORM_TEMPLATES_DIR}/001-mk-storageclass.yml.template ${TERRAFORM_GENERATED_DIR}/001-mk-storageclass.yml
   cp -a ${TERRAFORM_TEMPLATES_DIR}/003-observability-operator-project.yml.template ${TERRAFORM_GENERATED_DIR}/003-observability-operator-project.yml

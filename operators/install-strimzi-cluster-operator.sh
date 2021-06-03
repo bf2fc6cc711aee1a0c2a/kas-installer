@@ -22,19 +22,25 @@ cp -t strimzi-cluster-operator/resources/security/tmp/ strimzi-cluster-operator/
 ${SED} -i "s/namespace: .*/namespace: ${NAMESPACE}/" \
     strimzi-cluster-operator/resources/security/tmp/*RoleBinding*.yaml
 
+# Create the namespace if it's not found
+${KUBECTL} get ns ${NAMESPACE} >/dev/null \
+  || ${KUBECTL} create ns ${NAMESPACE}
+
 ${KUBECTL} create clusterrolebinding strimzi-cluster-operator-namespaced \
     --clusterrole=strimzi-cluster-operator-namespaced \
     --serviceaccount ${NAMESPACE}:strimzi-cluster-operator
+${KUBECTL} label clusterrolebinding strimzi-cluster-operator-namespaced app=strimzi
 
 ${KUBECTL} create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation \
     --clusterrole=strimzi-entity-operator \
     --serviceaccount ${NAMESPACE}:strimzi-cluster-operator
+${KUBECTL} label clusterrolebinding strimzi-cluster-operator-entity-operator-delegation app=strimzi
 
 ${KUBECTL} create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation \
     --clusterrole=strimzi-topic-operator \
     --serviceaccount ${NAMESPACE}:strimzi-cluster-operator
+${KUBECTL} label clusterrolebinding strimzi-cluster-operator-topic-operator-delegation app=strimzi
 
-${KUBECTL} create ns ${NAMESPACE}
 ${KUBECTL} create -f strimzi-cluster-operator/resources/security/tmp -n ${NAMESPACE}
 ${KUBECTL} create -f strimzi-cluster-operator/resources -n ${NAMESPACE}
 

@@ -187,6 +187,8 @@ spec:
           value: "(https?:\\/\\/localhost(:\\d*)?)|(https:\\/\\/(qaprodauth\\.)?cloud\\.redhat\\.com)|(https:\\/\\/(prod|qa|ci|stage)\\.foo\\.redhat\\.com:1337)"
         - name: KAFKA_EXTERNAL_CERTIFICATE_ENABLED
           value: 'false'
+        - name: KAFKA_AUTHENTICATION_ENABLED
+          value: 'false'
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:

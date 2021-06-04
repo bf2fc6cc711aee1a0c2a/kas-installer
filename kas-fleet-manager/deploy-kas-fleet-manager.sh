@@ -36,6 +36,11 @@ OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME="observability-operator-controller-manage
 generate_kasfleetmanager_manual_terraforming_k8s_resources() {
   ## Generate KAS Fleet Manager manual terraforming resources from template files
 
+  if [ -d "${TERRAFORM_GENERATED_DIR}" ]; then
+      # Clean up old generated resources
+      rm -rf ${TERRAFORM_GENERATED_DIR}
+  fi
+
   mkdir -p ${TERRAFORM_GENERATED_DIR}
 
   # Generate Sharded NLB IngressController K8s file

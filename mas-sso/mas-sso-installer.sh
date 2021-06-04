@@ -54,6 +54,8 @@ $OC create -f mas-sso/clients/kas-fleetshard-agent.yaml
 $OC create -f mas-sso/clients/strimzi-ui.yaml
 $OC create -f mas-sso/clients/rhoas-cli.yaml
 
+sleep 10
+
 sh ./mas-sso/kas.sh
 sh ./mas-sso/kas-sre.sh
 sh ./mas-sso/role-agent.sh

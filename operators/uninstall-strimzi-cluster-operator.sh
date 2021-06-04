@@ -3,6 +3,7 @@
 NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE:-redhat-managed-kafka-operator}
 KUBECTL=$(which kubectl)
 
+${KUBECTL} delete kafkas --all --all-namespaces
 ${KUBECTL} delete clusterrolebinding strimzi-cluster-operator-namespaced
 ${KUBECTL} delete clusterrolebinding strimzi-cluster-operator-entity-operator-delegation
 ${KUBECTL} delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation

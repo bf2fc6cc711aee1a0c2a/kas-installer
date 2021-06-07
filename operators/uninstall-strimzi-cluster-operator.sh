@@ -9,3 +9,5 @@ ${KUBECTL} delete clusterrolebinding strimzi-cluster-operator-entity-operator-de
 ${KUBECTL} delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation
 ${KUBECTL} delete -f strimzi-cluster-operator/resources/security/tmp -n ${NAMESPACE}
 ${KUBECTL} delete -f strimzi-cluster-operator/resources -n ${NAMESPACE}
+
+exit 0

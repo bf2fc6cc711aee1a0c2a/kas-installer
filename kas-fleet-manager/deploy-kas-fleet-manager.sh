@@ -38,7 +38,7 @@ generate_kasfleetmanager_manual_terraforming_k8s_resources() {
 
   if [ -d "${TERRAFORM_GENERATED_DIR}" ]; then
       # Clean up old generated resources
-      rm -rf ${TERRAFORM_GENERATED_DIR}
+      rm -rvf ${TERRAFORM_GENERATED_DIR}
   fi
 
   mkdir -p ${TERRAFORM_GENERATED_DIR}
@@ -286,11 +286,10 @@ wait_for_observability_operator_availability() {
 
   while [ ${OBSERVABILITY_CR_CONFIG_READY} -eq 0 ]; do
     OBSERVABILITY_CR_STATUS="$(${KUBECTL} get -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE} observability observability-stack -o jsonpath="{.status.stage};{.status.stageStatus}")"
-    OBSERVABILITY_CR_STATUS_RECEIVED_FIELDS="$(echo -n "${OBSERVABILITY_CR_STATUS}" | tr ';' ' '| wc -w)"
     OBSERVABILITY_CR_STAGE=$(echo -n ${OBSERVABILITY_CR_STATUS} | cut -d';' -f1)
     OBSERVABILITY_CR_STAGE_STATUS=$(echo -n ${OBSERVABILITY_CR_STATUS} | cut -d';' -f2)
 
-    if [ ${OBSERVABILITY_CR_STATUS_RECEIVED_FIELDS} -eq 2 ] && [ "${OBSERVABILITY_CR_STAGE}" = "configuration" ] && [ "${OBSERVABILITY_CR_STAGE_STATUS}" = "success" ]; then
+    if [ "${OBSERVABILITY_CR_STAGE}" = "configuration" ] && [ "${OBSERVABILITY_CR_STAGE_STATUS}" = "in progress" ]; then
       OBSERVABILITY_CR_CONFIG_READY=1
     else
       echo "Observability CR still not ready. Stage: '${OBSERVABILITY_CR_STAGE}, Stage status: '${OBSERVABILITY_CR_STAGE_STATUS}'"

@@ -8,3 +8,5 @@ ${KUBECTL} delete managedkafkaagents --all --all-namespaces
 ${KUBECTL} delete -f kas-fleetshard/resources -n ${NAMESPACE}
 ${KUBECTL} delete clusterrolebinding kas-fleetshard-operator
 ${KUBECTL} delete clusterrolebinding kas-fleetshard-sync
+
+exit 0

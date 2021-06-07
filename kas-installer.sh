@@ -162,6 +162,20 @@ deploy_observatorium() {
 
 }
 
+deploy_mas_ui() {
+
+  echo "Retrieve KAS API route ..."
+  KAS_API_ROUTE=$($OC get route kas-fleet-manager -n kas-fleet-manager-${USER} --template='{{ .spec.host }}')
+
+  echo "Deploying MAS UI ..."
+  IMAGE_REPOSITORY_USERNAME=${IMAGE_REPOSITORY_USERNAME} \
+    IMAGE_REPOSITORY_PASSWORD=${IMAGE_REPOSITORY_PASSWORD} \
+    MAS_SSO_URL="https://${MAS_SSO_ROUTE}" \
+    KAS_API_URL="https://${KAS_API_ROUTE}" \
+    ./mas-ui/install-mas-ui.sh
+  echo "MAS UI deployed"
+}
+
 ## Main body of the script starts here
 
 read_kas_installer_env_file
@@ -185,3 +199,6 @@ deploy_kas_fleet_manager
 if [ "${SKIP_KAS_FLEETSHARD:-""}n" = "n" ]; then
     deploy_kas_fleetshard
 fi
+
+# Deploy and configure MAS UI/Console
+deploy_mas_ui

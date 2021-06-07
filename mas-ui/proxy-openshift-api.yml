@@ -1,0 +1,86 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: proxy-openshift-api
+parameters:
+  - name: NGINX_IMAGE
+    value: quay.io/app-sre/ubi8-nginx-118
+    required: true
+  - name: OPENSHIFT_API_URL
+    value: https://api.openshift.com/
+    required: true
+objects:
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: proxy-openshift-api
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: proxy-openshift-api
+      template:
+        metadata:
+          labels:
+            app: proxy-openshift-api
+        spec:
+          containers:
+            - name: proxy
+              image: ${NGINX_IMAGE}
+              command:
+                - nginx
+                - -g
+                - "daemon off;"
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              volumeMounts:
+                - name: config
+                  mountPath: /opt/app-root/etc/nginx.default.d/proxy.conf
+                  subPath: proxy.conf
+              imagePullPolicy: Always
+          volumes:
+            - name: config
+              configMap:
+                name: proxy-openshift-api-config
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: proxy-openshift-api-config
+    data:
+      proxy.conf: |-
+        location / {
+          proxy_http_version 1.1;
+          proxy_pass ${OPENSHIFT_API_URL};
+          add_header Access-Control-Allow-Origin *;
+          add_header Access-Control-Allow-Headers *;
+        }
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: proxy-openshift-api
+    spec:
+      selector:
+        app: proxy-openshift-api
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 8080
+
+  - kind: Route
+    apiVersion: route.openshift.io/v1
+    metadata:
+      name: api
+    spec:
+      to:
+        kind: Service
+        name: proxy-openshift-api
+      port:
+        targetPort: 8080
+      tls:
+        termination: edge

@@ -1,0 +1,164 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: application-services-ui
+parameters:
+  - name: IMAGE
+    value: quay.io/b1zzu/application-services-ui:latest
+    required: true
+  - name: MAS_SSO_URL
+    required: true
+  - name: KAS_API_URL
+    required: true
+  - name: AMS_API_URL
+    required: true
+  - name: SRS_API_URL
+    required: true
+
+objects:
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: application-services-ui
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: application-services-ui
+      template:
+        metadata:
+          labels:
+            app: application-services-ui
+        spec:
+          containers:
+            - name: application-services-ui
+              image: ${IMAGE}
+              command:
+                - nginx
+                - -g
+                - "daemon off;"
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              volumeMounts:
+                - name: config
+                  mountPath: /opt/app-root/src/dist/config.json
+                  subPath: config.json
+              imagePullPolicy: Always
+
+          volumes:
+            - name: config
+              configMap:
+                name: application-services-ui-config
+
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: application-services-ui-config
+    data:
+      config.json: |
+        {
+          "federatedModules": {
+            "kas": {
+              "basePath": "http://localhost:9000",
+              "fallbackBasePath": "/beta/apps/rhosak-control-plane-ui-build"
+            },
+            "kafka": {
+              "basePath": "http://localhost:8080",
+              "fallbackBasePath": "/beta/apps/rhosak-data-plane-ui-build"
+            },
+            "guides": {
+              "basePath": "http://localhost:9001",
+              "fallbackBasePath": "/beta/apps/rhoas-guides-build"
+            },
+            "apicurio_registry": {
+              "basePath": "http://localhost:8888",
+              "fallbackBasePath": "/beta/apps/sr-ui-build"
+            },
+            "srs": {
+              "basePath": "http://localhost:9005",
+              "fallbackBasePath": "/beta/apps/srs-ui-build"
+            },
+            "cos": {
+              "basePath": "http://localhost:9002",
+              "fallbackBasePath": "/beta/apps/cos-ui-build"
+            }
+          },
+          "config": [
+            {
+              "hostnames": [
+                "prod.foo.redhat.com"
+              ],
+              "fetchConfig": true,
+              "config": {
+                "serviceDown": false,
+                "guides": {
+                  "showDrafts": false
+                },
+                "ams": {
+                  "apiBasePath": "${AMS_API_URL}",
+                  "eventCode": "onlineService",
+                  "siteCode": "ocm",
+                  "kasQuotaId": "cluster|rhinfra|rhosak|marketplace",
+                  "kasTrialQuotaId": "cluster|rhinfra|rhosaktrial|marketplace",
+                  "srsQuotaId": "cluster|rhinfra|rhosr|any",
+                  "srsTrialQuotaId": "cluster|rhinfra|rhosrtrial|any"
+                },
+                "kas": {
+                  "apiBasePath": "${KAS_API_URL}"
+                },
+                "kafka": {},
+                "masSso": {
+                  "authServerUrl": "${MAS_SSO_URL}/auth",
+                  "clientId": "strimzi-ui",
+                  "realm": "rhoas"
+                },
+                "apicurio_registry": {
+                  "apiBasePath": ""
+                },
+                "rbac": {
+                  "basePath": "/api/rbac/v1"
+                },
+                "srs": {
+                  "apiBasePath": "${SRS_API_URL}"
+                },
+                "cos": {
+                  "apiBasePath": "https://cos-fleet-manager-cos.rh-fuse-153f1de160110098c1928a6c05e19444-0000.eu-de.containers.appdomain.cloud",
+                  "configurators": {
+                    "debezium-mongodb-1.5.0.Final": {
+                      "remoteEntry": "https://de-debezium-ui-demo.rh-fuse-153f1de160110098c1928a6c05e19444-0000.eu-de.containers.appdomain.cloud/dbz-connector-configurator.remoteEntry.js",
+                      "scope": "debezium_ui",
+                      "module": "./config"
+                    },
+                    "debezium-mysql-1.5.0.Final": {
+                      "remoteEntry": "https://de-debezium-ui-demo.rh-fuse-153f1de160110098c1928a6c05e19444-0000.eu-de.containers.appdomain.cloud/dbz-connector-configurator.remoteEntry.js",
+                      "scope": "debezium_ui",
+                      "module": "./config"
+                    },
+                    "debezium-postgres-1.5.0.Final": {
+                      "remoteEntry": "https://de-debezium-ui-demo.rh-fuse-153f1de160110098c1928a6c05e19444-0000.eu-de.containers.appdomain.cloud/dbz-connector-configurator.remoteEntry.js",
+                      "scope": "debezium_ui",
+                      "module": "./config"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: application-services-ui
+    spec:
+      selector:
+        app: application-services-ui
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 8080

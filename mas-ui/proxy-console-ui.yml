@@ -1,0 +1,168 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: proxy-console-ui
+parameters:
+  - name: NGINX_IMAGE
+    value: quay.io/app-sre/ubi8-nginx-118
+    required: true
+  - name: VARNISH_IMAGE
+    value: varnish
+    required: true
+  - name: CONSOLE_UI_URI
+    value: https://console.redhat.com/
+    required: true
+objects:
+
+  # Nginx proxy to dispatch UI requests to the correct micro frontend or
+  # fallback to the CONSOLE_UI_URI
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: proxy-console-ui
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: proxy-console-ui
+      template:
+        metadata:
+          labels:
+            app: proxy-console-ui
+        spec:
+          containers:
+            - name: proxy
+              image: ${NGINX_IMAGE}
+              command:
+                - nginx
+                - -g
+                - "daemon off;"
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              volumeMounts:
+                - name: config
+                  mountPath: /opt/app-root/etc/nginx.default.d/proxy.conf
+                  subPath: proxy.conf
+              imagePullPolicy: Always
+          volumes:
+            - name: config
+              configMap:
+                name: proxy-console-ui-config
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: proxy-console-ui-config
+    data:
+      proxy.conf: |-
+        location ~ ^(\/beta)?(\/apps)?\/application-services {
+          proxy_pass http://application-services-ui:80;
+        }
+
+        location / {
+          proxy_ssl_server_name on;
+          proxy_pass ${CONSOLE_UI_URI};
+        }
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: proxy-console-ui
+    spec:
+      selector:
+        app: proxy-console-ui
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 8080
+
+
+  # Varnish cache to resolve Edge Side Includes
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: varnish-console-ui
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: varnish-console-ui
+      template:
+        metadata:
+          labels:
+            app: varnish-console-ui
+        spec:
+          containers:
+            - name: varnish
+              image: ${VARNISH_IMAGE}
+              command:
+                - varnishd
+                - -F
+                - -a
+                - :8080
+                - -f
+                - /etc/varnish/default.vcl
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              volumeMounts:
+                - name: config
+                  mountPath: /etc/varnish/default.vcl
+                  subPath: default.vcl
+                - name: lib
+                  mountPath: /var/lib/varnish
+              imagePullPolicy: Always
+          volumes:
+            - name: config
+              configMap:
+                name: varnish-console-ui-config
+            - name: lib
+              emptyDir: { }
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: varnish-console-ui-config
+    data:
+      default.vcl: |-
+        vcl 4.0;
+
+        backend default {
+          .host = "proxy-console-ui";
+        }
+
+        sub vcl_backend_response {
+          set beresp.do_esi = true;
+        }
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: varnish-console-ui
+    spec:
+      selector:
+        app: varnish-console-ui
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 8080
+
+  - kind: Route
+    apiVersion: route.openshift.io/v1
+    metadata:
+      name: ui
+    spec:
+      host: prod.foo.redhat.com
+      to:
+        kind: Service
+        name: varnish-console-ui
+      port:
+        targetPort: 8080
+      tls:
+        termination: edge

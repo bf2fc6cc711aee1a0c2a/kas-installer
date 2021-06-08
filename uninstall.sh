@@ -22,13 +22,13 @@ DIR_NAME="$(dirname $0)"
 
 KAS_INSTALLER_ENV_FILE="kas-installer.env"
 
-KAS_FLEET_MANAGER_DIR="kas-fleet-manager"
+KAS_FLEET_MANAGER_DIR="${DIR_NAME}/kas-fleet-manager"
 KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="${KAS_FLEET_MANAGER_DIR}/kas-fleet-manager-deploy.env"
 TERRAFORM_FILES_BASE_DIR="terraforming"
 TERRAFORM_GENERATED_DIR="${KAS_FLEET_MANAGER_DIR}/${TERRAFORM_FILES_BASE_DIR}/terraforming-generated-k8s-resources"
 source ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
-(cd operators && \
+(cd ${DIR_NAME}/operators && \
   ./uninstall-kas-fleetshard.sh && \
   ./uninstall-strimzi-cluster-operator.sh)
 

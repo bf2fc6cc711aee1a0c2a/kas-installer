@@ -188,7 +188,7 @@ spec:
         - name: KAFKA_EXTERNAL_CERTIFICATE_ENABLED
           value: 'false'
         - name: KAFKA_AUTHENTICATION_ENABLED
-          value: 'false'
+          value: 'true'
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:

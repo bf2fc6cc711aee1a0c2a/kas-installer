@@ -314,12 +314,12 @@ delete_namespace() {
 }
 
 create_strimzi_operator_namespace() {
-  STRIMZI_OPERATOR_NAMESPACE="redhat-managed-kafka-operator"
+  STRIMZI_OPERATOR_NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE}
   create_namespace ${STRIMZI_OPERATOR_NAMESPACE}
 }
 
 create_kas_fleetshard_operator_namespace() {
-  KAS_FLEETSHARD_OPERATOR_NAMESPACE="redhat-kas-fleetshard-operator"
+  KAS_FLEETSHARD_OPERATOR_NAMESPACE=${KAS_FLEETSHARD_OPERATOR_NAMESPACE}
   create_namespace ${KAS_FLEETSHARD_OPERATOR_NAMESPACE}
 }
 

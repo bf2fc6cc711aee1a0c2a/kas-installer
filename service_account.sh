@@ -8,9 +8,6 @@ create() {
       https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/serviceaccounts \
       -d '{ "name": "'${USER}-kafka-service-account'" }')
 
-    # Pretty print
-    echo ${RESPONSE} | jq
-
     local KIND=$(echo ${RESPONSE} | jq -r .kind)
 
     if [ "${KIND}" = "Error" ]; then
@@ -18,19 +15,20 @@ create() {
 
         # Display existing service accounts if limit has been reached
         if [ "${ERRCODE}" = "KAFKAS-MGMT-4" ]; then
-            list
+            echo "Existing service accounts:"
+            list | jq
         fi
 
         exit 1
     fi
+
+    echo ${RESPONSE}
 }
 
 list() {
     local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(ocm token)" \
       https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/serviceaccounts)
-
-    echo "Existing service accounts:"
-    echo ${RESPONSE} | jq
+    echo ${RESPONSE}
 }
 
 delete() {

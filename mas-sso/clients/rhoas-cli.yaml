@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: rhoas
   client:
-    clientId: rhoas-cli
+    clientId: rhoas-cli-prod
     protocol: openid-connect
     publicClient: true
     standardFlowEnabled: true

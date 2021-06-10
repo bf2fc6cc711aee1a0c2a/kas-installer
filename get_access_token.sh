@@ -23,4 +23,5 @@ fi
 ACCESS_TOKEN=$(echo "${RESPONSE}" | jq -r .access_token)
 EXPIRES_IN=$(echo "${RESPONSE}" | jq -r .expires_in)
 
-printf "Access Token (expires at %s):\n%s\n" "$(date --date="${EXPIRES_IN} seconds")" ${ACCESS_TOKEN}
+printf "Access Token (expires at %s):\n" "$(date --date="${EXPIRES_IN} seconds")" >>/dev/stderr
+printf "%s\n" ${ACCESS_TOKEN}

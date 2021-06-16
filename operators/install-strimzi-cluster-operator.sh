@@ -1,5 +1,6 @@
 #!/bin/bash
 
+OS=$(uname)
 NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE:-redhat-managed-kafka-operator}
 KUBECTL=$(which kubectl)
 

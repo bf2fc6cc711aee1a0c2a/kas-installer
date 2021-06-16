@@ -51,6 +51,13 @@ The `service_account.sh` script supports creating, listing, and deleting service
 ### Generate an Access Token
 1. Run `get_access_token.sh` using the `clientID` and `clientSecret` as the first and second arguments. The generated access token and its expiration date and time will be printed to the console.
 
+### Kafka Instance Maintenance
+
+The `managed_kafka.sh` script supports creating, listing, and deleting Kafka clusters.
+
+1. To create a cluster, run `managed_kafka.sh --create <cluster name>`. Progress will be printed as the cluster is prepared and provisioned.
+1. To list existing clusters, run `managed_kafka.sh --list`.
+1. To remove an existing cluster, run `managed_kafka.sh --delete <cluster ID>`.
 
 [git_tool]:https://git-scm.com/downloads
 [jq]:https://stedolan.github.io/jq/

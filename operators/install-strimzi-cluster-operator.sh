@@ -1,14 +1,17 @@
 #!/bin/bash
 
+OS=$(uname)
 NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE:-redhat-managed-kafka-operator}
 KUBECTL=$(which kubectl)
 
 if [ "$OS" = 'Darwin' ]; then
   # for MacOS
   SED=$(which gsed)
+  CP=$(which gcp)
 else
   # for Linux and Windows
   SED=$(which sed)
+  CP=$(which cp)
 fi
 
 if ! [ -d strimzi-cluster-operator/resources/security/tmp ]; then
@@ -17,7 +20,7 @@ fi
 
 rm -rf strimzi-cluster-operator/resources/security/tmp/*
 
-cp -t strimzi-cluster-operator/resources/security/tmp/ strimzi-cluster-operator/resources/security/*.yaml
+${CP} -t strimzi-cluster-operator/resources/security/tmp/ strimzi-cluster-operator/resources/security/*.yaml
 
 ${SED} -i "s/namespace: .*/namespace: ${NAMESPACE}/" \
     strimzi-cluster-operator/resources/security/tmp/*RoleBinding*.yaml

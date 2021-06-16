@@ -13,6 +13,7 @@ in a single K8s cluster.
 * kubectl
 * openssl CLI tool
 * A user with administrative privileges in the OpenShift cluster
+* brew coreutils (Mac only)
 
 ## Description
 

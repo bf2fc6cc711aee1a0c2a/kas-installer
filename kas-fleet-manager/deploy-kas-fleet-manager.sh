@@ -89,13 +89,19 @@ deploy_kasfleetmanager_manual_terraforming_k8s_resources() {
 }
 
 clone_kasfleetmanager_code_repository() {
+
+  if [ -d "${KAS_FLEET_MANAGER_CODE_DIR}" ]; then
+    CURRENT_HASH=$(cd "${KAS_FLEET_MANAGER_CODE_DIR}" && ${GIT} rev-parse HEAD)
+    if [ "${CURRENT_HASH}" != "${KAS_FLEET_MANAGER_BF2_REF}" ]; then
+      echo "KAS Fleet Manager code directory was stale ${CURRENT_HASH} != ${KAS_FLEET_MANAGER_BF2_REF}. Deleting it..."
+      rm -rf ${KAS_FLEET_MANAGER_CODE_DIR}
+    fi
+  fi
+
   if [ ! -d "${KAS_FLEET_MANAGER_CODE_DIR}" ]; then
     echo "KAS Fleet Manager code directory does not exist. Cloning it..."
     ${GIT} clone ${BF2_KAS_FLEET_MANAGER_REPO} ${KAS_FLEET_MANAGER_CODE_DIR}
-    CURR_DIR=$(pwd)
-    cd ${KAS_FLEET_MANAGER_CODE_DIR}
-    ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF}
-    cd ${CURR_DIR}
+    (cd ${KAS_FLEET_MANAGER_CODE_DIR} && ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF})
   fi
 }
 

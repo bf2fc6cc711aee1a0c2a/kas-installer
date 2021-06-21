@@ -58,6 +58,9 @@ spec:
                     type: string
                   strimzi:
                     type: string
+                required:
+                - kafka
+                - strimzi
                 type: object
               adminServerURI:
                 type: string
@@ -105,6 +108,8 @@ spec:
                     type: string
                   customClaimCheck:
                     type: string
+                required:
+                - clientSecret
                 type: object
               endpoint:
                 properties:
@@ -116,7 +121,12 @@ spec:
                         type: string
                       key:
                         type: string
+                    required:
+                    - cert
+                    - key
                     type: object
+                required:
+                - bootstrapServerHost
                 type: object
               versions:
                 properties:
@@ -124,9 +134,15 @@ spec:
                     type: string
                   strimzi:
                     type: string
+                required:
+                - kafka
+                - strimzi
                 type: object
               deleted:
                 type: boolean
+            required:
+            - endpoint
+            - versions
             type: object
         type: object
     served: true

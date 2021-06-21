@@ -101,7 +101,7 @@ install_mas_sso() {
   export MAS_SSO_NAMESPACE=mas-sso
   ${DIR_NAME}/mas-sso/mas-sso-installer.sh
   export MAS_SSO_ROUTE=$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}')
-  export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | $SED -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p')
+  export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | $OPENSSL x509)
   echo "MAS SSO deployed"
 }
 

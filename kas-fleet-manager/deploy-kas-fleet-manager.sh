@@ -167,24 +167,28 @@ deploy_kasfleetmanager() {
   create_kasfleetmanager_service_account
   create_kasfleetmanager_pull_credentials
 
+  echo "Deploying KAS Fleet Manager Connector Catalog ConfigMaps..."
+  # Not a template, apply directly
+  ${OC} apply -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/connector-catalog-configmap.yml -n ${KAS_FLEET_MANAGER_NAMESPACE}
+
   echo "Deploying KAS Fleet Manager..."
   OCM_ENV="development"
-	${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
-		-p ENVIRONMENT="${OCM_ENV}" \
+
+  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
+    -p ENVIRONMENT="${OCM_ENV}" \
     -p OCM_BASE_URL="https://nonexistingdummyhosttest.com" \
-		-p IMAGE_REGISTRY=${IMAGE_REGISTRY} \
-		-p IMAGE_REPOSITORY=${IMAGE_REPOSITORY} \
-		-p IMAGE_TAG=${IMAGE_TAG} \
-		-p JWKS_URL="${JWKS_URL}" \
-		-p MAS_SSO_BASE_URL="${MAS_SSO_BASE_URL}" \
-		-p MAS_SSO_REALM="${MAS_SSO_REALM}" \
-		-p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
-		-p ALLOW_ANY_REGISTERED_USERS="true" \
-		-p ENABLE_QUOTA_SERVICE="false" \
-		-p ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE="false" \
-		-p DATAPLANE_CLUSTER_SCALING_TYPE="none" \
+    -p IMAGE_REGISTRY=${IMAGE_REGISTRY} \
+    -p IMAGE_REPOSITORY=${IMAGE_REPOSITORY} \
+    -p IMAGE_TAG=${IMAGE_TAG} \
+    -p JWKS_URL="${JWKS_URL}" \
+    -p MAS_SSO_BASE_URL="${MAS_SSO_BASE_URL}" \
+    -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
+    -p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
+    -p ALLOW_ANY_REGISTERED_USERS="true" \
+    -p ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE="false" \
+    -p DATAPLANE_CLUSTER_SCALING_TYPE="none" \
     -p REPLICAS=1 \
-		| ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
+    | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Waiting until KAS Fleet Manager Deployment is available..."
   ${KUBECTL} wait --timeout=90s --for=condition=available deployment/kas-fleet-manager --namespace=${KAS_FLEET_MANAGER_NAMESPACE}

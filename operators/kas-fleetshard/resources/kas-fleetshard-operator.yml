@@ -4,7 +4,6 @@ kind: ServiceAccount
 metadata:
   labels:
     app: kas-fleetshard-operator
-    app.kubernetes.io/version: 0.4.0
     app.kubernetes.io/name: kas-fleetshard-operator
   name: kas-fleetshard-operator
 ---
@@ -13,7 +12,6 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/name: kas-fleetshard-operator
-    app.kubernetes.io/version: 0.4.0
   name: kas-fleetshard-operator
 spec:
   ports:
@@ -22,7 +20,6 @@ spec:
     targetPort: 8080
   selector:
     app.kubernetes.io/name: kas-fleetshard-operator
-    app.kubernetes.io/version: 0.4.0
   type: ClusterIP
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -44,7 +41,6 @@ kind: ClusterRole
 metadata:
   labels:
     app: kas-fleetshard-operator
-    app.kubernetes.io/version: 0.4.0
     app.kubernetes.io/name: kas-fleetshard-operator
   name: kas-fleetshard-operator
 rules:
@@ -99,6 +95,14 @@ rules:
   - patch
   - update
 - apiGroups:
+    - apps
+  resources:
+    # operator needs to get ReplicaSets for discovering Strimzi installations
+    - replicasets
+  verbs:
+    - get
+    - list
+- apiGroups:
   - ""
   resources:
   - services
@@ -126,30 +130,12 @@ rules:
   - delete
   - patch
   - update
-#---
-#apiVersion: rbac.authorization.k8s.io/v1
-#kind: ClusterRoleBinding
-#metadata:
-#  labels:
-#    app: kas-fleetshard-operator
-#    app.kubernetes.io/version: 0.4.0
-#    app.kubernetes.io/name: kas-fleetshard-operator
-#  name: kas-fleetshard-operator
-#roleRef:
-#  kind: ClusterRole
-#  apiGroup: rbac.authorization.k8s.io
-#  name: kas-fleetshard-operator
-#subjects:
-#- kind: ServiceAccount
-#  name: kas-fleetshard-operator
-#  namespace: kas-fleetshard
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
     app: kas-fleetshard-operator
-    app.kubernetes.io/version: 0.4.0
     app.kubernetes.io/name: kas-fleetshard-operator
   name: kas-fleetshard-operator
 spec:
@@ -157,13 +143,11 @@ spec:
   selector:
     matchLabels:
       app: kas-fleetshard-operator
-      app.kubernetes.io/version: 0.4.0
       app.kubernetes.io/name: kas-fleetshard-operator
   template:
     metadata:
       labels:
         app: kas-fleetshard-operator
-        app.kubernetes.io/version: 0.4.0
         app.kubernetes.io/name: kas-fleetshard-operator
       name: kas-fleetshard-operator
     spec:
@@ -179,7 +163,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-operator
-        image: quay.io/mk-ci-cd/kas-fleetshard-operator@sha256:7fd2aa2e2607688e1cca25a610e6331c455f0d9757688858965d7e39d1688615
+        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.6.0
         env:
         - name: QUARKUS_PROFILE
           value: prod

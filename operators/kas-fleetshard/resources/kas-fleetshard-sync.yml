@@ -4,7 +4,6 @@ kind: ServiceAccount
 metadata:
   labels:
     app.kubernetes.io/name: kas-fleetshard-sync
-    app.kubernetes.io/version: 0.4.0
   name: kas-fleetshard-sync
 ---
 apiVersion: v1
@@ -12,7 +11,6 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/name: kas-fleetshard-sync
-    app.kubernetes.io/version: 0.4.0
   name: kas-fleetshard-sync
 spec:
   ports:
@@ -21,7 +19,6 @@ spec:
     targetPort: 8080
   selector:
     app.kubernetes.io/name: kas-fleetshard-sync
-    app.kubernetes.io/version: 0.4.0
   type: ClusterIP
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -66,7 +63,6 @@ metadata:
   labels:
     app: kas-fleetshard-sync
     app.kubernetes.io/name: kas-fleetshard-sync
-    app.kubernetes.io/version: 0.4.0
   name: kas-fleetshard-sync
 rules:
 - apiGroups:
@@ -94,42 +90,22 @@ rules:
   - create
   - delete
   - update
-#---
-#apiVersion: rbac.authorization.k8s.io/v1
-#kind: ClusterRoleBinding
-#metadata:
-#  labels:
-#    app: kas-fleetshard-sync
-#    app.kubernetes.io/name: kas-fleetshard-sync
-#    app.kubernetes.io/version: 0.4.0
-#  name: kas-fleetshard-sync
-#roleRef:
-#  kind: ClusterRole
-#  apiGroup: rbac.authorization.k8s.io
-#  name: kas-fleetshard-sync
-#subjects:
-#- kind: ServiceAccount
-#  name: kas-fleetshard-sync
-#  namespace: kas-fleetshard
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/name: kas-fleetshard-sync
-    app.kubernetes.io/version: 0.4.0
   name: kas-fleetshard-sync
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: kas-fleetshard-sync
-      app.kubernetes.io/version: 0.4.0
   template:
     metadata:
       labels:
         app.kubernetes.io/name: kas-fleetshard-sync
-        app.kubernetes.io/version: 0.4.0
     spec:
       serviceAccount: kas-fleetshard-sync
       volumes:
@@ -142,7 +118,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-sync
-        image: quay.io/mk-ci-cd/kas-fleetshard-sync@sha256:3f3027a744f8535c31b9927764965eeafdf831286c56c8b914d7ca3829814241
+        image: quay.io/mk-ci-cd/kas-fleetshard-sync:0.6.0
         env:
         - name: KUBERNETES_NAMESPACE
           valueFrom:

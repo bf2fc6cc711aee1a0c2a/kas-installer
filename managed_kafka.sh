@@ -2,7 +2,6 @@
 
 KUBECTL=$(which kubectl)
 DIR_NAME="$(dirname $0)"
-OPENSSL=$(which openssl)
 source ${DIR_NAME}/kas-installer.env
 
 create() {

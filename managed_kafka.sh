@@ -80,24 +80,29 @@ delete() {
 }
 
 certgen() {
-    local KAFKA_ID=${1}
 
-    KAFKA_USERNAME=$(ocm whoami | grep username | sed 's/"username": "//' | sed 's/"//' | sed 's/^[ \t]*//' | sed 's/_/-/')
-    KAFKA_INSTANCE_NAMESPACE=$(oc get namespaces | grep ${KAFKA_USERNAME} | sed 's/ .*//')
-    oc get secret -o yaml ${KAFKA_ID}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > /tmp/mkinstance.pem
-    keytool -genkey -alias testserver -keyalg RSA -keystore truststore.jks -dname "CN=test, OU=test, O=test, L=test, S=test, C=test" -storepass password -keypass password
+    KAFKA_USERNAME=$(get | sed 's/^.*"name":"//' | sed 's/\".*//')
+    KAFKA_INSTANCE_NAMESPACE=$(get | sed 's/^.*"owner":"//' | sed 's/\".*//' | sed 's/_/-/')'-'$(get | sed 's/^.*"id":"//' | sed 's/\".*//')
+    echo ${KAFKA_INSTANCE_NAMESPACE}
+    oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > /tmp/mkinstance.pem
     keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file /tmp/mkinstance.pem
 
-    ./service_account.sh --create > service_account.txt
-    SVC_ACT_NAME=$(cat service_account.txt | sed 's/^.*"client_id":"//' | sed 's/\".*//')
-    SVC_ACT_SECRET=$(cat service_account.txt | sed 's/^.*"client_secret":"//' | sed 's/\".*//')
+    SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
+
+    if [ ${?} -ne 0 ] ; then
+        echo "Failed to create a service account!"
+        exit 1
+    fi
+
+    SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .clientID)
+    SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .clientSecret)
 
     touch app-services.properties
     echo 'security.protocol=SASL_SSL' > app-services.properties
     echo 'sasl.mechanism=PLAIN' >> app-services.properties
     echo 'ssl.truststore.location = '${PWD}'/truststore.jks' >> app-services.properties
     echo 'ssl.truststore.password = password' >> app-services.properties
-    echo 'sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="'${SVC_ACT_NAME}'" password="'${SVC_ACT_SECRET}'";' >> app-services.properties
+    echo 'sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="'${SA_CLIENT_ID}'" password="'${SA_CLIENT_SECRET}'";' >> app-services.properties
 }
 
 case "${1}" in

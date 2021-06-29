@@ -43,7 +43,8 @@ create() {
 
         echo "Kafka instance '${KAFKA_NAME}' now ready" >>/dev/stderr
         echo ${KAFKA_RESOURCE}
-        certgen
+        echo "Generating certificate setup"
+        certgen ${KAFKA_ID}
     fi
 }
 
@@ -80,10 +81,16 @@ delete() {
 }
 
 certgen() {
+    local KAFKA_ID=${1}
 
-    KAFKA_USERNAME=$(get | sed 's/^.*"name":"//' | sed 's/\".*//')
-    KAFKA_INSTANCE_NAMESPACE=$(get | sed 's/^.*"owner":"//' | sed 's/\".*//' | sed 's/_/-/')'-'$(get | sed 's/^.*"id":"//' | sed 's/\".*//')
-    echo ${KAFKA_INSTANCE_NAMESPACE}
+    echo "Creating truststore and app-services.properties files for kafka bin script utilization."
+
+    KAFKA_RESOURCE=$(get ${KAFKA_ID})
+
+    SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .clientID)
+
+    KAFKA_USERNAME=$(echo ${KAFKA_RESOURCE} | jq -r .name)
+    KAFKA_INSTANCE_NAMESPACE=$(echo ${KAFKA_RESOURCE} | jq -r .owner | sed 's/_/-/')'-'$(echo ${KAFKA_RESOURCE} | jq -r .id  | tr '[:upper:]' '[:lower:]')
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > /tmp/mkinstance.pem
     keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file /tmp/mkinstance.pem
 
@@ -103,6 +110,8 @@ certgen() {
     echo 'ssl.truststore.location = '${PWD}'/truststore.jks' >> app-services.properties
     echo 'ssl.truststore.password = password' >> app-services.properties
     echo 'sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="'${SA_CLIENT_ID}'" password="'${SA_CLIENT_SECRET}'";' >> app-services.properties
+
+    echo "Certificate generation complete. Please use app-services.properties as the --command-config flag when using kafka bin scripts."
 }
 
 case "${1}" in

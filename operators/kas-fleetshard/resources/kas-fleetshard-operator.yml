@@ -130,6 +130,15 @@ rules:
   - delete
   - patch
   - update
+- apiGroups:
+    - admissionregistration.k8s.io
+  resources:
+    # created by the OLM for the DrainCleaner
+    - validatingwebhookconfigurations
+  verbs:
+    - get
+    - list
+    - watch
 ---
 apiVersion: apps/v1
 kind: Deployment

@@ -2,6 +2,7 @@
 
 KUBECTL=$(which kubectl)
 DIR_NAME="$(dirname $0)"
+OPENSSL=$(which openssl)
 source ${DIR_NAME}/kas-installer.env
 
 create() {
@@ -43,6 +44,7 @@ create() {
 
         echo "Kafka instance '${KAFKA_NAME}' now ready" >>/dev/stderr
         echo ${KAFKA_RESOURCE}
+        certgen
     fi
 }
 
@@ -78,6 +80,27 @@ delete() {
     fi
 }
 
+certgen() {
+    local KAFKA_ID=${1}
+
+    KAFKA_USERNAME=$(ocm whoami | grep username | sed 's/"username": "//' | sed 's/"//' | sed 's/^[ \t]*//' | sed 's/_/-/')
+    KAFKA_INSTANCE_NAMESPACE=$(oc get namespaces | grep ${KAFKA_USERNAME} | sed 's/ .*//')
+    oc get secret -o yaml ${KAFKA_ID}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > /tmp/mkinstance.pem
+    keytool -genkey -alias testserver -keyalg RSA -keystore truststore.jks -dname "CN=test, OU=test, O=test, L=test, S=test, C=test" -storepass password -keypass password
+    keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file /tmp/mkinstance.pem
+
+    ./service_account.sh --create > service_account.txt
+    SVC_ACT_NAME=$(cat service_account.txt | sed 's/^.*"client_id":"//' | sed 's/\".*//')
+    SVC_ACT_SECRET=$(cat service_account.txt | sed 's/^.*"client_secret":"//' | sed 's/\".*//')
+
+    touch app-services.properties
+    echo 'security.protocol=SASL_SSL' > app-services.properties
+    echo 'sasl.mechanism=PLAIN' >> app-services.properties
+    echo 'ssl.truststore.location = '${PWD}'/truststore.jks' >> app-services.properties
+    echo 'ssl.truststore.password = password' >> app-services.properties
+    echo 'sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="'${SVC_ACT_NAME}'" password="'${SVC_ACT_SECRET}'";' >> app-services.properties
+}
+
 case "${1}" in
     "--create" )
         shift; create ${1}
@@ -90,6 +113,9 @@ case "${1}" in
         ;;
     "--delete" )
         shift; delete ${1}
+        ;;
+    "--certgen" )
+        shift; certgen ${1}
         ;;
     *)
         echo "Unknown operation '${1}'";

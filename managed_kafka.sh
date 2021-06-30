@@ -86,9 +86,7 @@ certgen() {
     echo "Creating truststore and app-services.properties files for kafka bin script utilization."
 
     KAFKA_RESOURCE=$(get ${KAFKA_ID})
-
     SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .clientID)
-
     KAFKA_USERNAME=$(echo ${KAFKA_RESOURCE} | jq -r .name)
     KAFKA_INSTANCE_NAMESPACE=$(echo ${KAFKA_RESOURCE} | jq -r .owner | sed 's/_/-/')'-'$(echo ${KAFKA_RESOURCE} | jq -r .id  | tr '[:upper:]' '[:lower:]')
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > /tmp/mkinstance.pem

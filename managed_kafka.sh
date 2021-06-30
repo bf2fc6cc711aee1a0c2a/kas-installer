@@ -43,8 +43,6 @@ create() {
 
         echo "Kafka instance '${KAFKA_NAME}' now ready" >>/dev/stderr
         echo ${KAFKA_RESOURCE}
-        echo "Generating certificate setup"
-        certgen ${KAFKA_ID}
     fi
 }
 
@@ -88,10 +86,11 @@ certgen() {
     KAFKA_RESOURCE=$(get ${KAFKA_ID})
     SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .clientID)
     KAFKA_USERNAME=$(echo ${KAFKA_RESOURCE} | jq -r .name)
+    KAFKA_CERT=$(mktemp)
     KAFKA_INSTANCE_NAMESPACE=$(echo ${KAFKA_RESOURCE} | jq -r .owner | sed 's/_/-/')'-'$(echo ${KAFKA_RESOURCE} | jq -r .id  | tr '[:upper:]' '[:lower:]')
-    oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > /tmp/mkinstance.pem
-    keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file /tmp/mkinstance.pem
-
+    oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${KAFKA_CERT}
+    keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file ${KAFKA_CERT}
+    rm ${KAFKA_CERT}
     SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
 
     if [ ${?} -ne 0 ] ; then

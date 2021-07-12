@@ -33,6 +33,21 @@ read_kas_installer_env_file() {
 
   . ${KAS_INSTALLER_ENV_FILE}
 
+  # Parse the domain reported by cluster-info to ensure a match with the user-configured k8s domain
+  K8S_CLUSTER_REPORTED_DOMAIN=$(${OC} cluster-info | grep -o 'is running at .*https.*$' | cut -d '/' -f3 | cut -d ':' -f1 | cut -c5-)
+
+  if [ "${K8S_CLUSTER_REPORTED_DOMAIN}" != "${K8S_CLUSTER_DOMAIN}" ] ; then
+      echo "Configured k8s domain '${K8S_CLUSTER_DOMAIN}' is different from domain reported by 'oc cluster-info': '${K8S_CLUSTER_REPORTED_DOMAIN}'"
+      echo -n "Proceed with install process? [yN]: "
+      read -r proceed
+
+      if [ "$(echo ${proceed} | tr [a-z] [A-Z])" != "Y" ] ; then
+          echo "Exiting ${0}"
+      else
+          echo "Ignoring k8s cluster domain difference..."
+      fi
+  fi
+
   # Apply Default values for the optional .env variables
   KAS_FLEET_MANAGER_IMAGE_REGISTRY=${KAS_FLEET_MANAGER_IMAGE_REGISTRY:-quay.io}
   KAS_FLEET_MANAGER_IMAGE_REPOSITORY=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY:-rhoas/kas-fleet-manager}

@@ -167,16 +167,12 @@ deploy_kasfleetmanager() {
   create_kasfleetmanager_service_account
   create_kasfleetmanager_pull_credentials
 
-  echo "Deploying KAS Fleet Manager Connector Catalog ConfigMaps..."
-  # Not a template, apply directly
-  ${OC} apply -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/connector-catalog-configmap.yml -n ${KAS_FLEET_MANAGER_NAMESPACE}
-
   echo "Deploying KAS Fleet Manager..."
   OCM_ENV="development"
 
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
     -p ENVIRONMENT="${OCM_ENV}" \
-    -p OCM_BASE_URL="https://nonexistingdummyhosttest.com" \
+    -p OCM_URL="https://nonexistingdummyhosttest.com" \
     -p IMAGE_REGISTRY=${IMAGE_REGISTRY} \
     -p IMAGE_REPOSITORY=${IMAGE_REPOSITORY} \
     -p IMAGE_TAG=${IMAGE_TAG} \

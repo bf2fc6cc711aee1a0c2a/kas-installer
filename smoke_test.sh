@@ -19,8 +19,8 @@ if [ ${?} -ne 0 ] ; then
 fi
 
 SA_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .id)
-SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .clientID)
-SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .clientSecret)
+SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
+SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
 
 ACCESS_TOKEN=$(${DIR_NAME}/get_access_token.sh ${SA_CLIENT_ID} ${SA_CLIENT_SECRET})
 
@@ -29,7 +29,7 @@ if [ ${?} -ne 0 ] ; then
     exit 1
 fi
 
-BOOTSTRAP_HOST=$(echo ${MK_SMOKE} | jq -r .bootstrapServerHost)
+BOOTSTRAP_HOST=$(echo ${MK_SMOKE} | jq -r .bootstrap_server_host)
 ADMIN_SERVER_HOST="admin-server-$(echo ${BOOTSTRAP_HOST} | cut -d':' -f 1)" # Remove the port
 SMOKE_TOPIC="smoke_topic"
 

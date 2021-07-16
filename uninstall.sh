@@ -21,6 +21,7 @@ fi
 DIR_NAME="$(dirname $0)"
 
 KAS_INSTALLER_ENV_FILE="kas-installer.env"
+source ${KAS_INSTALLER_ENV_FILE}
 
 KAS_FLEET_MANAGER_DIR="${DIR_NAME}/kas-fleet-manager"
 KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="${KAS_FLEET_MANAGER_DIR}/kas-fleet-manager-deploy.env"
@@ -45,7 +46,11 @@ done
 ${KUBECTL} delete namespace ${KAS_FLEET_MANAGER_NAMESPACE} || true
 ${KUBECTL} delete namespace managed-application-services-observability || true
 
-${KUBECTL} delete keycloakclients -l app=mas-sso --all-namespaces || true
-${KUBECTL} delete keycloakrealms --all -n mas-sso || true
-${KUBECTL} delete keycloaks -l app=mas-sso --all-namespaces || true
-${KUBECTL} delete namespace mas-sso || true
+if [ "${SKIP_SSO}n" = "n" ] ; then
+    ${KUBECTL} delete keycloakclients -l app=mas-sso --all-namespaces || true
+    ${KUBECTL} delete keycloakrealms --all -n mas-sso || true
+    ${KUBECTL} delete keycloaks -l app=mas-sso --all-namespaces || true
+    ${KUBECTL} delete namespace mas-sso || true
+else
+    echo "MAS SSO not uninstalled"
+fi

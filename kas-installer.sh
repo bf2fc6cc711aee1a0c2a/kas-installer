@@ -114,7 +114,7 @@ install_mas_sso() {
   export DOCKER_PASSWORD=${IMAGE_REPOSITORY_PASSWORD}
   export MAS_SSO_NAMESPACE=mas-sso
 
-  if [ "${SKIP_SSO}n" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
+  if [ "${SKIP_SSO:-""}n" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
     echo "MAS SSO route not found or SKIP_SSO not configured, installing MAS SSO ..."
     ${DIR_NAME}/mas-sso/mas-sso-installer.sh
     echo "MAS SSO deployed"
@@ -149,4 +149,6 @@ generate_kas_fleet_manager_env_config
 deploy_kas_fleet_manager
 
 # Deploy and configure KAS Fleet Shard Operator
-deploy_kas_fleetshard
+if [ "${SKIP_KAS_FLEETSHARD:-""}n" = "n" ]; then
+    deploy_kas_fleetshard
+fi

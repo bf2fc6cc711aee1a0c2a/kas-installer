@@ -100,10 +100,18 @@ spec:
                 type: object
               updatedTimestamp:
                 type: string
-              strimziVersions:
-                type: array
+              strimzi:
                 items:
-                  type: string
+                  properties:
+                    version:
+                      type: string
+                    ready:
+                      type: boolean
+                  required:
+                  - version
+                  - ready
+                  type: object
+                type: array
             type: object
           spec:
             properties:

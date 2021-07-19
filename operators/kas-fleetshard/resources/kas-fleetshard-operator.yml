@@ -102,6 +102,7 @@ rules:
   verbs:
     - get
     - list
+    - watch
 - apiGroups:
   - ""
   resources:
@@ -139,28 +140,6 @@ rules:
     - get
     - list
     - watch
-- apiGroups:
-    - storage.k8s.io
-  resources:
-    # the operator creates StorageClasses for per-AZ broker storage
-    - storageclasses
-  verbs:
-    - get
-    - list
-    - watch
-    - create
-    - delete
-    - patch
-    - update
-- apiGroups:
-    - ""
-  resources:
-    # the operator reads nodes to get AZ information
-    - nodes
-  verbs:
-    - get
-    - list
-    - watch
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -194,7 +173,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-operator
-        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.7.0
+        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.8.0
         env:
         - name: QUARKUS_PROFILE
           value: prod

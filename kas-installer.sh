@@ -52,11 +52,11 @@ read_kas_installer_env_file() {
   KAS_FLEET_MANAGER_IMAGE_REGISTRY=${KAS_FLEET_MANAGER_IMAGE_REGISTRY:-quay.io}
   KAS_FLEET_MANAGER_IMAGE_REPOSITORY=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY:-rhoas/kas-fleet-manager}
   # TODO update this to a 'main' tag by default when it is available
-  KAS_FLEET_MANAGER_IMAGE_TAG=${KAS_FLEET_MANAGER_IMAGE_TAG:-e75964c}
+  KAS_FLEET_MANAGER_IMAGE_TAG=${KAS_FLEET_MANAGER_IMAGE_TAG:-main}
   KAS_FLEET_MANAGER_IMAGE_REPOSITORY_USERNAME=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY_USERNAME:-${IMAGE_REPOSITORY_USERNAME}}
   KAS_FLEET_MANAGER_IMAGE_REPOSITORY_PASSWORD=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY_PASSWORD:-${IMAGE_REPOSITORY_PASSWORD}}
   # TODO update this to a 'main' when we have 'main' container image available
-  KAS_FLEET_MANAGER_BF2_REF=${KAS_FLEET_MANAGER_BF2_REF:-e75964cbfcbe8d0dd8036c2e168f31409268d0e0}
+  KAS_FLEET_MANAGER_BF2_REF=${KAS_FLEET_MANAGER_BF2_REF:-main}
 }
 
 generate_kas_fleet_manager_env_config() {
@@ -110,14 +110,20 @@ deploy_kas_fleet_manager() {
 }
 
 install_mas_sso() {
-  echo "Installing MAS SSO ... "
   export DOCKER_USER_NAME=${IMAGE_REPOSITORY_USERNAME}
   export DOCKER_PASSWORD=${IMAGE_REPOSITORY_PASSWORD}
   export MAS_SSO_NAMESPACE=mas-sso
-  ${DIR_NAME}/mas-sso/mas-sso-installer.sh
+
+  if [ "${SKIP_SSO:-""}n" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
+    echo "MAS SSO route not found or SKIP_SSO not configured, installing MAS SSO ..."
+    ${DIR_NAME}/mas-sso/mas-sso-installer.sh
+    echo "MAS SSO deployed"
+  else
+    echo "Skipping MAS SSO installation"
+  fi
+
   export MAS_SSO_ROUTE=$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}')
   export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | $OPENSSL x509)
-  echo "MAS SSO deployed"
 }
 
 deploy_kas_fleetshard() {
@@ -143,4 +149,6 @@ generate_kas_fleet_manager_env_config
 deploy_kas_fleet_manager
 
 # Deploy and configure KAS Fleet Shard Operator
-deploy_kas_fleetshard
+if [ "${SKIP_KAS_FLEETSHARD:-""}n" = "n" ]; then
+    deploy_kas_fleetshard
+fi

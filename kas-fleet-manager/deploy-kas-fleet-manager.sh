@@ -93,12 +93,10 @@ clone_kasfleetmanager_code_repository() {
   if [ -d "${KAS_FLEET_MANAGER_CODE_DIR}" ]; then
     CURRENT_HASH=$(cd "${KAS_FLEET_MANAGER_CODE_DIR}" && ${GIT} rev-parse HEAD)
     if [ "${CURRENT_HASH}" != "${KAS_FLEET_MANAGER_BF2_REF}" ]; then
-      echo "KAS Fleet Manager code directory was stale ${CURRENT_HASH} != ${KAS_FLEET_MANAGER_BF2_REF}. Deleting it..."
-      rm -rf ${KAS_FLEET_MANAGER_CODE_DIR}
+      echo "KAS Fleet Manager code directory was stale ${CURRENT_HASH} != ${KAS_FLEET_MANAGER_BF2_REF}. Updating it..."
+      (cd ${KAS_FLEET_MANAGER_CODE_DIR} && ${GIT} pull --ff-only && ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF})
     fi
-  fi
-
-  if [ ! -d "${KAS_FLEET_MANAGER_CODE_DIR}" ]; then
+  else
     echo "KAS Fleet Manager code directory does not exist. Cloning it..."
     ${GIT} clone ${BF2_KAS_FLEET_MANAGER_REPO} ${KAS_FLEET_MANAGER_CODE_DIR}
     (cd ${KAS_FLEET_MANAGER_CODE_DIR} && ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF})
@@ -167,19 +165,16 @@ deploy_kasfleetmanager() {
   create_kasfleetmanager_service_account
   create_kasfleetmanager_pull_credentials
 
-  echo "Deploying KAS Fleet Manager Connector Catalog ConfigMaps..."
-  # Not a template, apply directly
-  ${OC} apply -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/connector-catalog-configmap.yml -n ${KAS_FLEET_MANAGER_NAMESPACE}
-
   echo "Deploying KAS Fleet Manager..."
   OCM_ENV="development"
 
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
     -p ENVIRONMENT="${OCM_ENV}" \
-    -p OCM_BASE_URL="https://nonexistingdummyhosttest.com" \
+    -p OCM_URL="https://nonexistingdummyhosttest.com" \
     -p IMAGE_REGISTRY=${IMAGE_REGISTRY} \
     -p IMAGE_REPOSITORY=${IMAGE_REPOSITORY} \
     -p IMAGE_TAG=${IMAGE_TAG} \
+    -p IMAGE_PULL_POLICY="Always" \
     -p JWKS_URL="${JWKS_URL}" \
     -p MAS_SSO_BASE_URL="${MAS_SSO_BASE_URL}" \
     -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
@@ -301,7 +296,7 @@ wait_for_observability_operator_availability() {
     OBSERVABILITY_CR_STAGE=$(echo -n ${OBSERVABILITY_CR_STATUS} | cut -d';' -f1)
     OBSERVABILITY_CR_STAGE_STATUS=$(echo -n ${OBSERVABILITY_CR_STATUS} | cut -d';' -f2)
 
-    if [ "${OBSERVABILITY_CR_STAGE}" = "configuration" ] && [ "${OBSERVABILITY_CR_STAGE_STATUS}" = "in progress" ]; then
+    if [ "${OBSERVABILITY_CR_STAGE}" = "configuration" ] && [[ "${OBSERVABILITY_CR_STAGE_STATUS}" =~ (in progress|success) ]]; then
       OBSERVABILITY_CR_CONFIG_READY=1
     else
       echo "Observability CR still not ready. Stage: '${OBSERVABILITY_CR_STAGE}, Stage status: '${OBSERVABILITY_CR_STAGE_STATUS}'"

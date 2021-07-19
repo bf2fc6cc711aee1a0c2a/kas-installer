@@ -40,8 +40,7 @@ $OC create -f mas-sso/keycloak.yaml
 while [ "$($OC get keycloak mas-sso -n $NAMESPACE -o go-template={{.status.ready}})" != "true" ]
 do
   sleep 3
-  echo "MAS SSO is not ready. Current mas sso status message:"
-  $OC get keycloak -n $NAMESPACE -o go-template={{.status.message}}
+  echo "MAS SSO is not ready. Current mas sso status message: $($OC get keycloak -n $NAMESPACE -o go-template={{.status.message}})"
 done
 
 echo "MAS SSO is ready $($OC get route keycloak -n $NAMESPACE -o go-template={{.spec.host}})"

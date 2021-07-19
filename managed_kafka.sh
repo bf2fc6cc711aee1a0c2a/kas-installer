@@ -97,8 +97,8 @@ certgen() {
         exit 1
     fi
 
-    SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .clientID)
-    SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .clientSecret)
+    SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
+    SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
 
     touch app-services.properties
     echo 'security.protocol=SASL_SSL' > app-services.properties

@@ -92,6 +92,8 @@ spec:
             # a new operator version is out for a bug fix but Kafka images didn't change (otherwise any label change causes a rolling)
             - name: STRIMZI_LABELS_EXCLUSION_PATTERN
               value: "^managedkafka.bf2.org/strimziVersion.*"
+            - name: STRIMZI_IMAGE_PULL_POLICY
+              value: Always
           livenessProbe:
             httpGet:
               path: /healthy

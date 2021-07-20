@@ -140,6 +140,35 @@ rules:
     - get
     - list
     - watch
+- apiGroups:
+    - operators.coreos.com
+  resources:
+    # the operator watches Subscriptions for Strimzi bundle installation
+    - subscriptions
+  verbs:
+    - get
+    - list
+    - watch
+- apiGroups:
+    - packages.operators.coreos.com
+  resources:
+    # the operator get PackageManifests for Strimzi bundle installation
+    - packagemanifests
+  verbs:
+    - get
+    - list
+    - watch
+- apiGroups:
+    - operators.coreos.com
+  resources:
+    # the operator get/update InstallPlan for Strimzi bundle installation
+    - installplans
+  verbs:
+    - get
+    - list
+    - watch
+    - patch
+    - update
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -173,7 +202,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-operator
-        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.8.0
+        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.9.1
         env:
         - name: QUARKUS_PROFILE
           value: prod

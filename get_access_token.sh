@@ -17,6 +17,7 @@ RESPONSE=$(curl --fail --show-error -sX POST -H "Content-Type: application/x-www
   https://keycloak-mas-sso.apps.${K8S_CLUSTER_DOMAIN}/auth/realms/rhoas/protocol/openid-connect/token)
 
 if [ ${?} -ne 0 ]; then
+    echo ${RESPONSE} > /dev/stderr
     exit 1
 fi
 

@@ -5,7 +5,7 @@ source ${DIR_NAME}/kas-installer.env
 SA_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/service_accounts"
 
 create() {
-    local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer $(ocm token)" \
+    local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer ${ACCESS_TOKEN}" \
       ${SA_BASE_URL} \
       -d '{ "name": "'${USER}-kafka-service-account'" }')
 
@@ -27,14 +27,14 @@ create() {
 }
 
 list() {
-    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(ocm token)" ${SA_BASE_URL})
+    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" ${SA_BASE_URL})
     echo ${RESPONSE}
 }
 
 delete() {
     local SERVICE_ACCOUNT_ID=${1}
 
-    local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $(ocm token)" -w '\n\n%{http_code}' ${SA_BASE_URL}/${SERVICE_ACCOUNT_ID})
+    local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer ${ACCESS_TOKEN}" -w '\n\n%{http_code}' ${SA_BASE_URL}/${SERVICE_ACCOUNT_ID})
     local BODY=$(echo "${RESPONSE}" | head -n 1)
     local CODE=$(echo "${RESPONSE}" | tail -n -1)
 
@@ -48,18 +48,54 @@ delete() {
     fi
 }
 
-case "${1}" in
+OPERATION='<NONE>'
+DELETE_ID='<NONE>'
+ACCESS_TOKEN=''
+
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
     "--create" )
-        create
+        OPERATION='create'
+        shift
         ;;
     "--list" )
-        list
+        OPERATION='list'
+        shift
         ;;
     "--delete" )
-        shift; delete ${1}
+        OPERATION='delete'
+        DELETE_ID="${2}"
+        shift
+        shift
+        ;;
+    "--access-token" )
+        ACCESS_TOKEN="${2}"
+        shift
+        shift
+        ;;
+    *) # unknown option
+        shift
+        ;;
+    esac
+done
+
+if [ -z "${ACCESS_TOKEN}" ] ; then
+    ACCESS_TOKEN="$(ocm token)"
+fi
+
+case "${OPERATION}" in
+    "create" )
+        create
+        ;;
+    "list" )
+        list
+        ;;
+    "delete" )
+        delete ${DELETE_ID}
         ;;
     *)
-        echo "Unknown operation '${1}'";
+        echo "Unknown operation '${OPERATION}'";
         exit 1
         ;;
 esac

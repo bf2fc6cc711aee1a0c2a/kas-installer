@@ -7,7 +7,7 @@ source ${DIR_NAME}/kas-installer.env
 create() {
     local KAFKA_NAME=${1}
 
-    local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer $(ocm token)" \
+    local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer ${ACCESS_TOKEN}" \
       https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas?async=true \
       -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "'${KAFKA_NAME}'", "multi_az":true}')
 
@@ -47,14 +47,14 @@ create() {
 }
 
 list() {
-    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(ocm token)" \
+    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" \
       https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas)
     echo ${RESPONSE}
 }
 
 get() {
     local KAFKA_ID=${1}
-    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(ocm token)" \
+    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" \
       https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID})
 
     echo ${RESPONSE}
@@ -63,7 +63,7 @@ get() {
 delete() {
     local KAFKA_ID=${1}
 
-    local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $(ocm token)" -w '\n\n%{http_code}' \
+    local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer ${ACCESS_TOKEN}" -w '\n\n%{http_code}' \
       https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}?async=true)
     local BODY=$(echo "${RESPONSE}" | head -n 1)
     local CODE=$(echo "${RESPONSE}" | tail -n -1)
@@ -110,24 +110,75 @@ certgen() {
     echo "Certificate generation complete. Please use app-services.properties as the --command-config flag when using kafka bin scripts."
 }
 
-case "${1}" in
+OPERATION='<NONE>'
+CREATE_NAME='<NONE>'
+OP_KAFKA_ID='<NONE>'
+ACCESS_TOKEN=''
+
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
     "--create" )
-        shift; create ${1}
+        OPERATION='create'
+        CREATE_NAME="${2}"
+        shift
+        shift
         ;;
     "--list" )
-        list
+        OPERATION='list'
+        shift
         ;;
     "--get" )
-        shift; get ${1}
+        OPERATION='get'
+        OP_KAFKA_ID="${2}"
+        shift
+        shift
         ;;
     "--delete" )
-        shift; delete ${1}
+        OPERATION='delete'
+        OP_KAFKA_ID="${2}"
+        shift
+        shift
         ;;
     "--certgen" )
-        shift; certgen ${1}
+        OPERATION='certgen'
+        OP_KAFKA_ID="${2}"
+        shift
+        shift
+        ;;
+    "--access-token" )
+        ACCESS_TOKEN="${2}"
+        shift
+        shift
+        ;;
+    *) # unknown option
+        shift
+        ;;
+    esac
+done
+
+if [ -z "${ACCESS_TOKEN}" ] ; then
+    ACCESS_TOKEN="$(ocm token)"
+fi
+
+case "${OPERATION}" in
+    "create" )
+        create ${CREATE_NAME}
+        ;;
+    "list" )
+        list
+        ;;
+    "get" )
+        get ${OP_KAFKA_ID}
+        ;;
+    "delete" )
+        delete ${OP_KAFKA_ID}
+        ;;
+    "certgen" )
+        certgen ${OP_KAFKA_ID}
         ;;
     *)
-        echo "Unknown operation '${1}'";
+        echo "Unknown operation '${OPERATION}'";
         exit 1
         ;;
 esac

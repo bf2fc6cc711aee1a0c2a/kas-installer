@@ -15,6 +15,7 @@ spec:
       labels:
         name: strimzi-cluster-operator
         strimzi.io/kind: cluster-operator
+        app.kubernetes.io/part-of: managed-kafka
     spec:
       serviceAccountName: strimzi-cluster-operator
       volumes:
@@ -23,7 +24,7 @@ spec:
             medium: Memory
         - name: co-config-volume
           configMap:
-            name: strimzi-cluster-operator
+            name: strimzi-cluster-operator-v0.23.0-1
       containers:
         - name: strimzi-cluster-operator
           image: quay.io/k_wall/strimzi-operator@sha256:9b1afb1631e6c8425c97f3b02fa29d87f0f55bc09bf17cf662910665955da215

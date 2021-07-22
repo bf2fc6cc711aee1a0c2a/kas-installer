@@ -15,6 +15,7 @@ spec:
       labels:
         name: strimzi-cluster-operator
         strimzi.io/kind: cluster-operator
+        app.kubernetes.io/part-of: managed-kafka
     spec:
       serviceAccountName: strimzi-cluster-operator
       volumes:
@@ -23,7 +24,7 @@ spec:
             medium: Memory
         - name: co-config-volume
           configMap:
-            name: strimzi-cluster-operator
+            name: strimzi-cluster-operator-v0.23.0-0
       containers:
         - name: strimzi-cluster-operator
           image: quay.io/mk-ci-cd/strimzi-operator@sha256:d992a3367551f2e41763dceed6f74f78f3e75aba4aa64ce2349f03c8844f4ca2
@@ -85,6 +86,12 @@ spec:
                   fieldPath: metadata.namespace
             - name: STRIMZI_FEATURE_GATES
               value: ""
+            - name: STRIMZI_CUSTOM_RESOURCE_SELECTOR
+              value: managedkafka.bf2.org/strimziVersion=strimzi-cluster-operator.v0.23.0-0
+            # excluding resource selector label from propagation to ZooKeeper/Kafka pods to avoid useless pods rolling when
+            # a new operator version is out for a bug fix but Kafka images didn't change (otherwise any label change causes a rolling)
+            - name: STRIMZI_LABELS_EXCLUSION_PATTERN
+              value: "^managedkafka.bf2.org/strimziVersion.*"
           livenessProbe:
             httpGet:
               path: /healthy

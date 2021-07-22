@@ -3,8 +3,22 @@
 DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/kas-installer.env
 
-CLIENT_ID=$1
-CLIENT_SECRET=$2
+GRANT_TYPE=''
+USER_PARAMS=''
+
+case ${1} in
+    "--owner" )
+        GRANT_TYPE='password'
+        CLIENT_ID=${RH_USERNAME}
+        CLIENT_SECRET=${RH_USERNAME}
+        USER_PARAMS="&username=${RH_USERNAME}&password=${RH_USERNAME}"
+        ;;
+    *) # Assume client ID and secret were provided
+        GRANT_TYPE='client_credentials'
+        CLIENT_ID=${1}
+        CLIENT_SECRET=${2}
+        ;;
+esac
 
 if [ -z "${CLIENT_ID}" ] || [ -z "${CLIENT_SECRET}" ]; then
     echo "Service account clientID and clientSecret are both required."
@@ -13,10 +27,11 @@ if [ -z "${CLIENT_ID}" ] || [ -z "${CLIENT_SECRET}" ]; then
 fi
 
 RESPONSE=$(curl --fail --show-error -sX POST -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}" \
+  -d "grant_type=${GRANT_TYPE}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}${USER_PARAMS}" \
   https://keycloak-mas-sso.apps.${K8S_CLUSTER_DOMAIN}/auth/realms/rhoas/protocol/openid-connect/token)
 
 if [ ${?} -ne 0 ]; then
+    echo ${RESPONSE} > /dev/stderr
     exit 1
 fi
 

@@ -1,6 +1,16 @@
 #!/bin/bash
 
 DIR_NAME="$(dirname $0)"
+OS=$(uname)
+
+if [ "$OS" = 'Darwin' ]; then
+  # for MacOS
+  DATE=$(which gdate)
+else
+  # for Linux and Windows
+  DATE=$(which date)
+fi
+
 source ${DIR_NAME}/kas-installer.env
 
 GRANT_TYPE=''
@@ -38,5 +48,5 @@ fi
 ACCESS_TOKEN=$(echo "${RESPONSE}" | jq -r .access_token)
 EXPIRES_IN=$(echo "${RESPONSE}" | jq -r .expires_in)
 
-printf "Access Token (expires at %s):\n" "$(date --date="${EXPIRES_IN} seconds")" >>/dev/stderr
+printf "Access Token (expires at %s):\n" "$(${DATE} --date="${EXPIRES_IN} seconds")" >>/dev/stderr
 printf "%s\n" ${ACCESS_TOKEN}

@@ -50,7 +50,8 @@ ${KUBECTL} create -f strimzi-cluster-operator/resources -n ${NAMESPACE}
 echo "Waiting until Strimzi Deployment is available..."
 ${KUBECTL} wait --timeout=90s \
     --for=condition=available \
-    deployment/strimzi-cluster-operator \
-    --namespace=${NAMESPACE}
+    deployment \
+    --namespace=${NAMESPACE} \
+    --selector app=strimzi
 
 exit ${?}

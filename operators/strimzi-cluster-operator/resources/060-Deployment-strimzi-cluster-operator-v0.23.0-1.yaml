@@ -86,6 +86,12 @@ spec:
                   fieldPath: metadata.namespace
             - name: STRIMZI_FEATURE_GATES
               value: ""
+            - name: STRIMZI_CUSTOM_RESOURCE_SELECTOR
+              value: managedkafka.bf2.org/strimziVersion=strimzi-cluster-operator.v0.23.0-1
+            # excluding resource selector label from propagation to ZooKeeper/Kafka pods to avoid useless pods rolling when
+            # a new operator version is out for a bug fix but Kafka images didn't change (otherwise any label change causes a rolling)
+            - name: STRIMZI_LABELS_EXCLUSION_PATTERN
+              value: "^managedkafka.bf2.org/strimziVersion.*"
           livenessProbe:
             httpGet:
               path: /healthy

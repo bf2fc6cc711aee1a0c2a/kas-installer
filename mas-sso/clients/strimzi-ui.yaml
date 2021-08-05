@@ -15,4 +15,26 @@ spec:
     standardFlowEnabled: true
     redirectUris: ["*"]
     webOrigins: ["*"]
- 
+    protocolMappers:
+      - name: rh-user-id
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          userinfo.token.claim: 'true'
+          user.attribute: rh-user-id
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: rh-user-id
+          jsonType.label: String
+      - name: rh-org-id
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          userinfo.token.claim: 'true'
+          user.attribute: rh-org-id
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: rh-org-id
+          jsonType.label: String

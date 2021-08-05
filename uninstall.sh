@@ -49,6 +49,7 @@ ${KUBECTL} delete namespace ${KAS_FLEET_MANAGER_NAMESPACE} || true
 ${KUBECTL} delete namespace managed-application-services-observability || true
 
 if [ "${SKIP_SSO:-""}n" = "n" ] ; then
+    ${KUBECTL} delete keycloakusers -l app=mas-sso --all-namespaces || true
     ${KUBECTL} delete keycloakclients -l app=mas-sso --all-namespaces || true
     ${KUBECTL} delete keycloakrealms --all -n mas-sso || true
     ${KUBECTL} delete keycloaks -l app=mas-sso --all-namespaces || true

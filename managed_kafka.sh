@@ -9,7 +9,7 @@ create() {
 
     local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer ${ACCESS_TOKEN}" \
       https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas?async=true \
-      -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "'${KAFKA_NAME}'", "multi_az":true}')
+      -d '{ "region": "'${REGION:-us-east-1}'", "cloud_provider": "aws",  "name": "'${KAFKA_NAME}'", "multi_az":true}')
 
     local KIND=$(echo ${RESPONSE} | jq -r .kind)
 

@@ -8,6 +8,8 @@ in a single K8s cluster.
 * [curl][curl]
 * [OpenShift][openshift]. In the future there are plans to make it compatible
   with native K8s. Currently an OpenShift dedicated based environment is needed
+  (Currently needs to be a multi-zone cluster if you want to create a Kafka
+  instance through the fleet manager by using `managed_kafka.sh`). 
 * [git][git_tool]
 * oc
 * kubectl

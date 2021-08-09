@@ -30,9 +30,7 @@ TERRAFORM_GENERATED_DIR="${KAS_FLEET_MANAGER_DIR}/${TERRAFORM_FILES_BASE_DIR}/te
 source ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
 if [ "${SKIP_KAS_FLEETSHARD:-""}n" = "n" ]; then
-    (cd ${DIR_NAME}/operators && \
-      ./uninstall-kas-fleetshard.sh && \
-      ./uninstall-strimzi-cluster-operator.sh)
+    (cd ${DIR_NAME}/operators && ./uninstall-all.sh)
     ${KUBECTL} delete namespace ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} || true
     ${KUBECTL} delete namespace ${STRIMZI_OPERATOR_NAMESPACE} || true
 fi

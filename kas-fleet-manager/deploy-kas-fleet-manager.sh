@@ -23,7 +23,7 @@ ORIGINAL_DIR=$(pwd)
 
 DIR_NAME="$(dirname $0)"
 
-BF2_KAS_FLEET_MANAGER_REPO="git@github.com:bf2fc6cc711aee1a0c2a/kas-fleet-manager.git"
+BF2_KAS_FLEET_MANAGER_REPO="https://<TOKEN>@github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager.git"
 KAS_FLEET_MANAGER_CODE_DIR="${DIR_NAME}/kas-fleet-manager-source"
 
 TERRAFORM_FILES_BASE_DIR="terraforming"
@@ -98,7 +98,7 @@ clone_kasfleetmanager_code_repository() {
     fi
   else
     echo "KAS Fleet Manager code directory does not exist. Cloning it..."
-    ${GIT} clone ${BF2_KAS_FLEET_MANAGER_REPO} ${KAS_FLEET_MANAGER_CODE_DIR}
+    ${GIT} clone $(echo ${BF2_KAS_FLEET_MANAGER_REPO} | sed -e s/\<TOKEN\>/${OBSERVABILITY_CONFIG_ACCESS_TOKEN}/g) ${KAS_FLEET_MANAGER_CODE_DIR}
     (cd ${KAS_FLEET_MANAGER_CODE_DIR} && ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF})
   fi
 }

@@ -3,12 +3,30 @@
 KUBECTL=$(which kubectl)
 DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/kas-installer.env
+MK_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas"
+
+OPERATION='<NONE>'
+CREATE_NAME='<NONE>'
+OP_KAFKA_ID='<NONE>'
+ACCESS_TOKEN=''
+OCM_TOKEN='false'
+
+access_token() {
+    if [ "${OCM_TOKEN}" = "true" ]; then
+        # Extract expiration from token and compare to current date
+        if [ $(date "+%s") -gt $(echo "${ACCESS_TOKEN}" | awk -F. '{ print $2 }' | base64 -d 2>/dev/null | jq -r .exp) ]; then
+            # Current date is after token expiration time, refresh the token
+            ACCESS_TOKEN="$(ocm token)"
+        fi
+    fi
+
+    echo "${ACCESS_TOKEN}"
+}
 
 create() {
     local KAFKA_NAME=${1}
 
-    local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-      https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas?async=true \
+    local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}?async=true \
       -d '{ "region": "'${REGION:-us-east-1}'", "cloud_provider": "aws",  "name": "'${KAFKA_NAME}'", "multi_az":true}')
 
     local KIND=$(echo ${RESPONSE} | jq -r .kind)
@@ -47,15 +65,13 @@ create() {
 }
 
 list() {
-    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-      https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas)
+    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL})
     echo ${RESPONSE}
 }
 
 get() {
     local KAFKA_ID=${1}
-    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-      https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID})
+    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}/${KAFKA_ID})
 
     echo ${RESPONSE}
 }
@@ -63,8 +79,7 @@ get() {
 delete() {
     local KAFKA_ID=${1}
 
-    local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer ${ACCESS_TOKEN}" -w '\n\n%{http_code}' \
-      https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}?async=true)
+    local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $(access_token)" -w '\n\n%{http_code}' ${MK_BASE_URL}/${KAFKA_ID}?async=true)
     local BODY=$(echo "${RESPONSE}" | head -n 1)
     local CODE=$(echo "${RESPONSE}" | tail -n -1)
 
@@ -110,11 +125,6 @@ certgen() {
     echo "Certificate generation complete. Please use app-services.properties as the --command-config flag when using kafka bin scripts."
 }
 
-OPERATION='<NONE>'
-CREATE_NAME='<NONE>'
-OP_KAFKA_ID='<NONE>'
-ACCESS_TOKEN=''
-
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
@@ -158,6 +168,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "${ACCESS_TOKEN}" ] ; then
+    OCM_TOKEN='true'
     ACCESS_TOKEN="$(ocm token)"
 fi
 

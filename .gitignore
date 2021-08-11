@@ -3,5 +3,6 @@ kas-fleet-manager/kas-fleet-manager-deploy.env
 kas-fleet-manager/terraforming/terraforming-generated-k8s-resources
 kas-fleet-manager/kas-fleet-manager-source
 /.project
+.idea
 truststore.jks
 app-services.properties

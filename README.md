@@ -16,6 +16,11 @@ in a single K8s cluster.
 * openssl CLI tool
 * A user with administrative privileges in the OpenShift cluster
 * brew coreutils (Mac only)
+* OSD Cluster with the following specs:
+   * 3 compute nodes
+   * Size: m5.4xlarge
+   * MultiAz: True 
+
 
 ## Description
 

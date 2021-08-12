@@ -128,9 +128,7 @@ install_mas_sso() {
 
 deploy_kas_fleetshard() {
   echo "Deploying KAS Fleet Shard ..."
-  (cd ${DIR_NAME}/operators && \
-    ./install-strimzi-cluster-operator.sh && \
-    ./install-kas-fleetshard.sh) && \
+  (cd ${DIR_NAME}/operators && ./install-all.sh) && \
   echo "KAS Fleet Shard deployed" || \
   echo "KAS Fleet Shard failed to deploy"
 }

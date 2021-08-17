@@ -182,6 +182,7 @@ deploy_kasfleetmanager() {
     -p ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE="false" \
     -p DATAPLANE_CLUSTER_SCALING_TYPE="none" \
     -p REPLICAS=1 \
+    -p STRIMZI_OPERATOR_VERSION="${STRIMZI_OPERATOR_VERSION}" \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Waiting until KAS Fleet Manager Deployment is available..."

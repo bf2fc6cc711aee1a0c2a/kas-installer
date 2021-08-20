@@ -15,6 +15,7 @@ source ${DIR_NAME}/kas-installer.env
 
 GRANT_TYPE=''
 USER_PARAMS=''
+KEYCLOAK_REALM=${KEYCLOAK_REALM:-rhoas}
 
 case ${1} in
     "--owner" )
@@ -38,7 +39,7 @@ fi
 
 RESPONSE=$(curl --fail --show-error -sX POST -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=${GRANT_TYPE}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}${USER_PARAMS}" \
-  https://keycloak-mas-sso.apps.${K8S_CLUSTER_DOMAIN}/auth/realms/rhoas/protocol/openid-connect/token)
+  https://keycloak-mas-sso.apps.${K8S_CLUSTER_DOMAIN}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token)
 
 if [ ${?} -ne 0 ]; then
     echo ${RESPONSE} > /dev/stderr

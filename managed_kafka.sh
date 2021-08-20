@@ -3,13 +3,16 @@
 KUBECTL=$(which kubectl)
 DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/kas-installer.env
-MK_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/kafkas"
+MK_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1"
 
 OPERATION='<NONE>'
+OPERATION_PATH='/kafkas'
 CREATE_NAME='<NONE>'
+REQUEST_BODY=''
 OP_KAFKA_ID='<NONE>'
 ACCESS_TOKEN=''
 OCM_TOKEN='false'
+ADMIN_OPERATION='false'
 
 access_token() {
     if [ "${OCM_TOKEN}" = "true" ]; then
@@ -26,7 +29,7 @@ access_token() {
 create() {
     local KAFKA_NAME=${1}
 
-    local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}?async=true \
+    local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}${OPERATION_PATH}?async=true \
       -d '{ "region": "'${REGION:-us-east-1}'", "cloud_provider": "aws",  "name": "'${KAFKA_NAME}'", "multi_az":true}')
 
     local KIND=$(echo ${RESPONSE} | jq -r .kind)
@@ -65,13 +68,21 @@ create() {
 }
 
 list() {
-    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL})
+    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}${OPERATION_PATH})
     echo ${RESPONSE}
 }
 
 get() {
     local KAFKA_ID=${1}
-    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}/${KAFKA_ID})
+    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}${OPERATION_PATH}/${KAFKA_ID})
+
+    echo ${RESPONSE}
+}
+
+patch() {
+    local KAFKA_ID=${1}
+    local PATCH_BODY=${2}
+    local RESPONSE=$(curl -sXPATCH -H'Content-type: application/json' --data "${PATCH_BODY}" -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}${OPERATION_PATH}/${KAFKA_ID})
 
     echo ${RESPONSE}
 }
@@ -79,7 +90,7 @@ get() {
 delete() {
     local KAFKA_ID=${1}
 
-    local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $(access_token)" -w '\n\n%{http_code}' ${MK_BASE_URL}/${KAFKA_ID}?async=true)
+    local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $(access_token)" -w '\n\n%{http_code}' ${MK_BASE_URL}${OPERATION_PATH}/${KAFKA_ID}?async=true)
     local BODY=$(echo "${RESPONSE}" | head -n 1)
     local CODE=$(echo "${RESPONSE}" | tail -n -1)
 
@@ -128,6 +139,11 @@ certgen() {
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
+    "--admin" )
+        OPERATION_PATH='/admin/kafkas'
+        ADMIN_OPERATION='true'
+        shift
+        ;;
     "--create" )
         OPERATION='create'
         CREATE_NAME="${2}"
@@ -141,6 +157,14 @@ while [[ $# -gt 0 ]]; do
     "--get" )
         OPERATION='get'
         OP_KAFKA_ID="${2}"
+        shift
+        shift
+        ;;
+    "--patch" )
+        OPERATION='patch'
+        OP_KAFKA_ID="${2}"
+        REQUEST_BODY="${3}"
+        shift
         shift
         shift
         ;;
@@ -167,9 +191,19 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [ "${ADMIN_OPERATION}" = "true" ] && [ "${OPERATION}" = "create" ] ; then
+    echo "Parameter '--admin' may not be used with '--create'"
+    exit 1
+fi
+
+
 if [ -z "${ACCESS_TOKEN}" ] ; then
-    OCM_TOKEN='true'
-    ACCESS_TOKEN="$(ocm token)"
+    if [ "${ADMIN_OPERATION}" = "true" ] ; then
+        ACCESS_TOKEN="$(export KEYCLOAK_REALM='rhoas-kafka-sre' && ${DIR_NAME}/get_access_token.sh kafka-admin kafka-admin 2>/dev/null)"
+    else
+        OCM_TOKEN='true'
+        ACCESS_TOKEN="$(ocm token)"
+    fi
 fi
 
 case "${OPERATION}" in
@@ -181,6 +215,9 @@ case "${OPERATION}" in
         ;;
     "get" )
         get ${OP_KAFKA_ID}
+        ;;
+    "patch" )
+        patch ${OP_KAFKA_ID} "${REQUEST_BODY}"
         ;;
     "delete" )
         delete ${OP_KAFKA_ID}

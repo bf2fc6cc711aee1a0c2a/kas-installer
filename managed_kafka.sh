@@ -5,6 +5,16 @@ DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/kas-installer.env
 MK_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1"
 
+OS=$(uname)
+
+if [ "$OS" = 'Darwin' ]; then
+  # for MacOS
+  BASE64=$(which gbase64)
+else
+  # for Linux and Windows
+  BASE64=$(which base64)
+fi
+
 OPERATION='<NONE>'
 OPERATION_PATH='/kafkas'
 CREATE_NAME='<NONE>'
@@ -17,7 +27,8 @@ ADMIN_OPERATION='false'
 access_token() {
     if [ "${OCM_TOKEN}" = "true" ]; then
         # Extract expiration from token and compare to current date
-        if [ $(date "+%s") -gt $(echo "${ACCESS_TOKEN}" | awk -F. '{ print $2 }' | base64 -d 2>/dev/null | jq -r .exp) ]; then
+        EXP=$(echo "${ACCESS_TOKEN}" | awk -F. '{ printf "%s", $2 }' | ${BASE64} -d 2>/dev/null | jq -r .exp)
+        if [ $(date "+%s") -gt ${EXP:-0} ]; then
             # Current date is after token expiration time, refresh the token
             ACCESS_TOKEN="$(ocm token)"
         fi

@@ -178,7 +178,6 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_BASE_URL="${MAS_SSO_BASE_URL}" \
     -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
     -p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
-    -p ALLOW_ANY_REGISTERED_USERS="true" \
     -p ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE="false" \
     -p DATAPLANE_CLUSTER_SCALING_TYPE="none" \
     -p REPLICAS=1 \

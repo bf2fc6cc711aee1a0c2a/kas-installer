@@ -169,6 +169,30 @@ rules:
     - watch
     - patch
     - update
+- apiGroups:
+    - ""
+  resources:
+    # the operator reads pods to get assigned node to get AZ information
+    - pods
+    # the operator reads nodes to get AZ information
+    - nodes
+  verbs:
+    - get
+    - list
+    - watch
+- apiGroups:
+    - operator.openshift.io
+  resources:
+    # the operator creates IngressControllers in the openshift-ingress-operator namespace
+    - ingresscontrollers
+  verbs:
+    - get
+    - list
+    - watch
+    - create
+    - delete
+    - patch
+    - update
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -190,8 +214,8 @@ spec:
         app.kubernetes.io/name: kas-fleetshard-operator
       name: kas-fleetshard-operator
     spec:
-      serviceAccount: kas-fleetshard-operator
       serviceAccountName: kas-fleetshard-operator
+      priorityClassName: kas-fleetshard-high
       volumes:
       - configMap:
           defaultMode: 384
@@ -202,7 +226,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-operator
-        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.9.1
+        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.10.0
         env:
         - name: QUARKUS_PROFILE
           value: prod

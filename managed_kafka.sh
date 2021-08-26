@@ -211,6 +211,11 @@ fi
 if [ -z "${ACCESS_TOKEN}" ] ; then
     if [ "${ADMIN_OPERATION}" = "true" ] ; then
         ACCESS_TOKEN="$(export KEYCLOAK_REALM='rhoas-kafka-sre' && ${DIR_NAME}/get_access_token.sh kafka-admin kafka-admin 2>/dev/null)"
+        retVal=$?
+        if [ ${retVal} -ne 0 ]; then
+            echo "Failed to get access token for kafka-admin: ${retVal}"
+            exit 1
+        fi
     else
         OCM_TOKEN='true'
         ACCESS_TOKEN="$(ocm token)"

@@ -31,6 +31,17 @@ spec:
                       type: string
                   type: object
                 type: array
+              routes:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    prefix:
+                      type: string
+                    router:
+                      type: string
+                  type: object
+                type: array
               capacity:
                 properties:
                   ingressEgressThroughputPerSec:
@@ -66,6 +77,21 @@ spec:
                 type: string
               updatedTimestamp:
                 type: string
+              serviceAccounts:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    principal:
+                      type: string
+                    password:
+                      type: string
+                  required:
+                  - name
+                  - principal
+                  - password
+                  type: object
+                type: array
             type: object
           spec:
             properties:
@@ -128,10 +154,6 @@ spec:
                 required:
                 - bootstrapServerHost
                 type: object
-              owners:
-                items:
-                  type: string
-                type: array
               versions:
                 properties:
                   kafka:
@@ -144,6 +166,25 @@ spec:
                 type: object
               deleted:
                 type: boolean
+              owners:
+                items:
+                  type: string
+                type: array
+              serviceAccounts:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    principal:
+                      type: string
+                    password:
+                      type: string
+                  required:
+                  - name
+                  - principal
+                  - password
+                  type: object
+                type: array
             required:
             - endpoint
             - versions

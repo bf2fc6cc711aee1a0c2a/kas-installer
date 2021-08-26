@@ -107,7 +107,8 @@ spec:
       labels:
         app.kubernetes.io/name: kas-fleetshard-sync
     spec:
-      serviceAccount: kas-fleetshard-sync
+      serviceAccountName: kas-fleetshard-sync
+      priorityClassName: kas-fleetshard-high
       volumes:
       - configMap:
           defaultMode: 384
@@ -118,7 +119,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-sync
-        image: quay.io/mk-ci-cd/kas-fleetshard-sync:0.9.1
+        image: quay.io/mk-ci-cd/kas-fleetshard-sync:0.10.0
         env:
         - name: KUBERNETES_NAMESPACE
           valueFrom:

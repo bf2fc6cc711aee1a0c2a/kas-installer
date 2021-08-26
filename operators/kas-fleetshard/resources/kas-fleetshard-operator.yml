@@ -214,8 +214,8 @@ spec:
         app.kubernetes.io/name: kas-fleetshard-operator
       name: kas-fleetshard-operator
     spec:
-      serviceAccount: kas-fleetshard-operator
       serviceAccountName: kas-fleetshard-operator
+      priorityClassName: kas-fleetshard-high
       volumes:
       - configMap:
           defaultMode: 384
@@ -226,7 +226,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-operator
-        image: quay.io/k_wall/kas-fleetshard-operator:0.10.0
+        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.10.0
         env:
         - name: QUARKUS_PROFILE
           value: prod

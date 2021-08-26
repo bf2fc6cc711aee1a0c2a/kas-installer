@@ -48,6 +48,7 @@ echo "MAS SSO is ready $($OC get route keycloak -n $NAMESPACE -o go-template={{.
 $OC create -f mas-sso/realms/realm-rhoas.yaml
 $OC create -f mas-sso/realms/realm-rhoas-kafka-sre.yaml
 
+$OC create -f mas-sso/clients/kafka-admin.yaml
 $OC create -f mas-sso/clients/kas-fleet-manager.yaml
 $OC create -f mas-sso/clients/kas-fleetshard-agent.yaml
 $OC create -f mas-sso/clients/strimzi-ui.yaml
@@ -62,4 +63,5 @@ sleep 10
 
 sh ./mas-sso/kas.sh
 sh ./mas-sso/kas-sre.sh
+sh ./mas-sso/role-admin.sh
 sh ./mas-sso/role-agent.sh

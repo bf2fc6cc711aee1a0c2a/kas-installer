@@ -4,9 +4,10 @@
 
 set -e
 
-if [$# -ne 1]; then
+if [ $# -ne 1 ]; then
     echo "$0: illegal number of parameters"
     echo "$0 <ocm cluster id>"
+    exit 1
 fi
 
 id=$1

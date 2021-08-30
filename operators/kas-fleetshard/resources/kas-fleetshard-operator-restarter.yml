@@ -60,7 +60,7 @@ data:
     oc scale deployment kas-fleetshard-operator --replicas=1
 ---
 kind: CronJob
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 metadata:
   name: fleetshard-operator-restarter
   labels:

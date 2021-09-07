@@ -90,6 +90,7 @@ rules:
   - create
   - delete
   - update
+  - patch
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -119,7 +120,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-sync
-        image: quay.io/mk-ci-cd/kas-fleetshard-sync:0.10.1
+        image: quay.io/mk-ci-cd/kas-fleetshard-sync:0.11.0
         env:
         - name: KUBERNETES_NAMESPACE
           valueFrom:

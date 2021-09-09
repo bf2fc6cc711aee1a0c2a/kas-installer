@@ -236,6 +236,8 @@ spec:
           value: 'false'
         - name: KAFKA_AUTHENTICATION_ENABLED
           value: 'true'
+        - name: MANAGEDKAFKA_KAFKA_ACL_ALLOWED_LISTENERS
+          value: 'TLS-9093,SRE-9096'
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:

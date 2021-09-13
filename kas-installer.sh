@@ -43,6 +43,7 @@ read_kas_installer_env_file() {
 
       if [ "$(echo ${proceed} | tr [a-z] [A-Z])" != "Y" ] ; then
           echo "Exiting ${0}"
+          exit 1
       else
           echo "Ignoring k8s cluster domain difference..."
       fi

@@ -46,7 +46,7 @@ same cluster set in the user's kubeconfig file.
    file
 1. Run the KAS installer `kas-installer.sh` to deploy and configure Managed
    Kafka Service
-
+1. Run `uninstall.sh` to remove KAS from the cluster.  You should remove any deployed Kafkas before runnig this script.
 ### Service Account Maintenance
 
 The `service_account.sh` script supports creating, listing, and deleting service accounts.

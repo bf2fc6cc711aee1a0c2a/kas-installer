@@ -182,6 +182,7 @@ deploy_kasfleetmanager() {
     -p DATAPLANE_CLUSTER_SCALING_TYPE="none" \
     -p REPLICAS=1 \
     -p STRIMZI_OPERATOR_VERSION="${STRIMZI_OPERATOR_VERSION}" \
+    -p KAFKA_CAPACITY_INGRESS_THROUGHPUT="${KAFKA_CAPACITY_INGRESS_THROUGHPUT}" \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Waiting until KAS Fleet Manager Deployment is available..."

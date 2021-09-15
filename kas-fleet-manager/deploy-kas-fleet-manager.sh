@@ -184,7 +184,8 @@ deploy_kasfleetmanager() {
     -p STRIMZI_OPERATOR_VERSION="${STRIMZI_OPERATOR_VERSION}" \
     -p KAFKA_CAPACITY_INGRESS_THROUGHPUT="${KAFKA_CAPACITY_INGRESS_THROUGHPUT}" \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
-
+  
+  echo "${KAFKA_CAPACITY_INGRESS_THROUGHPUT}"
   echo "Waiting until KAS Fleet Manager Deployment is available..."
   ${KUBECTL} wait --timeout=90s --for=condition=available deployment/kas-fleet-manager --namespace=${KAS_FLEET_MANAGER_NAMESPACE}
 

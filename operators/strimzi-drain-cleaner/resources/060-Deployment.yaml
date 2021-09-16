@@ -16,11 +16,12 @@ spec:
         app: strimzi-drain-cleaner
     spec:
       serviceAccountName: strimzi-drain-cleaner
+      priorityClassName: kas-strimzi-bundle-high
       imagePullSecrets:
         - name: rhoas-image-pull-secret
       containers:
         - name: strimzi-drain-cleaner
-          image: 'quay.io/mk-ci-cd/strimzi-drain-cleaner:0.1-5'
+          image: 'quay.io/mk-ci-cd/strimzi-drain-cleaner:0.2-1'
           env:
             # The `wrapper.sh` script will translate the key file to PKCS8 and override the equivalent Quarkus property
             - name: HTTP_SSL_CERTIFICATE_KEY_FILE

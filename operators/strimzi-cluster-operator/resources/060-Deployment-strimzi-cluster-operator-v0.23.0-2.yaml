@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/part-of: managed-kafka
     spec:
       serviceAccountName: strimzi-cluster-operator
+      priorityClassName: kas-strimzi-bundle-high
       volumes:
         - name: strimzi-tmp
           emptyDir:

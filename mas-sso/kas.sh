@@ -17,6 +17,19 @@ RESULT=`curl -sk --data "grant_type=password&client_id=$CLIENT_ID&username=$USER
 TOKEN=$(jq -r '.access_token' <<< $RESULT)
 echo $TOKEN
 
+CREATE=`curl -sk --data-raw '{
+   "authorizationServicesEnabled": false,
+   "clientId": "kas-fleet-manager",
+   "description": "kas-fleet-manager",
+   "name": "kas-fleet-manager",
+   "secret":"kas-fleet-manager",
+    "directAccessGrantsEnabled": false,
+    "serviceAccountsEnabled": true,
+    "publicClient": false,
+    "protocol": "openid-connect"
+}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/clients`
+echo $CREATE
+
 RE=`curl -sk --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/rhoas/clients?clientId=realm-management`
 realmMgmtClientId=$(jq -r '.[].id' <<< $RE)
 echo $realmMgmtClientId

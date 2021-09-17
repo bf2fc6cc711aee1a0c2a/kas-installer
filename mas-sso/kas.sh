@@ -8,6 +8,7 @@ echo $KEYCLOAK_ROUTE
 
 KEYCLOAK_URL=$KEYCLOAK_ROUTE
 TOKEN_PATH="/auth/realms/master/protocol/openid-connect/token"
+REALM=rhoas
 
 CLIENT_ID=admin-cli
 USERNAME=admin

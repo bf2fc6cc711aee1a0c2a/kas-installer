@@ -49,8 +49,6 @@ $OC create -f mas-sso/realms/realm-rhoas.yaml
 $OC create -f mas-sso/realms/realm-rhoas-kafka-sre.yaml
 
 $OC create -f mas-sso/clients/kafka-admin.yaml
-$OC create -f mas-sso/clients/kas-fleet-manager.yaml
-$OC create -f mas-sso/clients/kas-fleetshard-agent.yaml
 $OC create -f mas-sso/clients/strimzi-ui.yaml
 $OC create -f mas-sso/clients/rhoas-cli.yaml
 

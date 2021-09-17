@@ -17,18 +17,6 @@ spec:
     standardFlowEnabled: false
     attributes:
           "kas-fleetshard-operator-cluster-id": "dev-dataplane-cluster"
-    protocolMappers:
-    - name: kas-fleetshard-operator-cluster-id
-      protocol: openid-connect
-      protocolMapper: oidc-usermodel-attribute-mapper
-      consentRequired: false
-      config:
-        userinfo.token.claim: 'true'
-        user.attribute: kas-fleetshard-operator-cluster-id
-        id.token.claim: 'true'
-        access.token.claim: 'true'
-        claim.name: kas-fleetshard-operator-cluster-id
-        jsonType.label: String
     access:
        view: true
        configure: true

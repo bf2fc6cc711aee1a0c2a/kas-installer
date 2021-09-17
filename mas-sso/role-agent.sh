@@ -36,3 +36,6 @@ echo $UPUSER
 
 FINAL=`curl -sk --data-raw '[{"id": '$kasfleetroleid',"name": "'${FLEET_OPERATOR_ROLE}'"}]' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/users/$svcUserId/role-mappings/realm`
 echo $FINAL
+
+PROTO=`curl -sk --data-raw '{"protocol":"openid-connect","config":{"id.token.claim":"true","access.token.claim":"true","userinfo.token.claim":"true","multivalued":"","aggregate.attrs":"","user.attribute":"kas-fleetshard-operator-cluster-id","claim.name":"kas-fleetshard-operator-cluster-id"},"name":"kas-fleetshard-operator-cluster-id","protocolMapper":"oidc-usermodel-attribute-mapper"}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/clients/$kasClientId/protocol-mappers/models`
+echo $PROTO

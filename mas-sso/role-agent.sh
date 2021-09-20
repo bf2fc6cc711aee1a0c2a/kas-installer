@@ -16,6 +16,38 @@ RESULT=`curl -sk --data "grant_type=password&client_id=$CLIENT_ID&username=$USER
 TOKEN=$(jq -r '.access_token' <<< $RESULT)
 echo $TOKEN
 
+CREATE=`curl -sk --data-raw '{
+   "attributes": {
+    "kas-fleetshard-operator-cluster-id": "dev-dataplane-cluster"
+   },
+   "authorizationServicesEnabled": false,
+   "clientId": "kas-fleetshard-agent",
+   "description": "kas-fleetshard-agent",
+   "name": "kas-fleetshard-agent",
+   "secret":"kas-fleetshard-agent",
+   "protocolMappers": [
+      {
+        "protocol": "openid-connect",
+        "config": {
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "",
+            "aggregate.attrs": "",
+            "user.attribute": "kas-fleetshard-operator-cluster-id",
+            "claim.name": "kas-fleetshard-operator-cluster-id"
+        },
+        "name": "kas-fleetshard-operator-cluster-id",
+        "protocolMapper": "oidc-usermodel-attribute-mapper"
+    }
+   ],
+    "directAccessGrantsEnabled": false,
+    "serviceAccountsEnabled": true,
+    "publicClient": false,
+    "protocol": "openid-connect"
+}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/clients`
+echo $CREATE
+
 R=`curl -sk --data-raw '{"name": "'${FLEET_OPERATOR_ROLE}'"}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/roles`
 echo $R
 
@@ -36,3 +68,4 @@ echo $UPUSER
 
 FINAL=`curl -sk --data-raw '[{"id": '$kasfleetroleid',"name": "'${FLEET_OPERATOR_ROLE}'"}]' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/users/$svcUserId/role-mappings/realm`
 echo $FINAL
+

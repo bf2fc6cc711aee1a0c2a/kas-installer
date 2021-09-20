@@ -8,6 +8,7 @@ echo $KEYCLOAK_ROUTE
 
 KEYCLOAK_URL=$KEYCLOAK_ROUTE
 TOKEN_PATH="/auth/realms/master/protocol/openid-connect/token"
+REALM=rhoas
 
 CLIENT_ID=admin-cli
 USERNAME=admin
@@ -16,6 +17,19 @@ PASS=$KEYCLOAK_ADMIN_PASS
 RESULT=`curl -sk --data "grant_type=password&client_id=$CLIENT_ID&username=$USERNAME&password=$PASS" $KEYCLOAK_URL$TOKEN_PATH`
 TOKEN=$(jq -r '.access_token' <<< $RESULT)
 echo $TOKEN
+
+CREATE=`curl -sk --data-raw '{
+   "authorizationServicesEnabled": false,
+   "clientId": "kas-fleet-manager",
+   "description": "kas-fleet-manager",
+   "name": "kas-fleet-manager",
+   "secret":"kas-fleet-manager",
+    "directAccessGrantsEnabled": false,
+    "serviceAccountsEnabled": true,
+    "publicClient": false,
+    "protocol": "openid-connect"
+}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/clients`
+echo $CREATE
 
 RE=`curl -sk --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/rhoas/clients?clientId=realm-management`
 realmMgmtClientId=$(jq -r '.[].id' <<< $RE)

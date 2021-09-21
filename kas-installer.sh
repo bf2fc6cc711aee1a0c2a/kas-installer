@@ -162,7 +162,11 @@ read_kas_installer_env_file
 # Deploy and configure MAS SSO
 install_mas_sso
 
-deploy_observatorium
+# Deploy and configure Observatorium
+if [ "${SKIP_OBSERVATORIUM:-""}n" = "n" ]; then
+    deploy_observatorium
+fi
+
 
 # Deploy and configure KAS Fleet Manager and its
 # dependencies (Observability Operator, Sharded NLB, manual

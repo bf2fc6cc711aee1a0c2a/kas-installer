@@ -55,3 +55,7 @@ if [ "${SKIP_SSO:-""}n" = "n" ] ; then
 else
     echo "MAS SSO not uninstalled"
 fi
+
+${KUBECTL} delete namespace observatorium
+${KUBECTL} delete namespace dex
+${KUBECTL} delete namespace observatorium-minio

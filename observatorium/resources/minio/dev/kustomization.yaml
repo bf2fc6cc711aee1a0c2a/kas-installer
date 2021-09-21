@@ -1,0 +1,10 @@
+bases:
+- ../bases
+secretGenerator:
+- name: minio-secret
+  namespace: <namespace>
+  literals:
+  - access_key=minio
+  - secret_key=minio123
+generatorOptions:
+  disableNameSuffixHash: true

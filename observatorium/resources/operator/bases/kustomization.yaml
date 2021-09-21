@@ -1,0 +1,9 @@
+resources:
+- namespace.yaml
+- observatorium-operator-sa.yaml
+- clusterrole.yaml
+- clusterrolebinding.yaml
+- observatorium-xyz-tls-secret.yaml
+- observatorium-xyz-tls-cm.yaml
+- operator-deployment.yaml
+- crd.yaml

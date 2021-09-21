@@ -1,0 +1,11 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: <NAME>
+  namespace: managed-application-services-observability
+  labels:
+    app: strimzi
+    monitoring-key: middleware
+spec:
+  json: |-
+  <CONTENT>

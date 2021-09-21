@@ -1,0 +1,14 @@
+resources:
+- namespace.yaml
+- pvc.yaml
+- deployment.yaml
+- service.yaml
+- route.yaml
+# patchesJson6902:
+# - target:
+#     kind: Secret
+#     name: dex
+#   patch: |-
+#     - op: add
+#       path: /metadata/namespace
+#       value: <namespace>

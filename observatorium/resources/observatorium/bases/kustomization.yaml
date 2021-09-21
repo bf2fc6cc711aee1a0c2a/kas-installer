@@ -1,0 +1,3 @@
+resources:
+- route.yaml
+- observatorium-cr.yaml

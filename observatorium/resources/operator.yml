@@ -1,0 +1,225 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: observatorium-operator
+    app.kubernetes.io/version: v0.1
+  name: observatorium-operator
+  namespace: <namespace>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: observatorium-operator
+    app.kubernetes.io/version: v0.1
+  name: observatorium-operator
+rules:
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - '*'
+  - apiGroups:
+      - core.observatorium.io
+    resources:
+      - observatoria
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - core.observatorium.io
+    resources:
+      - observatoria/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - secrets
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - rolebindings
+      - roles
+    verbs:
+      - create
+      - get
+      - patch
+      - update
+      - list
+      - watch
+      - delete
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+      - deployments
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - services/finalizers
+      - endpoints
+    verbs:
+      - get
+      - create
+      - update
+      - delete
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - servicemonitors
+    verbs:
+      - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: observatorium-operator
+    app.kubernetes.io/version: v0.1
+  name: observatorium-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: observatorium-operator
+subjects:
+  - kind: ServiceAccount
+    name: observatorium-operator
+    namespace: <namespace>
+---
+apiVersion: v1
+data:
+  cert.pem: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNMekNDQWRXZ0F3SUJBZ0lVTnNjRHQ5VlpLK0ZqbEh6aGJyUVF4L3lUQXhjd0NnWUlLb1pJemowRUF3SXcKR0RFV01CUUdBMVVFQXhNTmIySnpaWEoyWVhSdmNtbDFiVEFlRncweU1EQTVNRFF4TURRMk1EQmFGdzB5TVRBNQpNRFF4TURRMk1EQmFNRTR4VERCS0JnTlZCQU1UUTI5aWMyVnlkbUYwYjNKcGRXMHRlSGw2TFc5aWMyVnlkbUYwCmIzSnBkVzB0WVhCcExtOWljMlZ5ZG1GMGIzSnBkVzB1YzNaakxtTnNkWE4wWlhJdWJHOWpZV3d3V1RBVEJnY3EKaGtqT1BRSUJCZ2dxaGtqT1BRTUJCd05DQUFUbHQ3bzNzSkRiZEdKQWZGNVhnVVVYdE1SSXhmRTBLLzA3eFRLcgprSEI4RG14RHg1RFZuUUNvNmV3ek5qNzRnYTlOdmNicU5LbW1wbThMMXRIWVIyZUlvNEhHTUlIRE1BNEdBMVVkCkR3RUIvd1FFQXdJRm9EQVRCZ05WSFNVRUREQUtCZ2dyQmdFRkJRY0RBVEFNQmdOVkhSTUJBZjhFQWpBQU1CMEcKQTFVZERnUVdCQlE4UElmd25ZRHRzOFRGYVNOR0hNYzVJM0VlSFRBZkJnTlZIU01FR0RBV2dCUVlGeTJhb1lEdQpBUEwxTkp6amY3dGFHSFVjWVRCT0JnTlZIUkVFUnpCRmdrTnZZbk5sY25aaGRHOXlhWFZ0TFhoNWVpMXZZbk5sCmNuWmhkRzl5YVhWdExXRndhUzV2WW5ObGNuWmhkRzl5YVhWdExuTjJZeTVqYkhWemRHVnlMbXh2WTJGc01Bb0cKQ0NxR1NNNDlCQU1DQTBnQU1FVUNJUURWK09MMVY4ZVAyQW52ZjUzS3paVTBGd2o4RGxuMVBKbFV5UDBBc0tRVwpkQUlnSkVQY0ZQcGI0RzMzQWFxN2FrS1pHT05KRkxHMktVUUJ1d2NBaVZ2NVh0Yz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  key.pem: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSURGYk9MdEt6clZKbzdQTzJTRFhaeDRBQVlsMlNMYjhqYU9UQ1NDb25ndzRvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFNWJlNk43Q1EyM1JpUUh4ZVY0RkZGN1RFU01YeE5DdjlPOFV5cTVCd2ZBNXNROGVRMVowQQpxT25zTXpZKytJR3ZUYjNHNmpTcHBxWnZDOWJSMkVkbmlBPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
+kind: Secret
+metadata:
+  name: observatorium-xyz-tls
+  namespace: <namespace>
+type: Opaque
+---
+apiVersion: v1
+data:
+  thanos.yaml: dHlwZTogczMKY29uZmlnOgogIGJ1Y2tldDogdGhhbm9zCiAgZW5kcG9pbnQ6IG1pbmlvLm9ic2VydmF0b3JpdW0tbWluaW8uc3ZjLmNsdXN0ZXIubG9jYWw6OTAwMAogIGluc2VjdXJlOiB0cnVlCiAgYWNjZXNzX2tleTogbWluaW8KICBzZWNyZXRfa2V5OiBtaW5pbzEyMwo=
+kind: Secret
+metadata:
+  name: thanos-objectstorage
+  namespace: <namespace>
+type: Opaque
+---
+apiVersion: v1
+data:
+  endpoint: aHR0cDovL21pbmlvOm1pbmlvMTIzQG1pbmlvLm9ic2VydmF0b3JpdW0tbWluaW8uc3ZjLmNsdXN0ZXIubG9jYWwuOjkwMDAvbG9raQ==
+kind: Secret
+metadata:
+  name: loki-objectstorage
+  namespace: <namespace>
+type: Opaque
+---
+apiVersion: v1
+data:
+  ca.pem: |
+    -----BEGIN CERTIFICATE-----
+    MIIBdTCCARqgAwIBAgIUQ01v4IujQzwxqSRgTBFO4JV6YMowCgYIKoZIzj0EAwIw
+    GDEWMBQGA1UEAxMNb2JzZXJ2YXRvcml1bTAeFw0yMDA5MDQxMDQ2MDBaFw0yNTA5
+    MDMxMDQ2MDBaMBgxFjAUBgNVBAMTDW9ic2VydmF0b3JpdW0wWTATBgcqhkjOPQIB
+    BggqhkjOPQMBBwNCAAS4xlNPCuLCt4+RPdy/fp9FewRPiCe1I/dFxfVFbi+XWPAK
+    UtVe4DRlZ6aPECfwuF8KFC/s9KTiTKQzidQ4ZuM/o0IwQDAOBgNVHQ8BAf8EBAMC
+    AQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUGBctmqGA7gDy9TSc43+7Whh1
+    HGEwCgYIKoZIzj0EAwIDSQAwRgIhAK0hPTmDdKAf4pRt7KJbXZx/a0I3hYhuy1+S
+    d5O5saTZAiEA4zSyUZFO/+oKA2YvgvyfBvBUlehdCOd868GwWmn46NA=
+    -----END CERTIFICATE-----
+kind: ConfigMap
+metadata:
+  name: observatorium-xyz-tls
+  namespace: <namespace>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: observatorium-operator
+    app.kubernetes.io/name: observatorium-operator
+    app.kubernetes.io/part-of: observatorium
+    control-plane: observatorium-operator
+  name: observatorium-operator
+  namespace: <namespace>
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      control-plane: observatorium-operator
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        control-plane: observatorium-operator
+    spec:
+      containers:
+        - args:
+            - --log-level=debug
+          image: quay.io/observatorium/observatorium-operator:master-2020-11-04-acb908d
+          imagePullPolicy: Always
+          name: observatorium-operator
+          resources:
+            limits:
+              cpu: 100m
+              memory: 600Mi
+            requests:
+              cpu: 100m
+              memory: 600Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: observatorium-operator
+      serviceAccountName: observatorium-operator
+      terminationGracePeriodSeconds: 10

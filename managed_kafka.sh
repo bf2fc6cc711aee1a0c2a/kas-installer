@@ -127,15 +127,9 @@ certgen() {
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${KAFKA_CERT}
     keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file ${KAFKA_CERT}
     rm ${KAFKA_CERT}
-    SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
-
-    if [ ${?} -ne 0 ] ; then
-        echo "Failed to create a service account!"
-        exit 1
-    fi
-
-    SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
-    SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
+    
+    SA_CLIENT_ID=($(jq -r '.client_id' service_account.json))
+    SA_CLIENT_SECRET=($(jq -r '.client_secret' service_account.json))
 
     touch app-services.properties
     echo 'security.protocol=SASL_SSL' > app-services.properties

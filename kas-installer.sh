@@ -163,7 +163,7 @@ read_kas_installer_env_file
 install_mas_sso
 
 # Deploy and configure Observatorium
-if [ "${SKIP_OBSERVATORIUM:-""}n" = "n" ]; then
+if [ "${INSTALL_OBSERVATORIUM:-"n"}" = "y" ]; then
     deploy_observatorium
 fi
 

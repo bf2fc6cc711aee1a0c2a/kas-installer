@@ -117,6 +117,8 @@ delete() {
 
 certgen() {
     local KAFKA_ID=${1}
+    local SA_CLIENT_ID=${2}
+    local SA_CLIENT_SECRET=${3}
 
     echo "Creating truststore and app-services.properties files for kafka bin script utilization."
 
@@ -128,8 +130,19 @@ certgen() {
     keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file ${KAFKA_CERT}
     rm ${KAFKA_CERT}
     
-    SA_CLIENT_ID=($(jq -r '.client_id' service_account.json))
-    SA_CLIENT_SECRET=($(jq -r '.client_secret' service_account.json))
+    if [ -z "${SA_CLIENT_ID:-}" ] ; then
+        echo "No service account provided, creating new account..."
+        SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
+
+        if [ ${?} -ne 0 ] ; then
+            echo "Failed to create a service account!"
+            exit 1
+        fi
+
+        SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
+        SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
+        echo "Service account created: ${SA_CLIENT_ID}"
+    fi
 
     touch app-services.properties
     echo 'security.protocol=SASL_SSL' > app-services.properties
@@ -182,6 +195,10 @@ while [[ $# -gt 0 ]]; do
     "--certgen" )
         OPERATION='certgen'
         OP_KAFKA_ID="${2}"
+        OP_CLIENT_ID="${3}"
+        OP_CLIENT_SECRET="${4}"
+        shift
+        shift
         shift
         shift
         ;;
@@ -233,7 +250,7 @@ case "${OPERATION}" in
         delete ${OP_KAFKA_ID}
         ;;
     "certgen" )
-        certgen ${OP_KAFKA_ID}
+        certgen "${OP_KAFKA_ID}" "${OP_CLIENT_ID}" "${OP_CLIENT_SECRET}"
         ;;
     *)
         echo "Unknown operation '${OPERATION}'";

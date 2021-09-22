@@ -1,0 +1,17 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: observatorium
+  namespace: <namespace>
+spec:
+  host: <hosturl>
+  to:
+    kind: Service
+    name: observatorium-xyz-observatorium-api
+    weight: 100
+  port:
+    targetPort: public
+  tls:
+    termination: passthrough
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

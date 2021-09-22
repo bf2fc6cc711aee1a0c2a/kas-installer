@@ -1,0 +1,9 @@
+bases:
+- ../bases
+secretGenerator:
+- name: dex
+  namespace: <namespace>
+  files:
+  - config.yaml=config.generated.yaml
+generatorOptions:
+  disableNameSuffixHash: true

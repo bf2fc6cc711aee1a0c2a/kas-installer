@@ -143,7 +143,7 @@ deploy_kasfleetmanager() {
   echo "Deploying KAS Fleet Manager Database..."
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/db-template.yml | oc apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
   echo "Waiting until KAS Fleet Manager Database is ready..."
-	time timeout --foreground 3m bash -c "until ${OC} get pods | grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
+	time timeout --foreground 3m bash -c "until ${OC} get pods -n ${KAS_FLEET_MANAGER_NAMESPACE}| grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
 
   echo "Deploying KAS Fleet Manager K8s Secrets..."
 	${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml \
@@ -188,6 +188,7 @@ deploy_kasfleetmanager() {
     -p KAFKA_CAPACITY_MAX_PARTITIONS="${KAFKA_CAPACITY_MAX_PARTITIONS}" \
     -p KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD="${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}" \
     -p KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC="${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}" \
+    -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Waiting until KAS Fleet Manager Deployment is available..."

@@ -147,12 +147,26 @@ deploy_kas_fleetshard() {
   echo "KAS Fleet Shard failed to deploy"
 }
 
+deploy_observatorium() {
+  echo "Deploying Observatorium ..."
+  ${DIR_NAME}/observatorium/install-observatorium.sh && \
+  echo "Observatorium deployed" || \
+  echo "Observatorium deployment failed"
+
+}
+
 ## Main body of the script starts here
 
 read_kas_installer_env_file
 
 # Deploy and configure MAS SSO
 install_mas_sso
+
+# Deploy and configure Observatorium
+if [ "${INSTALL_OBSERVATORIUM:-"n"}" = "y" ]; then
+    deploy_observatorium
+fi
+
 
 # Deploy and configure KAS Fleet Manager and its
 # dependencies (Observability Operator, Sharded NLB, manual

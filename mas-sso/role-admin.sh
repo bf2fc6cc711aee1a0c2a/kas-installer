@@ -1,7 +1,9 @@
 #!/bin/bash
 
-export KEYCLOAK_ROUTE=https://$(oc get route keycloak --template='{{ .spec.host }}')
-export KEYCLOAK_ADMIN_PASS=$(oc get secret credential-mas-sso -o go-template --template="{{.data.ADMIN_PASSWORD|base64decode}}")
+OC=$(which oc)
+
+export KEYCLOAK_ROUTE=https://$(${OC} get route keycloak --template='{{ .spec.host }}')
+export KEYCLOAK_ADMIN_PASS=$(${OC} get secret credential-mas-sso -o go-template --template="{{.data.ADMIN_PASSWORD|base64decode}}")
 echo $KEYCLOAK_ROUTE
 
 KEYCLOAK_URL=$KEYCLOAK_ROUTE

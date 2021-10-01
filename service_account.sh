@@ -13,6 +13,8 @@ create() {
 
     if [ "${KIND}" = "Error" ]; then
         local ERRCODE=$(echo ${RESPONSE} | jq -r .code)
+        local ERR_REASON=$(echo ${RESPONSE} | jq -r .reason)
+        echo "[ERROR] - ${ERRCODE} - ${ERR_REASON}"
 
         # Display existing service accounts if limit has been reached
         if [ "${ERRCODE}" = "KAFKAS-MGMT-4" ]; then

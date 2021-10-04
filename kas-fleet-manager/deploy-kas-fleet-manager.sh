@@ -44,11 +44,6 @@ generate_kasfleetmanager_manual_terraforming_k8s_resources() {
 
   mkdir -p ${TERRAFORM_GENERATED_DIR}
 
-  # Generate Sharded NLB IngressController K8s file
-  ${SED} \
-  "s/#placeholder_domain#/${KAFKA_SHARDED_NLB_INGRESS_CONTROLLER_DOMAIN}/" \
-    ${TERRAFORM_TEMPLATES_DIR}/002-sharded-nlb-ingresscontroller.yml.template > ${TERRAFORM_GENERATED_DIR}/002-sharded-nlb-ingresscontroller.yml
-
   # Generate KAS Fleet Shard Operator Addon parameters secret K8s file
   CONTROL_PLANE_API_HOSTNAME="kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}"
   ${SED} \
@@ -215,15 +210,6 @@ read_kasfleetmanager_env_file() {
   . ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 }
 
-wait_for_sharded_nlb_ingresscontroller_availability() {
-  # When creating the sharded NLB IngressController a deployment named "router-<ingresscontrollername>"
-  # is created in the openshift-ingress namespace.
-  echo "Waiting until Sharded NLB deployment is available..."
-  ${KUBECTL} wait --timeout=90s --for=condition=available deployment/router-sharded-nlb --namespace=openshift-ingress
-
-  # TODO check some states of the IngressController status sections? related to DNS stuff? related to AWS LB stuff?
-}
-
 wait_for_observability_operator_deployment_availability() {
   echo "Waiting until Observability operator deployment is created..."
   while [ -z "$(kubectl get deployment ${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
@@ -346,7 +332,6 @@ create_kas_fleet_manager_namespace() {
 read_kasfleetmanager_env_file
 generate_kasfleetmanager_manual_terraforming_k8s_resources
 deploy_kasfleetmanager_manual_terraforming_k8s_resources
-wait_for_sharded_nlb_ingresscontroller_availability
 disable_observability_operator_extras
 wait_for_observability_operator_availability
 clone_kasfleetmanager_code_repository

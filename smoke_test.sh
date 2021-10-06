@@ -1,42 +1,86 @@
 #!/bin/bash
 
+OS=$(uname)
 KUBECTL=$(which kubectl)
 DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/kas-installer.env
+MK_EXISTING_ID=${1}
+DELETE_INSTANCE='true'
 
-MK_SMOKE=$(${DIR_NAME}/managed_kafka.sh --create 'kafka-smoke')
-
-if [ ${?} -ne 0 ] ; then
-    echo "Failed to create a ManagedKafka instance"
-    exit 1
+if [ "$OS" = 'Darwin' ]; then
+  # for MacOS
+  DATE=$(which gdate)
+else
+  # for Linux and Windows
+  DATE=$(which date)
 fi
+
+if [ "${MK_EXISTING_ID:-}" != "" ] ; then
+    DELETE_INSTANCE='false'
+    MK_SMOKE=$(${DIR_NAME}/managed_kafka.sh --get ${MK_EXISTING_ID})
+
+    if [ ${?} -ne 0 ] || [ "$(echo ${MK_SMOKE} | jq -r .kind)" = "Error" ] ; then
+        echo "Failed to get ManagedKafka instance for ID: ${MK_EXISTING_ID}"
+        exit 1
+    fi
+else
+    MK_SMOKE=$(${DIR_NAME}/managed_kafka.sh --create 'kafka-smoke')
+
+    if [ ${?} -ne 0 ] ; then
+        echo "Failed to create a ManagedKafka instance"
+        exit 1
+    fi
+fi
+
+BOOTSTRAP_HOST=$(echo ${MK_SMOKE} | jq -r .bootstrap_server_host)
+ADMIN_SERVER_HOST="admin-server-$(echo ${BOOTSTRAP_HOST} | cut -d':' -f 1)" # Remove the port
+SMOKE_TOPIC="smoke_topic-$(${DATE} +%Y%j%H%M)"
 
 SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
 
 if [ ${?} -ne 0 ] ; then
     echo "Failed to create a service account!"
     exit 1
+else
+    echo "Service account created"
 fi
 
 SA_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .id)
 SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
 SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
 
-ACCESS_TOKEN=$(${DIR_NAME}/get_access_token.sh ${SA_CLIENT_ID} ${SA_CLIENT_SECRET})
+OWNER_TOKEN=$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)
+
+if [ ${?} -ne 0 ] ; then
+    echo "Failed obtain owner access token! Did you configure RH_USERNAME, RH_USER_ID, and RH_ORG_ID in kas-installer.env?"
+    exit 1
+fi
+
+curl -f -sXPOST -H'Content-type: application/json' \
+  -H "Authorization: Bearer $(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)" \
+  --data '{"resourceType":"TOPIC", "resourceName":"'${SMOKE_TOPIC}'", "patternType":"LITERAL", "principal":"User:'${SA_CLIENT_ID}'", "operation":"ALL", "permission":"ALLOW"}' \
+  "http://${ADMIN_SERVER_HOST}/rest/acls"
+
+if [ ${?} -ne 0 ] ; then
+    echo "Failed to grant topic permissions to service account!"
+    exit 1
+else
+    echo "Granted service account access to topic '${SMOKE_TOPIC}'"
+fi
+
+ACCESS_TOKEN=$(${DIR_NAME}/get_access_token.sh ${SA_CLIENT_ID} ${SA_CLIENT_SECRET} 2>/dev/null)
 
 if [ ${?} -ne 0 ] ; then
     echo "Failed to obtain an access token!"
     exit 1
+else
+    echo "Obtained access token for service account"
 fi
 
-BOOTSTRAP_HOST=$(echo ${MK_SMOKE} | jq -r .bootstrap_server_host)
-ADMIN_SERVER_HOST="admin-server-$(echo ${BOOTSTRAP_HOST} | cut -d':' -f 1)" # Remove the port
-SMOKE_TOPIC="smoke_topic"
-
-curl -sXPOST -H'Content-type: application/json' \
+SMOKE_TOPIC_INFO=$(curl -sXPOST -H'Content-type: application/json' \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   --data '{ "name":"'${SMOKE_TOPIC}'", "settings": { "numPartitions":3, "config": [] } }' \
-  "http://${ADMIN_SERVER_HOST}/rest/topics"
+  "http://${ADMIN_SERVER_HOST}/rest/topics")
 
 MSG_FILE=$(mktemp)
 SMOKE_MESSAGE="Smoke message from $(date)"
@@ -54,6 +98,8 @@ docker run --rm --mount type=bind,source=${MSG_FILE},target=${MSG_FILE} --networ
 
 rm ${MSG_FILE}
 
+echo "Smoke message sent to topic: [${SMOKE_MESSAGE}]"
+
 SMOKE_MESSAGE_OUT=$(docker run --rm --network=host edenhill/kafkacat:1.6.0 \
  -t "${SMOKE_TOPIC}" \
  -b "${BOOTSTRAP_HOST}" \
@@ -64,13 +110,21 @@ SMOKE_MESSAGE_OUT=$(docker run --rm --network=host edenhill/kafkacat:1.6.0 \
  -X enable.ssl.certificate.verification=false \
  -C -c1)
 
-${DIR_NAME}/service_account.sh --delete ${SA_ID}
+echo "Smoke message read from topic: [${SMOKE_MESSAGE_OUT}]"
 
-MK_SMOKE_ID=$(echo ${MK_SMOKE} | jq -r .id)
-${DIR_NAME}/managed_kafka.sh --delete ${MK_SMOKE_ID}
+if [ "${DELETE_INSTANCE}" = 'true' ] ; then
+    MK_SMOKE_ID=$(echo ${MK_SMOKE} | jq -r .id)
+    ${DIR_NAME}/managed_kafka.sh --delete ${MK_SMOKE_ID}
+else
+    TOPIC_DELETE_RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $ACCESS_TOKEN" "http://${ADMIN_SERVER_HOST}/rest/topics/${SMOKE_TOPIC}")
+    ACL_DELETE_RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)" \
+        "http://${ADMIN_SERVER_HOST}/rest/acls?principal=User:${SA_CLIENT_ID}")
+fi
+
+${DIR_NAME}/service_account.sh --delete ${SA_ID}
 
 if [ "${SMOKE_MESSAGE_OUT}" = "${SMOKE_MESSAGE}" ] ; then
     echo "Smoke test successful"
 else
-    echo "Failed smoke test: '${SMOKE_MESSAGE_OUT}'"
+    echo "Failed smoke test: '${SMOKE_MESSAGE_OUT}' != '${SMOKE_MESSAGE}'"
 fi

@@ -117,6 +117,8 @@ delete() {
 
 certgen() {
     local KAFKA_ID=${1}
+    local SA_CLIENT_ID=${2}
+    local SA_CLIENT_SECRET=${3}
 
     echo "Creating truststore and app-services.properties files for kafka bin script utilization."
 
@@ -125,17 +127,22 @@ certgen() {
     KAFKA_CERT=$(mktemp)
     KAFKA_INSTANCE_NAMESPACE='kafka-'$(echo ${KAFKA_RESOURCE} | jq -r .id  | tr '[:upper:]' '[:lower:]')
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${KAFKA_CERT}
-    keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file ${KAFKA_CERT}
+    keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mk${KAFKA_ID} -file ${KAFKA_CERT}
     rm ${KAFKA_CERT}
-    SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
 
-    if [ ${?} -ne 0 ] ; then
-        echo "Failed to create a service account!"
-        exit 1
+    if [ -z "${SA_CLIENT_ID:-}" ] ; then
+        echo "No service account provided, creating new account..."
+        SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
+
+        if [ ${?} -ne 0 ] ; then
+            echo "Failed to create a service account!"
+            exit 1
+        fi
+
+        SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
+        SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
+        echo "Service account created: ${SA_CLIENT_ID}"
     fi
-
-    SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
-    SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
 
     touch app-services.properties
     echo 'security.protocol=SASL_SSL' > app-services.properties
@@ -188,6 +195,10 @@ while [[ $# -gt 0 ]]; do
     "--certgen" )
         OPERATION='certgen'
         OP_KAFKA_ID="${2}"
+        OP_CLIENT_ID="${3}"
+        OP_CLIENT_SECRET="${4}"
+        shift
+        shift
         shift
         shift
         ;;
@@ -239,7 +250,7 @@ case "${OPERATION}" in
         delete ${OP_KAFKA_ID}
         ;;
     "certgen" )
-        certgen ${OP_KAFKA_ID}
+        certgen "${OP_KAFKA_ID}" "${OP_CLIENT_ID}" "${OP_CLIENT_SECRET}"
         ;;
     *)
         echo "Unknown operation '${OPERATION}'";

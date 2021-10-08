@@ -21,6 +21,7 @@ create() {
         fi
 
         exit 1
+    
     fi
     echo ${RESPONSE} 
 }

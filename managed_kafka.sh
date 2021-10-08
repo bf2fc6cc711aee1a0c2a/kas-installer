@@ -129,7 +129,7 @@ certgen() {
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${KAFKA_CERT}
     keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file ${KAFKA_CERT}
     rm ${KAFKA_CERT}
-    
+
     if [ -z "${SA_CLIENT_ID:-}" ] ; then
         echo "No service account provided, creating new account..."
         SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)

@@ -22,8 +22,7 @@ create() {
 
         exit 1
     fi
-    echo ${RESPONSE} > service_account.json 
-    cat service_account.json
+    echo ${RESPONSE} 
 }
 
 list() {

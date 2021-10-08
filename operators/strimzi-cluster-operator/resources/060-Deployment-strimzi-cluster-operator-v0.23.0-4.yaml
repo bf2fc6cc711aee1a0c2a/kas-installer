@@ -4,6 +4,7 @@ metadata:
   name: strimzi-cluster-operator.v0.23.0-4
   labels:
     app: strimzi
+    app.kubernetes.io/part-of: managed-kafka
 spec:
   replicas: 1
   selector:

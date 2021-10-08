@@ -6,3 +6,4 @@ kas-fleet-manager/kas-fleet-manager-source
 .idea
 truststore.jks
 app-services.properties
+service_account.json

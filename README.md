@@ -66,7 +66,7 @@ The `managed_kafka.sh` script supports creating, listing, and deleting Kafka clu
 1. To list existing clusters, run `managed_kafka.sh --list`.
 1. To remove an existing cluster, run `managed_kafka.sh --delete <cluster ID>`.
 1. To patch an existing cluster (for instance changing a strimzi version), run ` managed_kafka.sh --admin --patch  <cluster ID> '{ "strimzi_version": "strimzi-cluster-operator.v0.23.0-3" }'`
-1. To use kafka bin scripts against pre existing kafka cluster, run `managed_kafka.sh --certgen <kafka id>`. The cert generation is already performed at the end of `--create`. Point the `--command-config flag` to the generated app-services.properties in the working directory.
+1. To use kafka bin scripts against pre existing kafka cluster, run `managed_kafka.sh --certgen <kafka id> <Service_Account_ID> <Service_Account_Secret>`. If you do not pass the <Service_Account_ID> <Service_Account_Secret> arguments, the script will attempt to create a Service_Account for you. The cert generation is already performed at the end of `--create`. Point the `--command-config flag` to the generated app-services.properties in the working directory.
 * If there is already 2 service accounts pre-existing you must delete 1 of them for this script to work
 
 [git_tool]:https://git-scm.com/downloads

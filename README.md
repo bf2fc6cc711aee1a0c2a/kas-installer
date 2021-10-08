@@ -9,7 +9,7 @@ in a single K8s cluster.
 * [OpenShift][openshift]. In the future there are plans to make it compatible
   with native K8s. Currently an OpenShift dedicated based environment is needed
   (Currently needs to be a multi-zone cluster if you want to create a Kafka
-  instance through the fleet manager by using `managed_kafka.sh`). 
+  instance through the fleet manager by using `managed_kafka.sh`).
 * [git][git_tool]
 * oc
 * kubectl
@@ -19,7 +19,7 @@ in a single K8s cluster.
 * OSD Cluster with the following specs:
    * 3 compute nodes
    * Size: m5.4xlarge
-   * MultiAz: True 
+   * MultiAz: True
 
 
 ## Description
@@ -68,6 +68,26 @@ The `managed_kafka.sh` script supports creating, listing, and deleting Kafka clu
 1. To patch an existing cluster (for instance changing a strimzi version), run ` managed_kafka.sh --admin --patch  <cluster ID> '{ "strimzi_version": "strimzi-cluster-operator.v0.23.0-3" }'`
 1. To use kafka bin scripts against pre existing kafka cluster, run `managed_kafka.sh --certgen <kafka id> <Service_Account_ID> <Service_Account_Secret>`. If you do not pass the <Service_Account_ID> <Service_Account_Secret> arguments, the script will attempt to create a Service_Account for you. The cert generation is already performed at the end of `--create`. Point the `--command-config flag` to the generated app-services.properties in the working directory.
 * If there is already 2 service accounts pre-existing you must delete 1 of them for this script to work
+
+### Access the Kafka Cluster using command line tools
+
+To use the Kafka Cluster that is created with the `managed_kafka.sh` script with command line tools like `kafka-topics.sh` or `kafka-console-consumer.sh` do the following.
+
+1. Generate the certificate and `app-services.properties` file, run `managed_kafka.sh --certgen <instance-id>` where `instance-id` can found by running `managed_kafka.sh --list` and also bootstrap host to the cluster in same response.
+1. Run the following to give the current user the permissions to create a topic and group. For the `<service-acct>` for below script take the service account from generated `app-services.properties` file
+
+
+   ```
+   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/rest/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"GROUP", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
+   ```
+   then for Topic
+   ```
+   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/rest/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"TOPIC", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
+   ```
+
+1. Then execute the your tool like `kafka-topics.sh --bootstrap-server <bootstrap-host>:443 --command-config app-services.properties --topic foo --create --partitions 9`
+1. if you created separate service account using above instructions, edit the `app-services.properties` file and update the username and password with `clientID` and `clientSecret`
+
 
 [git_tool]:https://git-scm.com/downloads
 [jq]:https://stedolan.github.io/jq/

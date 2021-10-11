@@ -61,7 +61,7 @@ function create_command() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
     -h | --help)
-      demo_usage
+      create_usage
       return 0
       ;;
     --red-hat-user)
@@ -80,7 +80,7 @@ function create_command() {
       shift
       ;;
     --* | -* | *)
-      demo_usage
+      create_usage
       echo
       fatal "unknown option '$1'"
       ;;

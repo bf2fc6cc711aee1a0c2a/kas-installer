@@ -55,6 +55,26 @@ Installer uses predefined bundle for installing Strimzi Operator, to use a diffe
 
 ---
 
+### Use the Managed Kafka UI
+
+To use the UI the prod.foo.redhat.com host has to be configured locally and a matching SSO user must be created.
+
+1. Retrieve the cluster IP
+   ```
+   nslookup "$(oc get route console -n openshift-console --template='{{ .spec.host }}')"
+   ```
+2. Add to the local `/etc/hosts` the cluster IP and the prod.foo.redhat.com hostname
+   ```
+   3.19.216.213    prod.foo.redhat.com
+   ```
+3. Create the current log-in ocm user on the cluster
+   ```
+   ./mas-ui/user.sh create
+   ```
+   > Note: you can use the --red-hat-* options to create a different user
+4. Open https://prod.foo.redhat.com/beta/application-services/ to start using the UI
+
+
 ## Using rhoas CLI
 
 Use `./rhoas_login.sh` as a short cut to login to the CLI.  Login using the username you specified as RH_USERNAME in the env file.  The password is the same as the RH_USERNAME value.

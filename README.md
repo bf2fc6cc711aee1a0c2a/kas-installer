@@ -73,20 +73,31 @@ The `managed_kafka.sh` script supports creating, listing, and deleting Kafka clu
 
 To use the Kafka Cluster that is created with the `managed_kafka.sh` script with command line tools like `kafka-topics.sh` or `kafka-console-consumer.sh` do the following.
 
-1. Generate the certificate and `app-services.properties` file, run `managed_kafka.sh --certgen <instance-id>` where `instance-id` can found by running `managed_kafka.sh --list` and also bootstrap host to the cluster in same response.
-1. Run the following to give the current user the permissions to create a topic and group. For the `<service-acct>` for below script take the service account from generated `app-services.properties` file
+1. Generate the certificate and `app-services.properties` file, run
 
+   ```managed_kafka.sh --certgen <instance-id>```
 
-   ```
-   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/rest/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"GROUP", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
-   ```
-   then for Topic
-   ```
-   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/rest/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"TOPIC", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
-   ```
+   where `instance-id` can found by running `managed_kafka.sh --list`.
+1. Take a note of the Bootstrap host address to the Kafka Instance in same response.
+1. To give the current user all the available permissions to Kafka Instance, run
 
-1. Then execute the your tool like `kafka-topics.sh --bootstrap-server <bootstrap-host>:443 --command-config app-services.properties --topic foo --create --partitions 9`
-1. if you created separate service account using above instructions, edit the `app-services.properties` file and update the username and password with `clientID` and `clientSecret`
+   ```acl.sh --allow-all```
+
+   To give access to single topic run
+
+   ```acl.sh --allow-topic <topic-name>```
+
+   To give access to a single consumer group, run
+
+   ```acl.sh --allow-group <group-name>```
+
+   NOTE: there are options to `deny` access too.
+
+1. Then execute the your command line tool as
+
+   ```kafka-topics.sh --bootstrap-server <bootstrap-host>:443 --command-config app-services.properties --topic <topic-name> --create --partitions 9```
+
+1. if you created separate service account using above instructions, edit the `app-services.properties` file and update the username and password with `clientID` and `clientSecret`, as above works for first service account it finds.
 
 
 [git_tool]:https://git-scm.com/downloads

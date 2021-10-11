@@ -1,0 +1,12 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: kas-strimzi-catalog
+  namespace: redhat-managed-kafka-operator
+  labels:
+    app: kas-fleetshard
+spec:
+  sourceType: grpc
+  image: quay.io/mk-ci-cd/kas-strimzi-bundle:index
+  displayName: Kas Strimzi Catalog
+  publisher: mk-ci-cd

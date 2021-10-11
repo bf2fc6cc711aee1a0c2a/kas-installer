@@ -14,44 +14,23 @@ else
   CP=$(which cp)
 fi
 
-if ! [ -d strimzi-cluster-operator/resources/security/tmp ]; then
-    mkdir strimzi-cluster-operator/resources/security/tmp
+if ! [ -d strimzi-cluster-operator/resources/tmp ]; then
+    mkdir strimzi-cluster-operator/resources/tmp
 fi
 
-rm -rf strimzi-cluster-operator/resources/security/tmp/*
+rm -rf strimzi-cluster-operator/resources/tmp/*
 
-${CP} -t strimzi-cluster-operator/resources/security/tmp/ strimzi-cluster-operator/resources/security/*.yaml
+${CP} -t strimzi-cluster-operator/resources/tmp/ strimzi-cluster-operator/resources/*.yaml
 
 ${SED} -i "s/namespace: .*/namespace: ${NAMESPACE}/" \
-    strimzi-cluster-operator/resources/security/tmp/*RoleBinding*.yaml
+    strimzi-cluster-operator/resources/tmp/*.yaml
 
 # Create the namespace if it's not found
 ${KUBECTL} get ns ${NAMESPACE} >/dev/null \
   || ${KUBECTL} create ns ${NAMESPACE}
 
-${KUBECTL} create clusterrolebinding strimzi-cluster-operator-namespaced \
-    --clusterrole=strimzi-cluster-operator-namespaced \
-    --serviceaccount ${NAMESPACE}:strimzi-cluster-operator
-${KUBECTL} label clusterrolebinding strimzi-cluster-operator-namespaced app=strimzi
-
-${KUBECTL} create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation \
-    --clusterrole=strimzi-entity-operator \
-    --serviceaccount ${NAMESPACE}:strimzi-cluster-operator
-${KUBECTL} label clusterrolebinding strimzi-cluster-operator-entity-operator-delegation app=strimzi
-
-${KUBECTL} create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation \
-    --clusterrole=strimzi-topic-operator \
-    --serviceaccount ${NAMESPACE}:strimzi-cluster-operator
-${KUBECTL} label clusterrolebinding strimzi-cluster-operator-topic-operator-delegation app=strimzi
-
-${KUBECTL} create -f strimzi-cluster-operator/resources/security/tmp -n ${NAMESPACE}
-${KUBECTL} create -f strimzi-cluster-operator/resources -n ${NAMESPACE}
-
-echo "Waiting until Strimzi Deployment is available..."
-${KUBECTL} wait --timeout=90s \
-    --for=condition=available \
-    deployment \
-    --namespace=${NAMESPACE} \
-    --selector app=strimzi
+${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-catalog-source.yaml
+${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-strimzi-opgroup.yaml
+${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-strimzi-subscription.yaml
 
 exit ${?}

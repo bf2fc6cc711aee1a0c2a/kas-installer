@@ -1,0 +1,39 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: user
+parameters:
+- name: RED_HAT_USERNAME
+  required: true
+- name: RED_HAT_USER_ID
+  required: true
+- name: RED_HAT_ORG_ID
+  required: true
+objects:
+- apiVersion: keycloak.org/v1alpha1
+  kind: KeycloakUser
+  metadata:
+    name: ${RED_HAT_USERNAME}
+    labels:
+      app: mas-sso
+  spec:
+    realmSelector:
+      matchLabels:
+        app: rhoas
+    user:
+      username: ${RED_HAT_USERNAME}
+      credentials:
+      - type: "password"
+        value: "${RED_HAT_USERNAME}"
+      enabled: True
+      clientRoles:
+        'realm-management': [ 'view-users' ]
+      attributes:
+        "rh-user-id": [ "${RED_HAT_USER_ID}" ]
+        "rh-org-id": [ "${RED_HAT_ORG_ID}" ]
+        "preferred_username": [ "${RED_HAT_USERNAME}" ]
+      access:
+         view: true
+         configure: true
+         manage: true

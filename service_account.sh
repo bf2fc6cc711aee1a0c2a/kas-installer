@@ -24,8 +24,8 @@ create() {
 
         exit 1
     fi
-
-    echo ${RESPONSE}
+    
+    echo ${RESPONSE} 
 }
 
 list() {

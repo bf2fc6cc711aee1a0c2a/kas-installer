@@ -2,4 +2,3 @@ apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
   name: kas-strimzi-opgroup
-  namespace: redhat-managed-kafka-operator

@@ -33,8 +33,8 @@ ${KUBECTL} get ns ${NAMESPACE} >/dev/null \
 ${SED} -i "s/image: .*/image: ${BUNDLE_IMAGE}/" \
     strimzi-cluster-operator/resources/tmp/*.yaml
 
-${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-catalog-source.yaml
-${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-strimzi-opgroup.yaml
-${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-strimzi-subscription.yaml
+${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-catalog-source.yaml -n ${NAMESPACE}
+${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-strimzi-opgroup.yaml -n ${NAMESPACE}
+${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-strimzi-subscription.yaml -n ${NAMESPACE}
 
 exit ${?}

@@ -2,6 +2,7 @@
 
 OS=$(uname)
 NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE:-redhat-managed-kafka-operator}
+BUNDLE_IMAGE=${STRIMZI_OPERATOR_BUNDLE_IMAGE:-quay.io\\\/mk-ci-cd\\\/kas-strimzi-bundle:index}
 KUBECTL=$(which kubectl)
 
 if [ "$OS" = 'Darwin' ]; then
@@ -28,6 +29,9 @@ ${SED} -i "s/namespace: .*/namespace: ${NAMESPACE}/" \
 # Create the namespace if it's not found
 ${KUBECTL} get ns ${NAMESPACE} >/dev/null \
   || ${KUBECTL} create ns ${NAMESPACE}
+
+${SED} -i "s/image: .*/image: ${BUNDLE_IMAGE}/" \
+    strimzi-cluster-operator/resources/tmp/*.yaml
 
 ${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-catalog-source.yaml
 ${KUBECTL} create -f strimzi-cluster-operator/resources/tmp/kas-strimzi-opgroup.yaml

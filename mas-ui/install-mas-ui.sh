@@ -30,7 +30,7 @@ PROXY_NGINX_IMAGE=${PROXY_NGINX_IMAGE:-"quay.io/app-sre/ubi8-nginx-118"}
 PROXY_OPENSHIFT_API_URL=${PROXY_OPENSHIFT_API_URL:-"https://api.openshift.com/"}
 
 PROXY_VARNISH_IMAGE=${PROXY_VARNISH_IMAGE:-"varnish"}
-PROXY_CONSOLE_UI_URI=${PROXY_CONSOLE_UI_URI:-"https://console.redhat.com/"}
+PROXY_CONSOLE_UI_URL=${PROXY_CONSOLE_UI_URL:-"https://console.redhat.com/"}
 
 APPLICATION_SERVICES_UI_IMAGE=${APPLICATION_SERVICES_UI_IMAGE:-'application-services-ui'}
 APPLICATION_SERVICES_UI_TAG=${APPLICATION_SERVICES_TAG:-'latest'}
@@ -114,6 +114,24 @@ ${OC} process -f "${ROOT}/proxy-openshift-api.yml" --local -p \
 
 PROXY_API_URL="https://$(${OC} get route api -n "${NAMESPACE}" --template='{{ .spec.host }}')"
 
+## Varnish UI
+info "deploy varnish cache proxy"
+${OC} process -f "${ROOT}/varnish-ui.yml" --local -p \
+  VARNISH_IMAGE="${PROXY_VARNISH_IMAGE}" |
+  ${OC} apply -f - -n "${NAMESPACE}"
+
+VARNISH_UI_HOST="$(${OC} get route ui -n "${NAMESPACE}" --template='{{ .spec.host }}')"
+VARNISH_UI_URL="https://${VARNISH_UI_HOST}"
+
+## Proxy SSO
+info "deploy sso proxy"
+${OC} process -f "${ROOT}/proxy-redhat-sso.yml" --local -p \
+  NGINX_IMAGE="${PROXY_NGINX_IMAGE}" \
+  REDIRECT_URL="${VARNISH_UI_URL}" |
+  ${OC} apply -f - -n "${NAMESPACE}"
+
+PROXY_SSO_URL="https://$(${OC} get route sso -n "${NAMESPACE}" --template='{{ .spec.host }}')"
+
 ## Application Services UI
 info "deploy application-services-ui"
 ${OC} process -f "${ROOT}/application-services-ui.yml" --local -p \
@@ -121,13 +139,16 @@ ${OC} process -f "${ROOT}/application-services-ui.yml" --local -p \
   MAS_SSO_URL="${MAS_SSO_URL}" \
   KAS_API_URL="${KAS_API_URL}" \
   AMS_API_URL="${PROXY_API_URL}" \
-  SRS_API_URL="${PROXY_API_URL}" |
+  SRS_API_URL="${PROXY_API_URL}" \
+  UI_HOST="${VARNISH_UI_HOST}" |
   ${OC} apply -f - -n "${NAMESPACE}"
 
 # Proxy UI
 info "deploy ui proxy"
 ${OC} process -f "${ROOT}/proxy-console-ui.yml" --local -p \
   NGINX_IMAGE="${PROXY_NGINX_IMAGE}" \
-  VARNISH_IMAGE="${PROXY_VARNISH_IMAGE}" \
-  CONSOLE_UI_URI="${PROXY_CONSOLE_UI_URI}" |
+  CONSOLE_UI_URL="${PROXY_CONSOLE_UI_URL}" \
+  PROXY_SSO_URL="${PROXY_SSO_URL}" |
   ${OC} apply -f - -n "${NAMESPACE}"
+
+info "MAS UI ready at: ${VARNISH_UI_URL}"

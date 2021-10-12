@@ -1,0 +1,122 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: proxy-redhat-sso
+parameters:
+  - name: NGINX_IMAGE
+    value: quay.io/app-sre/ubi8-nginx-118
+    required: true
+  - name: REDIRECT_URL
+    required: true
+objects:
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: proxy-redhat-sso
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: proxy-redhat-sso
+      template:
+        metadata:
+          labels:
+            app: proxy-redhat-sso
+        spec:
+          containers:
+            - name: proxy
+              image: bitnami/openresty
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              volumeMounts:
+                - name: config
+                  mountPath: /opt/bitnami/openresty/nginx/conf/bitnami/proxy.conf
+                  subPath: proxy.conf
+              imagePullPolicy: Always
+          volumes:
+            - name: config
+              configMap:
+                name: proxy-redhat-sso-config
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: proxy-redhat-sso-config
+    data:
+      proxy.conf: |-
+
+        error_log /opt/bitnami/openresty/nginx/logs/error.log;
+
+        location / {
+
+          lua_need_request_body on;
+
+          # Replace the redirect_uri in the query or post request
+          # the regex match any https:// url that is not https://console.redhat.com
+          rewrite_by_lua_block {
+            local regex = "^https://(?!console\\.redhat\\.com)[^/]+"
+            local replace = "https://console.redhat.com"
+
+            local args = ngx.req.get_uri_args()
+            if args["redirect_uri"] ~= nil then
+              args["redirect_uri"] = ngx.re.sub(args["redirect_uri"], regex, replace)
+              ngx.req.set_uri_args(args)
+            end
+
+            local data = ngx.req.get_post_args()
+            if data["redirect_uri"] ~= nil then
+              data["redirect_uri"] = ngx.re.sub(data["redirect_uri"], regex, replace)
+              ngx.req.set_body_data(ngx.encode_args(data))
+            end
+          }
+
+          # Allow Cross-Origin
+          if ($http_origin = ''){
+            set $http_origin "*";
+          }
+          add_header Access-Control-Allow-Origin "$http_origin";
+          add_header Access-Control-Allow-Credentials true;
+          add_header Access-Control-Allow-Headers *;
+
+          # Proxy the request to the real Red Hat SSO
+          proxy_http_version    1.1;
+          proxy_set_header      Accept-Encoding "";
+          proxy_pass            https://sso.redhat.com/;
+          proxy_cookie_domain   redhat.com intlyqe.com; # TODO: Test without
+          proxy_buffers         8 16k;
+          proxy_buffer_size     16k;
+
+          # If the reponse containse sso.redhat.com substitute it with the proxy host
+          sub_filter            'sso.redhat.com' "$host";
+
+          proxy_redirect        https://console.redhat.com ${REDIRECT_URL};
+        }
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: proxy-redhat-sso
+    spec:
+      selector:
+        app: proxy-redhat-sso
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 8080
+
+  - kind: Route
+    apiVersion: route.openshift.io/v1
+    metadata:
+      name: sso
+    spec:
+      to:
+        kind: Service
+        name: proxy-redhat-sso
+      port:
+        targetPort: 8080
+      tls:
+        termination: edge

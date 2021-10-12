@@ -15,6 +15,8 @@ parameters:
     required: true
   - name: SRS_API_URL
     required: true
+  - name: UI_HOST
+    required: true
 
 objects:
   - kind: Deployment
@@ -43,14 +45,20 @@ objects:
                   protocol: TCP
               volumeMounts:
                 - name: config
-                  mountPath: /opt/app-root/src/dist/config.json
+                  mountPath: /opt/app-root/src/config.json
                   subPath: config.json
+                - name: nginx-config
+                  mountPath: /opt/app-root/etc/nginx.default.d/nginx.conf
+                  subPath: nginx.conf
               imagePullPolicy: Always
 
           volumes:
             - name: config
               configMap:
                 name: application-services-ui-config
+            - name: nginx-config
+              configMap:
+                name: application-services-ui-nginx-config
 
           restartPolicy: Always
           terminationGracePeriodSeconds: 30
@@ -90,10 +98,7 @@ objects:
           },
           "config": [
             {
-              "hostnames": [
-                "prod.foo.redhat.com"
-              ],
-              "fetchConfig": true,
+              "hostnames": ["${UI_HOST}"],
               "config": {
                 "serviceDown": false,
                 "guides": {
@@ -149,6 +154,20 @@ objects:
               }
             }
           ]
+        }
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: application-services-ui-nginx-config
+    data:
+      nginx.conf: |-
+        location / {
+          try_files         $uri /index.html;
+
+          sub_filter        'prod.foo.redhat.com' '${UI_HOST}';
+          sub_filter_once   off;
+          sub_filter_types  *;
         }
 
   - apiVersion: v1

@@ -33,6 +33,9 @@ BOOTSTRAP_HOST=$(echo ${MK_SMOKE} | jq -r .bootstrap_server_host)
 ADMIN_SERVER_HOST="admin-server-$(echo ${BOOTSTRAP_HOST} | cut -d':' -f 1)" # Remove the port
 SMOKE_TOPIC="smoke_topic"
 
+acl 'TOPIC' ${SMOKE_TOPIC}
+acl 'GROUP' '*'
+
 curl -sXPOST -H'Content-type: application/json' \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   --data '{ "name":"'${SMOKE_TOPIC}'", "settings": { "numPartitions":3, "config": [] } }' \
@@ -74,3 +77,13 @@ if [ "${SMOKE_MESSAGE_OUT}" = "${SMOKE_MESSAGE}" ] ; then
 else
     echo "Failed smoke test: '${SMOKE_MESSAGE_OUT}'"
 fi
+
+acl() {
+    ACL_BODY='{"resourceType":"'${1}'","resourceName":"'${2}'","patternType":"LITERAL","principal":"User:'${SA_CLIENT_ID}'","operation":"ALL","permission":"ALLOW"}'
+    ACL_RESPONSE=$(curl -s  -H"Authorization: Bearer ${ACCESS_TOKEN}" ${ADMIN_SERVER_HOST} -XPOST -H'Content-type: application/json' --data ${ACL_BODY})
+
+    ACL_CODE=$(echo "${ACL_RESPONSE}" | jq .code)
+    if [ ${ACL_CODE} -ne 200 ] ; then
+        echo "granting acl operation failed!"
+    fi
+}

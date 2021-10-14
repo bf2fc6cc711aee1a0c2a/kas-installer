@@ -126,6 +126,7 @@ install_mas_sso() {
   export DOCKER_USER_NAME=${IMAGE_REPOSITORY_USERNAME}
   export DOCKER_PASSWORD=${IMAGE_REPOSITORY_PASSWORD}
   export MAS_SSO_NAMESPACE=mas-sso
+  export RH_USERNAME RH_USER_ID RH_ORG_ID
 
   if [ "${SKIP_SSO:-""}n" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
     echo "MAS SSO route not found or SKIP_SSO not configured, installing MAS SSO ..."

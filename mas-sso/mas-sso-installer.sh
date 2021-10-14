@@ -48,7 +48,6 @@ echo "MAS SSO is ready $($OC get route keycloak -n $NAMESPACE -o go-template={{.
 $OC create -f mas-sso/realms/realm-rhoas.yaml
 $OC create -f mas-sso/realms/realm-rhoas-kafka-sre.yaml
 
-$OC create -f mas-sso/clients/kafka-admin.yaml
 $OC create -f mas-sso/clients/strimzi-ui.yaml
 $OC create -f mas-sso/clients/rhoas-cli.yaml
 

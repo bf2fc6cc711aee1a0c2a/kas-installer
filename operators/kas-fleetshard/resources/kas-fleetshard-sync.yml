@@ -120,7 +120,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-sync
-        image: quay.io/mk-ci-cd/kas-fleetshard-sync:0.13.1
+        image: quay.io/mk-ci-cd/kas-fleetshard-sync:0.14.2
         env:
         - name: KUBERNETES_NAMESPACE
           valueFrom:

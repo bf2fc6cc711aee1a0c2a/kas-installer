@@ -40,9 +40,8 @@ delete() {
     local BODY=$(echo "${RESPONSE}" | head -n 1)
     local CODE=$(echo "${RESPONSE}" | tail -n -1)
 
-    echo "Status code: ${CODE}"
-
     if [ ${CODE} -ge 400 ] ; then
+        echo "Status code: ${CODE}"
         # Pretty print
         echo "${BODY}" | jq
     else

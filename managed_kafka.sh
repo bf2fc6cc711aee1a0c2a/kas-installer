@@ -127,7 +127,7 @@ certgen() {
     KAFKA_CERT=$(mktemp)
     KAFKA_INSTANCE_NAMESPACE='kafka-'$(echo ${KAFKA_RESOURCE} | jq -r .id  | tr '[:upper:]' '[:lower:]')
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${KAFKA_CERT}
-    keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mkinstance -file ${KAFKA_CERT}
+    keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mk${KAFKA_ID} -file ${KAFKA_CERT}
     rm ${KAFKA_CERT}
 
     if [ -z "${SA_CLIENT_ID:-}" ] ; then

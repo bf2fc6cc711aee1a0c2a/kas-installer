@@ -89,6 +89,17 @@ objects:
           access.token.claim: 'true'
           claim.name: preferred_username
           jsonType.label: String
+      - name: is_org_admin
+        protocol: openid-connect
+        protocolMapper: oidc-hardcoded-claim-mapper
+        consentRequired: false
+        config:
+          userinfo.token.claim: 'true'
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: is_org_admin
+          claim.value: 'true'
+          jsonType.label: boolean
       access:
          view: true
          configure: true

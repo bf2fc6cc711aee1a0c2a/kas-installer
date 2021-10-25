@@ -14,6 +14,7 @@ in a single K8s cluster.
 * oc
 * kubectl
 * openssl CLI tool
+* rhoas CLI (https://github.com/redhat-developer/app-services-cli)
 * A user with administrative privileges in the OpenShift cluster
 * brew coreutils (Mac only)
 * OSD Cluster with the following specs:
@@ -47,6 +48,33 @@ same cluster set in the user's kubeconfig file.
 1. Run the KAS installer `kas-installer.sh` to deploy and configure Managed
    Kafka Service
 1. Run `uninstall.sh` to remove KAS from the cluster.  You should remove any deployed Kafkas before runnig this script.
+
+
+## Using rhoas CLI
+
+Use `./rhoas_login.sh` as a short cut to login to the CLI.  Login using the username you specified as RH_USERNAME in the env file.  The password is the same as the RH_USERNAME value.
+
+There are a couple of things that are expected not to work when using the RHOAS CLI with a kas-installer installed instance.  These are noted below.
+
+### Service Account Maintenace
+
+1. To create an account, run `rhoas service-account create --short-description foo --file-format properties`. 
+1. To list existing service accounts, run `rhoas service-account list`.
+1. To remove an existing service account, run `rhoas service-account delete --id=<ID of service account>`.
+
+### Kafka Instance Maintenance
+
+1. To create a cluster, run `rhoas kafka create --bypass-terms-check --provider aws --region us-east-1 --name <clustername>`.  Note that `--bypass-terms-check` is required as the T&Cs endpoint will not
+   exist in your environment. The provider and region must be passed on the command line.
+1. To list existing clusters, run `rhoas kafka list`
+1. To remove an existing cluster, run `rhoas kafka delete --name <clustername>`.
+
+Note: that managing ACLs via rhoas cli does not work yet (in kas-installer admin-server currently runs over plain).
+
+## Legacy scripts
+
+Please favour using the rhoas command line.  These scripts will be remove at some point soon.
+
 ### Service Account Maintenance
 
 The `service_account.sh` script supports creating, listing, and deleting service accounts.

@@ -97,8 +97,16 @@ spec:
                   properties:
                     ready:
                       type: boolean
+                    kafkaIbpVersions:
+                      items:
+                        type: string
+                      type: array
                     version:
                       type: string
+                    kafkaVersions:
+                      items:
+                        type: string
+                      type: array
                   required:
                   - ready
                   - version

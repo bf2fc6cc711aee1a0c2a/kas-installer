@@ -51,6 +51,8 @@ spec:
                 type: array
               versions:
                 properties:
+                  kafkaIbp:
+                    type: string
                   kafka:
                     type: string
                   strimzi:
@@ -88,6 +90,8 @@ spec:
                 properties:
                   jwksEndpointURI:
                     type: string
+                  maximumSessionLifetime:
+                    type: number
                   validIssuerEndpointURI:
                     type: string
                   customClaimCheck:
@@ -149,6 +153,8 @@ spec:
                 type: array
               versions:
                 properties:
+                  kafkaIbp:
+                    type: string
                   kafka:
                     type: string
                   strimzi:

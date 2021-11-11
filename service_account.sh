@@ -82,7 +82,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "${ACCESS_TOKEN}" ] ; then
-    ACCESS_TOKEN="$(ocm token)"
+    ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner)"
 fi
 
 case "${OPERATION}" in

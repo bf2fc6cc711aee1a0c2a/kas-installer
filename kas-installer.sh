@@ -49,6 +49,14 @@ read_kas_installer_env_file() {
       fi
   fi
 
+  for var in RH_USERNAME RH_USER_ID RH_ORG_ID
+  do
+    if [ -z ${!var+x} ]; then
+      echo "Exiting ${0} $var must be specified in ${KAS_INSTALLER_ENV_FILE}"
+      exit 1
+    fi
+  done
+
   # Apply Default values for the optional .env variables
   KAS_FLEET_MANAGER_IMAGE_REGISTRY=${KAS_FLEET_MANAGER_IMAGE_REGISTRY:-quay.io}
   KAS_FLEET_MANAGER_IMAGE_REPOSITORY=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY:-bf2fc6cc711aee1a0c2a82e312df7f2e6b37baa12bd9b1f2fd752e260d93a6f8144ac730947f25caa2bfe6ad0f410da360940ee6d28d6c1688d3822c4055650e/kas-fleet-manager}

@@ -184,6 +184,7 @@ deploy_kasfleetmanager() {
     -p KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD="${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}" \
     -p KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC="${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}" \
     -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \
+    -p TOKEN_ISSUER_URL="$(${KUBECTL} get route -n mas-sso keycloak -o jsonpath='https://{.status.ingress[0].host}/auth/realms/rhoas')" \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Waiting until KAS Fleet Manager Deployment is available..."

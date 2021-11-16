@@ -11,7 +11,7 @@ ${KUBECTL} delete clusterrolebinding strimzi-cluster-operator-topic-operator-del
 CSV=$(${KUBECTL} get subscription kas-strimzi-subscription -n ${NAMESPACE} -o json | jq -r '.status.installedCSV')
 ${KUBECTL} delete subscription kas-strimzi-subscription -n ${NAMESPACE}
 ${KUBECTL} delete csv ${CSV} -n ${NAMESPACE}
-${KUBECTL} delete operatorgroup kas-strimzi-opgroup -n ${NAMESPACE}
+${KUBECTL} delete operatorgroup kas-strimzi-bundle -n ${NAMESPACE}
 ${KUBECTL} delete catalogsource kas-strimzi-catalog -n ${NAMESPACE}
 
 # remove all CRDs

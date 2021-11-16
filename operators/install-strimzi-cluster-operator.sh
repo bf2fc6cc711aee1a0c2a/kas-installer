@@ -2,8 +2,9 @@
 
 OS=$(uname)
 NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE:-redhat-managed-kafka-operator}
-BUNDLE_IMAGE=${STRIMZI_OPERATOR_BUNDLE_IMAGE:-quay.io\\\/mk-ci-cd\\\/kas-strimzi-bundle:index}
+BUNDLE_IMAGE=${STRIMZI_OPERATOR_BUNDLE_IMAGE:-quay.io/mk-ci-cd/kas-strimzi-bundle:index}
 KUBECTL=$(which kubectl)
+OC=$(which oc)
 
 if [ "$OS" = 'Darwin' ]; then
   # for MacOS
@@ -17,10 +18,6 @@ fi
 ${KUBECTL} get ns ${NAMESPACE} >/dev/null \
   || ${KUBECTL} create ns ${NAMESPACE}
 
-CATALOG_SOURCE_YAML=$(< strimzi-cluster-operator/kas-catalog-source.yaml)
-
-echo "$CATALOG_SOURCE_YAML" | sed "s/image: .*/image: ${BUNDLE_IMAGE}/" | ${KUBECTL} create -n ${NAMESPACE} -f -
-${KUBECTL} create -f strimzi-cluster-operator/kas-strimzi-opgroup.yaml -n ${NAMESPACE}
-${KUBECTL} create -f strimzi-cluster-operator/kas-strimzi-subscription.yaml -n ${NAMESPACE}
+$OC process -f kas-strimzi-bundle-template.yaml -p BUNDLE_IMAGE=${BUNDLE_IMAGE} -p NAMESPACE=${NAMESPACE} | $OC create -f -
 
 exit ${?}

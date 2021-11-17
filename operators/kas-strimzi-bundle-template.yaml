@@ -25,7 +25,7 @@ objects:
       app.kubernetes.io/part-of: managed-kafka
       app.kubernetes.io/component: strimzi-bundle
   spec:
-    channel: stable
+    channel: alpha
     installPlanApproval: Manual
     name: kas-strimzi-bundle
     source: kas-strimzi-catalog

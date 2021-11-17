@@ -21,9 +21,42 @@ CREATE_NAME='<NONE>'
 REQUEST_BODY=''
 OP_KAFKA_ID='<NONE>'
 ACCESS_TOKEN=''
+REFRESH_EXPIRED_TOKENS='false'
 ADMIN_OPERATION='false'
 
 access_token() {
+    local FETCH_TOKEN='false'
+
+    if [ -z "${ACCESS_TOKEN}" ] ; then
+        FETCH_TOKEN='true'
+    elif [ "${REFRESH_EXPIRED_TOKENS}" = "true" ] ; then
+        # Extract expiration from token and compare to current date
+        EXP=$(echo "${ACCESS_TOKEN}" | awk -F. '{ printf "%s", $2 }' | ${BASE64} -d 2>/dev/null | jq -r .exp)
+
+        if [ $(date "+%s") -gt ${EXP:-0} ] ; then
+            # Current date is after token expiration time, refresh the token
+            FETCH_TOKEN='true'
+        fi
+    fi
+
+    if [ "${FETCH_TOKEN}" = "true" ] ; then
+        if [ "${ADMIN_OPERATION}" = "true" ] ; then
+            USER=kafka-admin
+            PWD=kafka-admin
+            REALM=rhoas-kafka-sre
+            ACCESS_TOKEN="$(export KEYCLOAK_REALM=${REALM} && ${DIR_NAME}/get_access_token.sh ${USER} ${PWD} 2>/dev/null)"
+        else
+            USER=owner
+            ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
+        fi
+
+        retVal=$?
+        if [ ${retVal} -ne 0 ]; then
+            echo "Failed to get access token for ${USER}: ${retVal}"
+            exit 1
+        fi
+    fi
+
     echo "${ACCESS_TOKEN}"
 }
 
@@ -210,20 +243,7 @@ fi
 
 
 if [ -z "${ACCESS_TOKEN}" ] ; then
-    if [ "${ADMIN_OPERATION}" = "true" ] ; then
-        USER=kafka-admin
-        PWD=kafka-admin
-        REALM=rhoas-kafka-sre
-        ACCESS_TOKEN="$(export KEYCLOAK_REALM=${REALM} && ${DIR_NAME}/get_access_token.sh ${USER} ${PWD} 2>/dev/null)"
-    else
-        USER=owner
-        ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
-    fi
-    retVal=$?
-    if [ ${retVal} -ne 0 ]; then
-        echo "Failed to get access token for ${USER}: ${retVal}"
-        exit 1
-    fi
+    REFRESH_EXPIRED_TOKENS='true'
 fi
 
 case "${OPERATION}" in

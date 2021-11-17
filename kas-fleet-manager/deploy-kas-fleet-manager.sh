@@ -138,20 +138,20 @@ deploy_kasfleetmanager() {
   echo "Deploying KAS Fleet Manager Database..."
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/db-template.yml | oc apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
   echo "Waiting until KAS Fleet Manager Database is ready..."
-	time timeout --foreground 3m bash -c "until ${OC} get pods -n ${KAS_FLEET_MANAGER_NAMESPACE}| grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
+  time timeout --foreground 3m bash -c "until ${OC} get pods -n ${KAS_FLEET_MANAGER_NAMESPACE}| grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
 
   echo "Deploying KAS Fleet Manager K8s Secrets..."
-	${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml \
-		-p OCM_SERVICE_CLIENT_ID="dummyclient" \
-		-p OCM_SERVICE_CLIENT_SECRET="dummysecret" \
+  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml \
+    -p OCM_SERVICE_CLIENT_ID="dummyclient" \
+    -p OCM_SERVICE_CLIENT_SECRET="dummysecret" \
     -p OBSERVABILITY_CONFIG_ACCESS_TOKEN="${OBSERVABILITY_CONFIG_ACCESS_TOKEN}" \
-		-p MAS_SSO_CLIENT_ID="${MAS_SSO_CLIENT_ID}" \
-		-p MAS_SSO_CLIENT_SECRET="${MAS_SSO_CLIENT_SECRET}" \
-		-p MAS_SSO_CRT="${MAS_SSO_CRT}" \
-		-p KAFKA_TLS_CERT="${KAFKA_TLS_CERT}" \
-		-p KAFKA_TLS_KEY="${KAFKA_TLS_KEY}" \
-		-p DATABASE_HOST="$(${KUBECTL} get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
-		| ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
+    -p MAS_SSO_CLIENT_ID="${MAS_SSO_CLIENT_ID}" \
+    -p MAS_SSO_CLIENT_SECRET="${MAS_SSO_CLIENT_SECRET}" \
+    -p MAS_SSO_CRT="${MAS_SSO_CRT}" \
+    -p KAFKA_TLS_CERT="${KAFKA_TLS_CERT}" \
+    -p KAFKA_TLS_KEY="${KAFKA_TLS_KEY}" \
+    -p DATABASE_HOST="$(${KUBECTL} get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
+    | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Deploying KAS Fleet Manager Envoy ConfigMap..."
   ${OC} apply -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/envoy-config-configmap.yml -n ${KAS_FLEET_MANAGER_NAMESPACE}
@@ -174,7 +174,19 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
     -p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
     -p ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE="false" \
-    -p DATAPLANE_CLUSTER_SCALING_TYPE="none" \
+    -p DATAPLANE_CLUSTER_SCALING_TYPE="manual" \
+    -p CLUSTER_LIST='
+- "name": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'"
+  "cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'"
+  "cloud_provider": "aws"
+  "region": "'${DATA_PLANE_CLUSTER_REGION}'"
+  "multi_az": true
+  "schedulable": true
+  "kafka_instance_limit": 5
+  "supported_instance_type": "standard,eval"
+  "status": "ready"
+  "cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"
+' \
     -p REPLICAS=1 \
     -p STRIMZI_OPERATOR_VERSION="${STRIMZI_OPERATOR_VERSION}" \
     -p KAFKA_CAPACITY_INGRESS_THROUGHPUT="${KAFKA_CAPACITY_INGRESS_THROUGHPUT}" \
@@ -337,7 +349,7 @@ disable_observability_operator_extras
 wait_for_observability_operator_availability
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager
-add_dataplane_cluster_to_kasfleetmanager_db
+#####add_dataplane_cluster_to_kasfleetmanager_db
 
 cd ${ORIGINAL_DIR}
 

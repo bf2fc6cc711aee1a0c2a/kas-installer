@@ -8,6 +8,6 @@ spec:
   source: observability-operator-manifests
   channel: alpha
   sourceNamespace: managed-application-services-observability
-  startingCSV: observability-operator.v3.0.7
+  startingCSV: observability-operator.v3.0.1
   installPlanApproval: Automatic
   name: observability-operator

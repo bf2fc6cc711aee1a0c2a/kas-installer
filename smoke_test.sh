@@ -91,13 +91,13 @@ SMOKE_MESSAGE="Smoke message from $(date)"
 echo "${SMOKE_MESSAGE}" > ${MSG_FILE}
 
 PARGS=()
-SARGS=()
+CARGS=()
 if [ "${KCAT}" ]; then
     CMD=${KCAT}
 else
     CMD=docker
-    PARGS=(run --rm --mount type=bind,source=${MSG_FILE},target=${MSG_FILE} --network=host edenhill/kafkacat:1.7.0)
-    SARGS=(run --rm --network=host edenhill/kafkacat:1.7.0)
+    PARGS=(run --rm --mount type=bind,source=${MSG_FILE},target=${MSG_FILE} --network=host edenhill/kcat:1.7.0)
+    CARGS=(run --rm --network=host edenhill/kcat:1.7.0)
 fi
 
 ${CMD} \

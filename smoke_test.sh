@@ -3,6 +3,10 @@
 OS=$(uname)
 KUBECTL=$(which kubectl)
 DIR_NAME="$(dirname $0)"
+if [ $(type -P "kcat") ]; then
+  KCAT=$(which kcat)
+fi
+
 source ${DIR_NAME}/kas-installer.env
 MK_EXISTING_ID=${1}
 DELETE_INSTANCE='true'
@@ -86,7 +90,18 @@ MSG_FILE=$(mktemp)
 SMOKE_MESSAGE="Smoke message from $(date)"
 echo "${SMOKE_MESSAGE}" > ${MSG_FILE}
 
-docker run --rm --mount type=bind,source=${MSG_FILE},target=${MSG_FILE} --network=host edenhill/kafkacat:1.6.0 \
+PARGS=()
+CARGS=()
+if [ "${KCAT}" ]; then
+    CMD=${KCAT}
+else
+    CMD=docker
+    PARGS=(run --rm --mount type=bind,source=${MSG_FILE},target=${MSG_FILE} --network=host edenhill/kcat:1.7.0)
+    CARGS=(run --rm --network=host edenhill/kcat:1.7.0)
+fi
+
+${CMD} \
+ ${PARGS[@]} \
  -t "${SMOKE_TOPIC}" \
  -b "${BOOTSTRAP_HOST}" \
  -X security.protocol=SASL_SSL \
@@ -100,7 +115,8 @@ rm ${MSG_FILE}
 
 echo "Smoke message sent to topic: [${SMOKE_MESSAGE}]"
 
-SMOKE_MESSAGE_OUT=$(docker run --rm --network=host edenhill/kafkacat:1.6.0 \
+SMOKE_MESSAGE_OUT=$(${CMD} \
+ ${CARGS[@]} \
  -t "${SMOKE_TOPIC}" \
  -b "${BOOTSTRAP_HOST}" \
  -X security.protocol=SASL_SSL \

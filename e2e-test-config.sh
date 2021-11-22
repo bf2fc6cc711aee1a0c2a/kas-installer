@@ -55,7 +55,7 @@ cat <<EOF
   "OPENSHIFT_IDENTITY_CLIENT_ID_ENV": "rhoas-cli-prod",
   "OPENSHIFT_IDENTITY_LOGIN_FORM_ID": "#kc-form-login",
 
-  "KAFKA_API_TLS": "https+insecure",
+  "KAFKA_INSECURE_TLS": "true",
 
   "OPENSHIFT_API_URI": "https://kas-fleet-manager-kas-fleet-manager-medgar.${DATA_PLANE_CLUSTER_DNS_NAME}"
 }

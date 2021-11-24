@@ -50,13 +50,13 @@ spec:
             - name: STRIMZI_OPERATION_TIMEOUT_MS
               value: "300000"
             - name: STRIMZI_DEFAULT_TLS_SIDECAR_ENTITY_OPERATOR_IMAGE
-              value: quay.io/mk-ci-cd/kafka-27@sha256:51b1607caab2e17a0c8bc434b07751859b431ac1bd6048e52a6ea6f04d6edba7
+              value: quay.io/mk-ci-cd/kafka-28@sha256:51b1607caab2e17a0c8bc434b07751859b431ac1bd6048e52a6ea6f04d6edba7
             - name: STRIMZI_DEFAULT_KAFKA_EXPORTER_IMAGE
-              value: quay.io/mk-ci-cd/kafka-27@sha256:51b1607caab2e17a0c8bc434b07751859b431ac1bd6048e52a6ea6f04d6edba7
+              value: quay.io/mk-ci-cd/kafka-28@sha256:51b1607caab2e17a0c8bc434b07751859b431ac1bd6048e52a6ea6f04d6edba7
             - name: STRIMZI_DEFAULT_CRUISE_CONTROL_IMAGE
-              value: quay.io/mk-ci-cd/kafka-27@sha256:51b1607caab2e17a0c8bc434b07751859b431ac1bd6048e52a6ea6f04d6edba7
+              value: quay.io/mk-ci-cd/kafka-28@sha256:51b1607caab2e17a0c8bc434b07751859b431ac1bd6048e52a6ea6f04d6edba7
             - name: STRIMZI_DEFAULT_TLS_SIDECAR_CRUISE_CONTROL_IMAGE
-              value: quay.io/mk-ci-cd/kafka-27@sha256:51b1607caab2e17a0c8bc434b07751859b431ac1bd6048e52a6ea6f04d6edba7
+              value: quay.io/mk-ci-cd/kafka-28@sha256:51b1607caab2e17a0c8bc434b07751859b431ac1bd6048e52a6ea6f04d6edba7
             - name: STRIMZI_KAFKA_IMAGES
               value: |
                 2.7.0=quay.io/mk-ci-cd/kafka-27@sha256:c12c2b8282bf5731584d9dfacc1e98b0e6f7d2c1aa5ba9c00cfe02a3eded9234

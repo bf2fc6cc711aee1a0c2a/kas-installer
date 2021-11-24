@@ -31,7 +31,7 @@ spec:
         - name: rhoas-image-pull-secret
       containers:
         - name: strimzi-cluster-operator
-          image: quay.io/mk-ci-cd/strimzi-operator@sha256:d67312cfa4afbd4fdf1ceeb14ebde59951a0f12e09d6d3b67b57c3489e498527
+          image: quay.io/mk-ci-cd/strimzi-operator@sha256:192735acb1e8561fc8a8487490b20e6d677ab60ae8e560c92f0ecffe0ec8f02e
           ports:
             - containerPort: 8080
               name: http

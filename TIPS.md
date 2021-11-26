@@ -6,8 +6,8 @@ When wanting to test the upgrade of strimzi, end to end, the rhosak bundle needs
 
 By default, fleetmanager will always chose the latest strimzi when a new kafka instance is created.  The easiest way to trick the system into creating
 a kafka instance with a previous version is to edit the strimzi deployment and change the `app.kubernetes.io/part-of` label on the strimzi deployment of
-the newer strimzi to a value other than `managed-kafka` (e.g. `managed-kafkaX`).  Fleetshard will ignored the deployment and not advertise the the version
-to Fleet Mangaer.
+the newer strimzi to a value other than `managed-kafka` (e.g. `managed-kafkaX`).  Fleetshard will ignore the deployment and not advertise the the version
+to Fleet Mangaer.  Check this by inspecting the `managedkafkaagent` resource.
 
 You can then create an instance:
 
@@ -15,11 +15,13 @@ You can then create an instance:
 rhoas  kafka create --bypass-terms-check --provider aws --region us-east-1 --name foobar
 ```
 
-Check the component versions:
+Check the component versions are as you expect:
 
 ```
 ./managed_kafka.sh --admin --get c6ggs2ap1fc4s45jpa70  | jq
 ```
+
+Now backout the label change made above and check the `managedkafkaagent` resource to ensure all versions are reported.
 
 To cause the fleetmanager to upgrade directly, use a patch command like:
 

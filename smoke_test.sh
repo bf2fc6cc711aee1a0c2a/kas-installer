@@ -38,6 +38,12 @@ fi
 
 BOOTSTRAP_HOST=$(echo ${MK_SMOKE} | jq -r .bootstrap_server_host)
 ADMIN_SERVER_HOST="admin-server-$(echo ${BOOTSTRAP_HOST} | cut -d':' -f 1)" # Remove the port
+ADMIN_SERVER_SCHEME='https'
+
+if [ "$(curl -s -o /dev/null -w "%{http_code}" http://${ADMIN_SERVER_HOST}/rest/openapi)" = "200" ] ; then
+    ADMIN_SERVER_SCHEME='http'
+fi
+
 SMOKE_TOPIC="smoke_topic-$(${DATE} +%Y%j%H%M)"
 
 SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
@@ -60,10 +66,10 @@ if [ ${?} -ne 0 ] ; then
     exit 1
 fi
 
-curl -f -sXPOST -H'Content-type: application/json' \
+curl -f -skXPOST -H'Content-type: application/json' \
   -H "Authorization: Bearer $(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)" \
   --data '{"resourceType":"TOPIC", "resourceName":"'${SMOKE_TOPIC}'", "patternType":"LITERAL", "principal":"User:'${SA_CLIENT_ID}'", "operation":"ALL", "permission":"ALLOW"}' \
-  "http://${ADMIN_SERVER_HOST}/rest/acls"
+  "${ADMIN_SERVER_SCHEME}://${ADMIN_SERVER_HOST}/rest/acls"
 
 if [ ${?} -ne 0 ] ; then
     echo "Failed to grant topic permissions to service account!"
@@ -81,10 +87,10 @@ else
     echo "Obtained access token for service account"
 fi
 
-SMOKE_TOPIC_INFO=$(curl -sXPOST -H'Content-type: application/json' \
+SMOKE_TOPIC_INFO=$(curl -skXPOST -H'Content-type: application/json' \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   --data '{ "name":"'${SMOKE_TOPIC}'", "settings": { "numPartitions":3, "config": [] } }' \
-  "http://${ADMIN_SERVER_HOST}/rest/topics")
+  "${ADMIN_SERVER_SCHEME}://${ADMIN_SERVER_HOST}/rest/topics")
 
 MSG_FILE=$(mktemp)
 SMOKE_MESSAGE="Smoke message from $(date)"
@@ -132,9 +138,9 @@ if [ "${DELETE_INSTANCE}" = 'true' ] ; then
     MK_SMOKE_ID=$(echo ${MK_SMOKE} | jq -r .id)
     ${DIR_NAME}/managed_kafka.sh --delete ${MK_SMOKE_ID}
 else
-    TOPIC_DELETE_RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $ACCESS_TOKEN" "http://${ADMIN_SERVER_HOST}/rest/topics/${SMOKE_TOPIC}")
-    ACL_DELETE_RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)" \
-        "http://${ADMIN_SERVER_HOST}/rest/acls?principal=User:${SA_CLIENT_ID}")
+    TOPIC_DELETE_RESPONSE=$(curl -skXDELETE -H "Authorization: Bearer $ACCESS_TOKEN" "${ADMIN_SERVER_SCHEME}://${ADMIN_SERVER_HOST}/rest/topics/${SMOKE_TOPIC}")
+    ACL_DELETE_RESPONSE=$(curl -skXDELETE -H "Authorization: Bearer $(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)" \
+        "${ADMIN_SERVER_SCHEME}://${ADMIN_SERVER_HOST}/rest/acls?principal=User:${SA_CLIENT_ID}")
 fi
 
 ${DIR_NAME}/service_account.sh --delete ${SA_ID}

@@ -24,13 +24,28 @@ create() {
 
         exit 1
     fi
-    
-    echo ${RESPONSE} 
+
+    echo ${RESPONSE}
 }
 
 list() {
     local RESPONSE=$(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" ${SA_BASE_URL})
     echo ${RESPONSE}
+}
+
+get() {
+    local SERVICE_ACCOUNT_ID=${1}
+
+    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" -w '\n\n%{http_code}' ${SA_BASE_URL}/${SERVICE_ACCOUNT_ID})
+    local BODY=$(echo "${RESPONSE}" | head -n 1)
+    local CODE=$(echo "${RESPONSE}" | tail -n -1)
+
+    if [ ${CODE} -ge 400 ] ; then
+        echo "Status code: ${CODE}" >>/dev/stderr
+    fi
+
+    # Pretty print
+    echo "${BODY}" | jq
 }
 
 delete() {
@@ -50,7 +65,7 @@ delete() {
 }
 
 OPERATION='<NONE>'
-DELETE_ID='<NONE>'
+ACCOUNT_ID='<NONE>'
 ACCESS_TOKEN=''
 
 while [[ $# -gt 0 ]]; do
@@ -66,7 +81,13 @@ while [[ $# -gt 0 ]]; do
         ;;
     "--delete" )
         OPERATION='delete'
-        DELETE_ID="${2}"
+        ACCOUNT_ID="${2}"
+        shift
+        shift
+        ;;
+    "--get" )
+        OPERATION='get'
+        ACCOUNT_ID="${2}"
         shift
         shift
         ;;
@@ -92,8 +113,11 @@ case "${OPERATION}" in
     "list" )
         list
         ;;
+    "get" )
+        get ${ACCOUNT_ID}
+        ;;
     "delete" )
-        delete ${DELETE_ID}
+        delete ${ACCOUNT_ID}
         ;;
     *)
         echo "Unknown operation '${OPERATION}'";

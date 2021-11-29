@@ -230,6 +230,7 @@ spec:
       - name: kas-fleetshard-operator
         image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.16.0
         env:
+        # Temporary - remove for 0.17.0
         - name: IMAGE_ADMIN_API
           value: 'quay.io/mk-ci-cd/kafka-admin-api:0.6.1'
         - name: QUARKUS_PROFILE

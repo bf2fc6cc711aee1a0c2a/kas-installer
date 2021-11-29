@@ -57,6 +57,6 @@ cat <<EOF
 
   "KAFKA_INSECURE_TLS": "true",
 
-  "OPENSHIFT_API_URI": "https://kas-fleet-manager-kas-fleet-manager-medgar.${DATA_PLANE_CLUSTER_DNS_NAME}"
+  "OPENSHIFT_API_URI": "https://kas-fleet-manager-kas-fleet-manager-${USER}.${DATA_PLANE_CLUSTER_DNS_NAME}"
 }
 EOF

@@ -15,7 +15,7 @@ if [ -z "${SECONDARY_USERNAME}" ] ; then
       -pRH_USERNAME=${SECONDARY_USERNAME} \
       -pRH_USER_ID=11111111 \
       -pRH_ORG_ID=${RH_ORG_ID} \
-        | oc create -f - -n mas-sso
+        | oc create -f - -n mas-sso 1>&2
 fi
 
 ALIEN_USERNAME=$(${OC} get KeyCloakUser kas-user-00000000 -n mas-sso --template='{{ .spec.user.username }}' 2>/dev/null)
@@ -27,7 +27,7 @@ if [ -z "${ALIEN_USERNAME}" ] ; then
       -pRH_USERNAME=${ALIEN_USERNAME} \
       -pRH_USER_ID=00000000 \
       -pRH_ORG_ID=00000000 \
-        | oc create -f - -n mas-sso
+        | oc create -f - -n mas-sso 1>&2
 fi
 
 cat <<EOF

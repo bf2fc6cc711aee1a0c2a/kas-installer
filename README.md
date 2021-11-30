@@ -49,6 +49,11 @@ same cluster set in the user's kubeconfig file.
    Kafka Service
 1. Run `uninstall.sh` to remove KAS from the cluster.  You should remove any deployed Kafkas before runnig this script.
 
+---
+**NOTE:**
+Installer uses predefined bundle for installing Strimzi Operator, to use a different bundle you'll need to build a dev bundle and update STRIMZI_OPERATOR_BUNDLE_IMAGE environment variable.
+
+---
 
 ## Using rhoas CLI
 

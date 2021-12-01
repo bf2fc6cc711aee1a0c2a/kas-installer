@@ -2,56 +2,22 @@
 
 OS=$(uname)
 NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE:-redhat-managed-kafka-operator}
+BUNDLE_IMAGE=${STRIMZI_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/rhosak-index@sha256:67087d25ea6ae7f15f7eb43537f4e972fa93e1c8f04b74502290234f45066093}
 KUBECTL=$(which kubectl)
+OC=$(which oc)
 
 if [ "$OS" = 'Darwin' ]; then
   # for MacOS
   SED=$(which gsed)
-  CP=$(which gcp)
 else
   # for Linux and Windows
   SED=$(which sed)
-  CP=$(which cp)
 fi
-
-if ! [ -d strimzi-cluster-operator/resources/security/tmp ]; then
-    mkdir strimzi-cluster-operator/resources/security/tmp
-fi
-
-rm -rf strimzi-cluster-operator/resources/security/tmp/*
-
-${CP} -t strimzi-cluster-operator/resources/security/tmp/ strimzi-cluster-operator/resources/security/*.yaml
-
-${SED} -i "s/namespace: .*/namespace: ${NAMESPACE}/" \
-    strimzi-cluster-operator/resources/security/tmp/*RoleBinding*.yaml
 
 # Create the namespace if it's not found
 ${KUBECTL} get ns ${NAMESPACE} >/dev/null \
   || ${KUBECTL} create ns ${NAMESPACE}
 
-${KUBECTL} create clusterrolebinding strimzi-cluster-operator-namespaced \
-    --clusterrole=strimzi-cluster-operator-namespaced \
-    --serviceaccount ${NAMESPACE}:strimzi-cluster-operator
-${KUBECTL} label clusterrolebinding strimzi-cluster-operator-namespaced app=strimzi
-
-${KUBECTL} create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation \
-    --clusterrole=strimzi-entity-operator \
-    --serviceaccount ${NAMESPACE}:strimzi-cluster-operator
-${KUBECTL} label clusterrolebinding strimzi-cluster-operator-entity-operator-delegation app=strimzi
-
-${KUBECTL} create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation \
-    --clusterrole=strimzi-topic-operator \
-    --serviceaccount ${NAMESPACE}:strimzi-cluster-operator
-${KUBECTL} label clusterrolebinding strimzi-cluster-operator-topic-operator-delegation app=strimzi
-
-${KUBECTL} create -f strimzi-cluster-operator/resources/security/tmp -n ${NAMESPACE}
-${KUBECTL} create -f strimzi-cluster-operator/resources -n ${NAMESPACE}
-
-echo "Waiting until Strimzi Deployment is available..."
-${KUBECTL} wait --timeout=90s \
-    --for=condition=available \
-    deployment \
-    --namespace=${NAMESPACE} \
-    --selector app=strimzi
+$OC process -f kas-strimzi-bundle-template.yaml -p BUNDLE_IMAGE=${BUNDLE_IMAGE} -p NAMESPACE=${NAMESPACE} | $OC create -f -
 
 exit ${?}

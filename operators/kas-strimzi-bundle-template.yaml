@@ -1,0 +1,49 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: kas-strimzi
+objects:
+- apiVersion: operators.coreos.com/v1alpha1
+  kind: CatalogSource
+  metadata:
+    name: kas-strimzi-catalog
+    namespace: ${NAMESPACE}
+    labels:
+      app: kas-fleetshard
+  spec:
+    sourceType: grpc
+    image: ${BUNDLE_IMAGE}
+    displayName: Kas Strimzi Catalog
+    publisher: Data Plane Team
+- apiVersion: operators.coreos.com/v1alpha1
+  kind: Subscription
+  metadata:
+    name: kas-strimzi-subscription
+    namespace: ${NAMESPACE}
+    labels:
+      app.kubernetes.io/part-of: managed-kafka
+      app.kubernetes.io/component: strimzi-bundle
+  spec:
+    channel: alpha
+    installPlanApproval: Manual
+    name: kas-strimzi-bundle
+    source: kas-strimzi-catalog
+    sourceNamespace: ${NAMESPACE}
+- apiVersion: operators.coreos.com/v1
+  kind: OperatorGroup
+  metadata:
+    name: kas-strimzi-bundle
+    namespace: ${NAMESPACE}
+
+parameters:
+- name: BUNDLE_IMAGE
+  value: quay.io/mk-ci-cd/kas-strimzi-bundle:index
+  displayName: kas-strimzi-operator catalog image
+  description: the image of the mas-sso-operator catalog to deploy
+  required: true
+- name: NAMESPACE
+  value: "redhat-managed-kafka-operator"
+  displayName: namespace to deploy into
+  description: the namespace to deploy into
+  required: true

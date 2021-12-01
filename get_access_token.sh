@@ -20,8 +20,8 @@ KEYCLOAK_REALM=${KEYCLOAK_REALM:-rhoas}
 case ${1} in
     "--owner" )
         GRANT_TYPE='password'
-        CLIENT_ID=${RH_USERNAME}
-        CLIENT_SECRET=${RH_USERNAME}
+        CLIENT_ID='kas-installer-client'
+        CLIENT_SECRET='kas-installer-client'
         USER_PARAMS="&username=${RH_USERNAME}&password=${RH_USERNAME}"
         ;;
     *) # Assume client ID and secret were provided

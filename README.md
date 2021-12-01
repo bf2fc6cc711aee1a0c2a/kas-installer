@@ -58,7 +58,7 @@ There are a couple of things that are expected not to work when using the RHOAS 
 
 ### Service Account Maintenace
 
-1. To create an account, run `rhoas service-account create --short-description foo --file-format properties`. 
+1. To create an account, run `rhoas service-account create --short-description foo --file-format properties`.
 1. To list existing service accounts, run `rhoas service-account list`.
 1. To remove an existing service account, run `rhoas service-account delete --id=<ID of service account>`.
 
@@ -116,8 +116,18 @@ To use the Kafka Cluster that is created with the `managed_kafka.sh` script with
 1. Then execute the your tool like `kafka-topics.sh --bootstrap-server <bootstrap-host>:443 --command-config app-services.properties --topic foo --create --partitions 9`
 1. if you created separate service account using above instructions, edit the `app-services.properties` file and update the username and password with `clientID` and `clientSecret`
 
+### Running E2E Test Suite (experimental)
+
+1. Install all cluster components using `kas-installer.sh`
+1. Clone the [e2e-test-suite][e2e_test_suite] repository locally and change directory to the test suite project root
+1. Generate the test suite configuration with `${KAS_INSTALLER_DIR}/e2e-test-config.sh > config.json`
+1. Execute individual test classes:
+   - `./hack/testrunner.sh test KafkaAdminPermissionTest`
+   - `./hack/testrunner.sh test KafkaInstanceAPITest`
+   - `./hack/testrunner.sh test KafkaCLITest`
 
 [git_tool]:https://git-scm.com/downloads
 [jq]:https://stedolan.github.io/jq/
 [openshift]:https://www.openshift.com/
 [curl]:https://curl.se/
+[e2e_test_suite]:https://github.com/bf2fc6cc711aee1a0c2a/e2e-test-suite

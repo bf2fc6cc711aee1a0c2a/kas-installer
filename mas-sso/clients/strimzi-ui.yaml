@@ -16,6 +16,17 @@ spec:
     redirectUris: ["*"]
     webOrigins: ["*"]
     protocolMappers:
+      - name: account-id
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          userinfo.token.claim: 'true'
+          user.attribute: account-id
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: account_id
+          jsonType.label: String
       - name: rh-user-id
         protocol: openid-connect
         protocolMapper: oidc-usermodel-attribute-mapper

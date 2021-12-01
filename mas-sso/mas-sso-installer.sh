@@ -50,9 +50,10 @@ $OC create -f mas-sso/realms/realm-rhoas-kafka-sre.yaml
 
 $OC create -f mas-sso/clients/strimzi-ui.yaml
 $OC create -f mas-sso/clients/rhoas-cli.yaml
+$OC create -f mas-sso/clients/kas-installer.yaml
 
 if [ -n "${RH_USERNAME}" ] && [ -n "${RH_USER_ID}" ] && [ -n "${RH_ORG_ID}" ] ; then
-    echo "Creating KAS cluster owner client and account"
+    echo "Creating KAS cluster owner account"
     ${OC} process -f mas-sso/clients/owner-template.yaml -pRH_USERNAME=${RH_USERNAME} -pRH_USER_ID=${RH_USER_ID} -pRH_ORG_ID=${RH_ORG_ID} | oc create -f - -n ${NAMESPACE}
 fi
 

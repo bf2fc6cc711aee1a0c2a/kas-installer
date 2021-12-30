@@ -228,7 +228,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-operator
-        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.17.1
+        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.17.2
         env:
         - name: QUARKUS_PROFILE
           value: prod

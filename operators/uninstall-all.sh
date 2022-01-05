@@ -1,5 +1,7 @@
 #!/bin/bash
 
-./uninstall-kas-fleetshard.sh
+DIR_NAME="$(dirname $0)"
 
-./uninstall-strimzi-cluster-operator.sh
+${DIR_NAME}/uninstall-kas-fleetshard.sh
+
+${DIR_NAME}/uninstall-strimzi-cluster-operator.sh

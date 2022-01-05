@@ -3,6 +3,17 @@
 KAS Installer allows the deployment and configuration of Managed Kafka Service
 in a single K8s cluster.
 
+## Contents
+- [Prerequisites](#prerequisites)
+- [Description](#description)
+- [Usage](#usage)
+- [Installation Modes](#installation-modes)
+  - [Standalone Mode](#standalone)
+  - [OCM Mode](#ocm)
+- [Using rhoas CLI](#using-rhoas-cli)
+- [Legacy Scripts](#legacy-scripts)
+- [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
+
 ## Prerequisites
 * [jq][jq]
 * [curl][curl]
@@ -29,10 +40,10 @@ in a single K8s cluster.
 KAS Installer deploys and configures the following components that are part of
 Managed Kafka Service:
 * MAS SSO
-* Observability Operator
-* sharded-nlb IngressController
 * KAS Fleet Manager
-* KAS Fleet Shard and Strimzi Operators
+* Observability Operator (via KAS Fleet Manager)
+* sharded-nlb IngressController
+* KAS Fleet Shard and Strimzi Operators (via KAS Fleet Manager)
 
 It deploys and configures the components to the cluster set in
 the user's kubeconfig file.
@@ -51,17 +62,56 @@ same cluster set in the user's kubeconfig file.
    Kafka Service
 1. Run `uninstall.sh` to remove KAS from the cluster.  You should remove any deployed Kafkas before runnig this script.
 
----
-**NOTE:**
-Installer uses predefined bundle for installing Strimzi Operator, to use a different bundle you'll need to build a dev bundle and update STRIMZI_OPERATOR_BUNDLE_IMAGE environment variable.
-
----
-
----
-**Troubleshooting:**
-If the installer crashed due to configuration error in `kas-installer.env`, you often can rerun the installer after fixing the config issue.
+**Troubleshooting:** If the installer crashed due to configuration error in `kas-installer.env`, you often can rerun the installer after fixing the config issue.
 It is not necessary to run uninstall before retrying.
----
+
+## Installation Modes
+
+### Standalone
+
+Deploying a cluster with kas-fleet-manager in `standalone` is the default for kas-installer (when `OCM_SERVICE_TOKEN` is not defined).
+In this mode, the fleet manager deploys the data plane components from OLM bundles. Additional configuration can be set on the bundle
+subscriptions using environment variables `KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG` and `STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG`.
+
+For example, to set resources used by fleetshard operator, sync, Kafka, and Zookeeper and enable TLS for the admin API server, the following could be used:
+```shell
+KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG='---
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "500m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+env:
+- name: SSO_ENABLED
+  value: "true"
+- name: MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED
+  value: "true"
+- name: STANDARD_KAFKA_CONTAINER_CPU
+  value: 500m
+- name: STANDARD_KAFKA_CONTAINER_MEMORY
+  value: 4Gi
+- name: STANDARD_KAFKA_JVM_XMS
+  value: 1G
+- name: STANDARD_ZOOKEEPER_CONTAINER_CPU
+  value: 500m
+'
+```
+
+**NOTE:**
+In standalone mode, predefined bundles are used for Strimzi and KAS Fleetshard operators. To use a different bundle
+you'll need to build a dev bundle and set either `STRIMZI_OLM_INDEX_IMAGE` or `KAS_FLEETSHARD_OLM_INDEX_IMAGE` environment variables.
+
+### OCM
+
+Installation with OCM mode allows kas-fleet-manager to deploy the data plane components as OCM addons. This mode can be
+used by setting `OCM_SERVICE_TOKEN` to your [OCM offline token](https://console.redhat.com/openshift/token) and also setting
+`OCM_CLUSTER_ID` to the idenfier for the OSD cluster used in deployment.
+
+**NOTE:**
+In OCM mode, it may take up to 10 minutes after the `kas-installer.sh` completes before the addon installations are ready. Until ready,
+the fleet-manager API will reject new Kafka requests.
 
 ## Using rhoas CLI
 
@@ -122,7 +172,6 @@ To use the Kafka Cluster that is created with the `managed_kafka.sh` script with
 
 1. Generate the certificate and `app-services.properties` file, run `managed_kafka.sh --certgen <instance-id>` where `instance-id` can found by running `managed_kafka.sh --list` and also bootstrap host to the cluster in same response.
 1. Run the following to give the current user the permissions to create a topic and group. For the `<service-acct>` for below script take the service account from generated `app-services.properties` file
-
 
    ```
    curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/api/v1/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"GROUP", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'

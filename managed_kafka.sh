@@ -18,6 +18,7 @@ fi
 OPERATION='<NONE>'
 OPERATION_PATH='/kafkas'
 CREATE_NAME='<NONE>'
+CREATE_PLAN='standard.x1'
 REQUEST_BODY=''
 OP_KAFKA_ID='<NONE>'
 ACCESS_TOKEN=''
@@ -62,9 +63,10 @@ access_token() {
 
 create() {
     local KAFKA_NAME=${1}
+    local KAFKA_PLAN=${2}
 
     local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}${OPERATION_PATH}?async=true \
-      -d '{ "region": "'${REGION:-us-east-1}'", "cloud_provider": "aws",  "name": "'${KAFKA_NAME}'", "multi_az":true}')
+      -d '{ "region": "'${REGION:-us-east-1}'", "cloud_provider": "aws", "name": "'${KAFKA_NAME}'", "plan": "'${KAFKA_PLAN}'" }')
 
     local KIND=$(echo ${RESPONSE} | jq -r .kind)
 
@@ -191,6 +193,11 @@ while [[ $# -gt 0 ]]; do
         shift
         shift
         ;;
+    "--plan" )
+        CREATE_PLAN="${2}"
+        shift
+        shift
+        ;;
     "--list" )
         OPERATION='list'
         shift
@@ -248,7 +255,7 @@ fi
 
 case "${OPERATION}" in
     "create" )
-        create ${CREATE_NAME}
+        create ${CREATE_NAME} "${CREATE_PLAN}"
         ;;
     "list" )
         list

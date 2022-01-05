@@ -55,6 +55,7 @@ same cluster set in the user's kubeconfig file.
 **NOTE:**
 Installer uses predefined bundle for installing Strimzi Operator, to use a different bundle you'll need to build a dev bundle and update STRIMZI_OPERATOR_BUNDLE_IMAGE environment variable.
 
+Installer uses predefined bundle for installing KAS Fleetshard Operator, to use a different bundle you'll need to build a dev bundle and update KAS_FLEETSHARD_OPERATOR_BUNDLE_IMAGE environment variable.
 ---
 
 ---

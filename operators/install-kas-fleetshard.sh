@@ -1,28 +1,27 @@
 #!/bin/bash
 
+OS=$(uname)
 NAMESPACE=${KAS_FLEETSHARD_OPERATOR_NAMESPACE:-redhat-kas-fleetshard-operator}
+BUNDLE_IMAGE=${KAS_FLEETSHARD_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/kas-fleetshard-operator-index@sha256:83f2727cb660185d50a2f724d6cbf3d3e311a4d7f9daaf33c820ddc0caac51e5}
 KUBECTL=$(which kubectl)
+OC=$(which oc)
 
-${KUBECTL} create ns ${NAMESPACE}
-${KUBECTL} create -f kas-fleetshard/resources -n ${NAMESPACE}
-
-if [[ ${MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED-false} == "true" ]];
-then 
-    ${KUBECTL} set env deployment/kas-fleetshard-operator -n ${NAMESPACE} MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED=true
+if [ "$OS" = 'Darwin' ]; then
+  # for MacOS
+  SED=$(which gsed)
+else
+  # for Linux and Windows
+  SED=$(which sed)
 fi
 
-${KUBECTL} create clusterrolebinding kas-fleetshard-operator \
-    --clusterrole=kas-fleetshard-operator \
-    --serviceaccount ${NAMESPACE}:kas-fleetshard-operator
+# Create the namespace if it's not found
+${KUBECTL} get ns ${NAMESPACE} >/dev/null \
+  || ${KUBECTL} create ns ${NAMESPACE}
 
-${KUBECTL} create clusterrolebinding kas-fleetshard-sync \
-    --clusterrole=kas-fleetshard-sync \
-    --serviceaccount ${NAMESPACE}:kas-fleetshard-sync
-
-echo "Waiting until KAS Fleet Shard Deployment is available..."
-${KUBECTL} wait --timeout=90s \
-    --for=condition=available \
-    deployment/kas-fleetshard-operator \
-    --namespace=${NAMESPACE}
+$OC process -f kas-fleetshard-bundle-template.yaml \
+  -p BUNDLE_IMAGE=${BUNDLE_IMAGE} \
+  -p NAMESPACE=${NAMESPACE} \
+  -p NAMESPACE=MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED=${MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED-false} \
+  | $OC create -f -
 
 exit ${?}

@@ -1,0 +1,55 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: kas-fleetshard
+objects:
+- apiVersion: operators.coreos.com/v1alpha1
+  kind: CatalogSource
+  metadata:
+    name: kas-fleetshard-catalog
+    namespace: ${NAMESPACE}
+    labels:
+      app: kas-fleetshard
+  spec:
+    sourceType: grpc
+    image: ${BUNDLE_IMAGE}
+    displayName: Kas Fleetshard Catalog
+    publisher: Data Plane Team
+- apiVersion: operators.coreos.com/v1alpha1
+  kind: Subscription
+  metadata:
+    name: kas-fleetshard-subscription
+    namespace: ${NAMESPACE}
+    labels:
+      app.kubernetes.io/part-of: managed-kafka
+      app.kubernetes.io/component: kas-fleetshard-operator
+  spec:
+    channel: alpha
+    installPlanApproval: Automatic
+    name: kas-fleetshard-operator
+    source: kas-fleetshard-catalog
+    sourceNamespace: ${NAMESPACE}
+    config:
+      env:
+      - name: MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED
+        value: "${MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED}"
+- apiVersion: operators.coreos.com/v1
+  kind: OperatorGroup
+  metadata:
+    name: kas-fleetshard-operator
+    namespace: ${NAMESPACE}
+
+parameters:
+- name: BUNDLE_IMAGE
+  value: quay.io/osd-addons/kas-fleetshard-operator-index@sha256:83f2727cb660185d50a2f724d6cbf3d3e311a4d7f9daaf33c820ddc0caac51e5
+  displayName: kas-strimzi-operator catalog image
+  description: the image of the mas-sso-operator catalog to deploy
+  required: true
+- name: NAMESPACE
+  value: "redhat-managed-kafka-operator"
+  displayName: namespace to deploy into
+  description: the namespace to deploy into
+  required: true
+- name: MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED
+  value: "false"

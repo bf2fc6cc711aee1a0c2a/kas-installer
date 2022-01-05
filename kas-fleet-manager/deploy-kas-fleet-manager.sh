@@ -262,7 +262,6 @@ EOF
 wait_for_observability_operator_availability() {
   OBSERVABILITY_OPERATOR_PROMETHEUS_OPERATOR_DEPLOYMENT_NAME="prometheus-operator"
   OBSERVABILITY_OPERATOR_GRAFANA_OPERATOR_DEPLOYMENT_NAME="grafana-operator"
-  OBSERVABILITY_OPERATOR_GRAFANA_DEPLOYMENT_NAME="grafana-deployment"
 
   wait_for_observability_operator_deployment_availability
 
@@ -283,15 +282,6 @@ wait_for_observability_operator_availability() {
 
   echo "Waiting until Observability operator's Grafana operator deployment is available..."
   ${KUBECTL} wait --timeout=120s --for=condition=available deployment/${OBSERVABILITY_OPERATOR_GRAFANA_OPERATOR_DEPLOYMENT_NAME} --namespace=${OBSERVABILITY_OPERATOR_K8S_NAMESPACE}
-
-  echo "Waiting until Observability operator's Grafana deployment is created..."
-  while [ -z "$(kubectl get deployment ${OBSERVABILITY_OPERATOR_GRAFANA_DEPLOYMENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
-    echo "Deployment ${OBSERVABILITY_OPERATOR_GRAFANA_DEPLOYMENT_NAME} still not created. Waiting..."
-    sleep 10
-  done
-
-  echo "Waiting until Observability operator's Grafana deployment is available..."
-  ${KUBECTL} wait --timeout=120s --for=condition=available deployment/${OBSERVABILITY_OPERATOR_GRAFANA_DEPLOYMENT_NAME} --namespace=${OBSERVABILITY_OPERATOR_K8S_NAMESPACE}
 
   echo "Waiting until Observability CR is in configuration success stage..."
   OBSERVABILITY_CR_CONFIG_READY=0

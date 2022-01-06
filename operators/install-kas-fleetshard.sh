@@ -18,6 +18,8 @@ fi
 ${KUBECTL} get ns ${NAMESPACE} >/dev/null \
   || ${KUBECTL} create ns ${NAMESPACE}
 
+${KUBECTL} create -f kas-fleetshard/resources -n ${NAMESPACE}
+
 $OC process -f kas-fleetshard-bundle-template.yaml \
   -p BUNDLE_IMAGE=${BUNDLE_IMAGE} \
   -p NAMESPACE=${NAMESPACE} \

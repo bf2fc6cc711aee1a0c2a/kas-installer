@@ -77,6 +77,8 @@ objects:
           proxy_pass        ${CONSOLE_UI_URL};
 
           sub_filter        'https://sso.qa.redhat.com' '${PROXY_SSO_URL}';
+          sub_filter        'redhat-external' 'rhoas';
+          sub_filter        'cloud-services' 'strimzi-ui';
           sub_filter_once   off;
           sub_filter_types  application/x-javascript;
         }

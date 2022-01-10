@@ -124,13 +124,13 @@ VARNISH_UI_HOST="$(${OC} get route ui -n "${NAMESPACE}" --template='{{ .spec.hos
 VARNISH_UI_URL="https://${VARNISH_UI_HOST}"
 
 ## Proxy SSO
-info "deploy sso proxy"
-${OC} process -f "${ROOT}/proxy-redhat-sso.yml" --local -p \
-  NGINX_IMAGE="${PROXY_NGINX_IMAGE}" \
-  REDIRECT_URL="${VARNISH_UI_URL}" |
-  ${OC} apply -f - -n "${NAMESPACE}"
-
-PROXY_SSO_URL="https://$(${OC} get route sso -n "${NAMESPACE}" --template='{{ .spec.host }}')"
+#info "deploy sso proxy"
+#${OC} process -f "${ROOT}/proxy-redhat-sso.yml" --local -p \
+#  NGINX_IMAGE="${PROXY_NGINX_IMAGE}" \
+#  REDIRECT_URL="${VARNISH_UI_URL}" |
+#  ${OC} apply -f - -n "${NAMESPACE}"
+#
+#PROXY_SSO_URL="https://$(${OC} get route sso -n "${NAMESPACE}" --template='{{ .spec.host }}')"
 
 ## Application Services UI
 info "deploy application-services-ui"
@@ -148,7 +148,7 @@ info "deploy ui proxy"
 ${OC} process -f "${ROOT}/proxy-console-ui.yml" --local -p \
   NGINX_IMAGE="${PROXY_NGINX_IMAGE}" \
   CONSOLE_UI_URL="${PROXY_CONSOLE_UI_URL}" \
-  PROXY_SSO_URL="${PROXY_SSO_URL}" |
+  PROXY_SSO_URL="${MAS_SSO_URL}" |
   ${OC} apply -f - -n "${NAMESPACE}"
 
 info "MAS UI ready at: ${VARNISH_UI_URL}"

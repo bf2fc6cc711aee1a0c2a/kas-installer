@@ -38,7 +38,6 @@ objects:
 
 parameters:
 - name: BUNDLE_IMAGE
-  value: quay.io/mk-ci-cd/kas-strimzi-bundle:index
   displayName: kas-strimzi-operator catalog image
   description: the image of the mas-sso-operator catalog to deploy
   required: true

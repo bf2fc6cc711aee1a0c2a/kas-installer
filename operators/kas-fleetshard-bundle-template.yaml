@@ -42,7 +42,6 @@ objects:
 
 parameters:
 - name: BUNDLE_IMAGE
-  value: quay.io/osd-addons/kas-fleetshard-operator-index@sha256:83f2727cb660185d50a2f724d6cbf3d3e311a4d7f9daaf33c820ddc0caac51e5
   displayName: kas-strimzi-operator catalog image
   description: the image of the mas-sso-operator catalog to deploy
   required: true

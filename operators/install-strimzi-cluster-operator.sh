@@ -2,7 +2,7 @@
 
 OS=$(uname)
 NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE:-redhat-managed-kafka-operator}
-BUNDLE_IMAGE=${STRIMZI_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/rhosak-index@sha256:7835ce6fcdbd3d5c1317f762ffc4dd90eaacc852cefd9de1c8ce036e1c1d3bc9}
+BUNDLE_IMAGE=${STRIMZI_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/rhosak-index@sha256:14a1831f4fee851ce3e22b4817813ca43868c6a30769a4fda58a1e2484558ec1}
 KUBECTL=$(which kubectl)
 OC=$(which oc)
 

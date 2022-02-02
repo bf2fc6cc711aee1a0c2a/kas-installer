@@ -2,7 +2,23 @@
 
 DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/kas-installer.env
+source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
 
+setvars() {
+    AUTH_URL="${MAS_SSO_BASE_URL}/auth/realms/${MAS_SSO_REALM}"
+    MAS_AUTH_URL_ARG=""
+
+    if [ "${MAS_SSO_REALM}" = 'rhoas' ] ; then
+        MAS_AUTH_URL_ARG="--mas-auth-url=${AUTH_URL}"
+    fi
+
+    API_GATEWAY="$(oc get route -n kas-fleet-manager-${USER} kas-fleet-manager -o json | jq -r '"https://"+.spec.host')"
+
+    if [ ${?} != 0 ] ; then
+        echo "Failed to retrieve kas-fleet-manager URL"
+        exit 1
+    fi
+}
 
 login() {
     echo "Login with ${RH_USERNAME}/${RH_USERNAME}"
@@ -24,19 +40,23 @@ login() {
         echo "${RH_USERNAME}" | ${COPYCMD}
     fi
 
+    setvars
+
     rhoas login \
      --insecure \
-     --auth-url $(oc get route -n mas-sso keycloak -o json | jq -r '"https://"+.spec.host+"/auth/realms/rhoas"')  \
-     --mas-auth-url $(oc get route -n mas-sso keycloak -o json | jq -r '"https://"+.spec.host+"/auth/realms/rhoas"')  \
-     --api-gateway $(oc get route -n kas-fleet-manager-${USER} kas-fleet-manager -o json | jq -r '"https://"+.spec.host')
+     --auth-url ${AUTH_URL} \
+     ${MAS_AUTH_URL_ARG} \
+     --api-gateway ${API_GATEWAY}
 
 }
 
 dryrun() {
-
-    echo "     --auth-url $(oc get route -n mas-sso keycloak -o json | jq -r '"https://"+.spec.host+"/auth/realms/rhoas"')  "
-    echo "     --mas-auth-url $(oc get route -n mas-sso keycloak -o json | jq -r '"https://"+.spec.host+"/auth/realms/rhoas"')  "
-    echo "     --api-gateway $(oc get route -n kas-fleet-manager-${USER} kas-fleet-manager -o json | jq -r '"https://"+.spec.host') "
+    setvars
+    echo "     --auth-url ${AUTH_URL}  "
+    if [ -n "${MAS_AUTH_URL_ARG}" ]; then
+        echo "     ${MAS_AUTH_URL_ARG}  "
+    fi
+    echo "     --api-gateway ${API_GATEWAY} "
 }
 
 OPERATION='<NONE>'

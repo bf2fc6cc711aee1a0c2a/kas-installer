@@ -31,6 +31,7 @@ in a single K8s cluster.
 * rhoas CLI (https://github.com/redhat-developer/app-services-cli)
 * A user with administrative privileges in the OpenShift cluster and is logged in using `oc` or `kubectl`
 * brew coreutils (Mac only)
+* JDK `keytool` (only when using a separate SSO instance)
 * OSD Cluster with the following specs. Clusters with fewer/smaller compute nodes _may_ work, but have not been verified with kas-installer.
    * Plan `developer.x1`
       * 6 compute nodes

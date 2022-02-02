@@ -164,8 +164,9 @@ certgen() {
             exit 1
         fi
 
-        SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
-        SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
+        # MAS SSO (via KFM API) use different properties for client ID/secret than SSO directly. Support both forms here
+        SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r '.client_id // .clientId')
+        SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r '.client_secret // .secret')
         echo "Service account created: ${SA_CLIENT_ID}"
     fi
 

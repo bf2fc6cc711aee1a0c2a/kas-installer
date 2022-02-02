@@ -25,4 +25,31 @@ ${KUBECTL} wait --timeout=90s \
     deployment/kas-fleetshard-operator \
     --namespace=${NAMESPACE}
 
+if [ -n "${SSO_TRUSTED_CA:-}" ] ; then
+    CRT_FILE=$(mktemp)
+    echo "${SSO_TRUSTED_CA}" > ${CRT_FILE}.pem
+
+    keytool -import \
+      -file ${CRT_FILE}.pem \
+      -keystore ${CRT_FILE}.p12 \
+      -storepass changeit\
+      -alias sso-ca \
+      -noprompt
+
+    ${KUBECTL} delete secret sync-sso-tls-config -n ${NAMESPACE} 2>/dev/null || true
+
+    ${KUBECTL} create secret generic \
+      sync-sso-tls-config \
+      -n ${NAMESPACE} \
+      --from-file=sso-trust.p12=${CRT_FILE}.p12
+
+    rm ${CRT_FILE} ${CRT_FILE}.pem ${CRT_FILE}.p12
+
+    ${KUBECTL} set env \
+      deployment/kas-fleetshard-sync \
+      -n ${NAMESPACE} \
+      QUARKUS_OIDC_CLIENT_TLS_TRUST_STORE_FILE=/config-sso-tls/sso-trust.p12 \
+      QUARKUS_OIDC_CLIENT_TLS_TRUST_STORE_PASSWORD=changeit
+fi
+
 exit ${?}

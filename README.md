@@ -17,6 +17,7 @@ in a single K8s cluster.
 * rhoas CLI (https://github.com/redhat-developer/app-services-cli)
 * A user with administrative privileges in the OpenShift cluster
 * brew coreutils (Mac only)
+* JDK `keytool` (only when using a separate SSO instance)
 * OSD Cluster with the following specs:
    * 3 compute nodes
    * Size: m5.4xlarge

@@ -174,8 +174,10 @@ deploy_kasfleetmanager() {
     -p IMAGE_REPOSITORY=${IMAGE_REPOSITORY} \
     -p IMAGE_TAG=${IMAGE_TAG} \
     -p IMAGE_PULL_POLICY="Always" \
+    -p JWKS_VERIFY_INSECURE=true \
     -p JWKS_URL="${JWKS_URL}" \
     -p MAS_SSO_BASE_URL="${MAS_SSO_BASE_URL}" \
+    -p MAS_SSO_INSECURE=true \
     -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
     -p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
     -p ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE="false" \
@@ -201,7 +203,7 @@ deploy_kasfleetmanager() {
     -p KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD="${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}" \
     -p KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC="${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}" \
     -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \
-    -p TOKEN_ISSUER_URL="$(${KUBECTL} get route -n mas-sso keycloak -o jsonpath='https://{.status.ingress[0].host}/auth/realms/rhoas')" \
+    -p TOKEN_ISSUER_URL="${ISSUER_URL}" \
     -p ENABLE_OCM_MOCK=true \
     -p OBSERVABILITY_CONFIG_REPO="${OBSERVABILITY_CONFIG_REPO}" \
     -p OBSERVABILITY_CONFIG_TAG="${OBSERVABILITY_CONFIG_TAG}" \

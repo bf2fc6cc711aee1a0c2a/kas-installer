@@ -2,12 +2,20 @@
 
 DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/kas-installer.env
-SA_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/service_accounts"
+source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
+
+if [ "${INSTALL_MAS_SSO:-"n"}" = "y" ]; then
+    # Service accounts via kas-fleet-manager when using MAS SSO
+    SA_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/service_accounts"
+else
+    SA_BASE_URL="${MAS_SSO_BASE_URL}/auth/realms/${MAS_SSO_REALM}/apis/service_accounts/v1"
+fi
 
 create() {
     local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+      -H 'Content-Type: application/json' \
       ${SA_BASE_URL} \
-      -d '{ "name": "'${USER}-kafka-service-account'" }')
+      --data-raw '{ "name": "'${USER}'-kafka-service-account", "description": "Test service account" }')
 
     local KIND=$(echo ${RESPONSE} | jq -r .kind)
 

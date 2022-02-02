@@ -19,16 +19,19 @@ else
   DATE=$(which date)
 fi
 
+echo "Obtaining owner token"
+OWNER_TOKEN=$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)
+
 if [ "${MK_EXISTING_ID:-}" != "" ] ; then
     DELETE_INSTANCE='false'
-    MK_SMOKE=$(${DIR_NAME}/managed_kafka.sh --get ${MK_EXISTING_ID})
+    MK_SMOKE=$(${DIR_NAME}/managed_kafka.sh --get ${MK_EXISTING_ID} --access-token ${OWNER_TOKEN})
 
     if [ ${?} -ne 0 ] || [ "$(echo ${MK_SMOKE} | jq -r .kind)" = "Error" ] ; then
         echo "Failed to get ManagedKafka instance for ID: ${MK_EXISTING_ID}"
         exit 1
     fi
 else
-    MK_SMOKE=$(${DIR_NAME}/managed_kafka.sh --create 'kafka-smoke')
+    MK_SMOKE=$(${DIR_NAME}/managed_kafka.sh --create 'kafka-smoke' --access-token ${OWNER_TOKEN})
 
     if [ ${?} -ne 0 ] ; then
         echo "Failed to create a ManagedKafka instance"
@@ -46,7 +49,7 @@ fi
 
 SMOKE_TOPIC="smoke_topic-$(${DATE} +%Y%j%H%M)"
 
-SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
+SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create --access-token ${OWNER_TOKEN})
 
 if [ ${?} -ne 0 ] ; then
     echo "Failed to create a service account!"
@@ -56,10 +59,9 @@ else
 fi
 
 SA_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .id)
-SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
-SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
-
-OWNER_TOKEN=$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)
+# MAS SSO (via KFM API) use different properties for client ID/secret than SSO directly. Support both forms here
+SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r '.client_id // .clientId')
+SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r '.client_secret // .secret')
 
 if [ ${?} -ne 0 ] ; then
     echo "Failed obtain owner access token! Did you configure RH_USERNAME, RH_USER_ID, and RH_ORG_ID in kas-installer.env?"
@@ -67,7 +69,7 @@ if [ ${?} -ne 0 ] ; then
 fi
 
 curl -f -skXPOST -H'Content-type: application/json' \
-  -H "Authorization: Bearer $(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)" \
+  -H "Authorization: Bearer ${OWNER_TOKEN}" \
   --data '{"resourceType":"TOPIC", "resourceName":"'${SMOKE_TOPIC}'", "patternType":"LITERAL", "principal":"User:'${SA_CLIENT_ID}'", "operation":"ALL", "permission":"ALLOW"}' \
   "${ADMIN_SERVER_SCHEME}://${ADMIN_SERVER_HOST}/api/v1/acls"
 
@@ -139,11 +141,11 @@ if [ "${DELETE_INSTANCE}" = 'true' ] ; then
     ${DIR_NAME}/managed_kafka.sh --delete ${MK_SMOKE_ID}
 else
     TOPIC_DELETE_RESPONSE=$(curl -skXDELETE -H "Authorization: Bearer $ACCESS_TOKEN" "${ADMIN_SERVER_SCHEME}://${ADMIN_SERVER_HOST}/api/v1/topics/${SMOKE_TOPIC}")
-    ACL_DELETE_RESPONSE=$(curl -skXDELETE -H "Authorization: Bearer $(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)" \
+    ACL_DELETE_RESPONSE=$(curl -skXDELETE -H "Authorization: Bearer ${OWNER_TOKEN}" \
         "${ADMIN_SERVER_SCHEME}://${ADMIN_SERVER_HOST}/api/v1/acls?principal=User:${SA_CLIENT_ID}")
 fi
 
-${DIR_NAME}/service_account.sh --delete ${SA_ID}
+${DIR_NAME}/service_account.sh --delete ${SA_ID} --access-token ${OWNER_TOKEN}
 
 if [ "${SMOKE_MESSAGE_OUT}" = "${SMOKE_MESSAGE}" ] ; then
     echo "Smoke test successful"

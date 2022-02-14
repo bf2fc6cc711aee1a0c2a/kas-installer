@@ -111,6 +111,11 @@ spec:
       serviceAccountName: kas-fleetshard-sync
       priorityClassName: kas-fleetshard-high
       volumes:
+      - name: tls-config-volume
+        secret:
+          defaultMode: 384
+          optional: true
+          secretName: sync-sso-tls-config
       - configMap:
           defaultMode: 384
           name: sync-logging-config-override
@@ -120,7 +125,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-sync
-        image: quay.io/mk-ci-cd/kas-fleetshard-sync:0.18.1
+        image: quay.io/mk-ci-cd/kas-fleetshard-sync:0.19.0
         env:
         - name: KUBERNETES_NAMESPACE
           valueFrom:
@@ -166,3 +171,6 @@ spec:
           name: logging-config-volume
           readOnly: false
           subPath: ""
+        - mountPath: /config-sso-tls
+          name: tls-config-volume
+          readOnly: false

@@ -210,6 +210,7 @@ spec:
     matchLabels:
       app: kas-fleetshard-operator
       app.kubernetes.io/name: kas-fleetshard-operator
+      name: kas-fleetshard-operator
   template:
     metadata:
       labels:

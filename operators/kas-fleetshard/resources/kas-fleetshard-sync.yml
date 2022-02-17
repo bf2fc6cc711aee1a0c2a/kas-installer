@@ -103,6 +103,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: kas-fleetshard-sync
+      name: kas-fleetshard-sync
   template:
     metadata:
       labels:

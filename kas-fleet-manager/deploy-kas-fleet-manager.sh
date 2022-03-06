@@ -88,7 +88,12 @@ clone_kasfleetmanager_code_repository() {
     CURRENT_HASH=$(cd "${KAS_FLEET_MANAGER_CODE_DIR}" && ${GIT} rev-parse HEAD)
     if [ "${CURRENT_HASH}" != "${KAS_FLEET_MANAGER_BF2_REF}" ]; then
       echo "KAS Fleet Manager code directory was stale ${CURRENT_HASH} != ${KAS_FLEET_MANAGER_BF2_REF}. Updating it..."
-      (cd ${KAS_FLEET_MANAGER_CODE_DIR} && ${GIT} pull --ff-only && ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF})
+      # Checkout the configured git ref and pull only if not in detached HEAD state (rc of symbolic-ref == 0)
+      (cd ${KAS_FLEET_MANAGER_CODE_DIR} && \
+        ${GIT} fetch && \
+        ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF} && \
+        ${GIT} symbolic-ref -q HEAD && \
+        ${GIT} pull --ff-only)
     fi
   else
     echo "KAS Fleet Manager code directory does not exist. Cloning it..."
@@ -178,6 +183,7 @@ deploy_kasfleetmanager() {
     -p CLUSTER_LIST='
 - "name": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'"
   "cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'"
+  "client_id": "'${MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID}'"
   "cloud_provider": "aws"
   "region": "'${DATA_PLANE_CLUSTER_REGION}'"
   "multi_az": true
@@ -206,12 +212,12 @@ deploy_kasfleetmanager() {
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 }
 
-add_dataplane_cluster_to_kasfleetmanager_db() {
+set_dataplane_cluster_client_id() {
   curr_timestamp=$(${DATE} --utc +%Y-%m-%dT%T)
-  INSERT_SQL_STATEMENT="INSERT INTO clusters (id, created_at, updated_at, cloud_provider, cluster_id, external_id, multi_az, region, status, cluster_dns) VALUES ('${DATA_PLANE_CLUSTER_CLUSTER_ID}', '${curr_timestamp}', '${curr_timestamp}', 'aws', '${DATA_PLANE_CLUSTER_CLUSTER_ID}', '${DATA_PLANE_CLUSTER_CLUSTER_ID}', 'true', '${DATA_PLANE_CLUSTER_REGION}', 'waiting_for_kas_fleetshard_operator', '${DATA_PLANE_CLUSTER_DNS_NAME}')"
+  UPDATE_SQL_STATEMENT="UPDATE clusters SET client_id = '${MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID}' WHERE cluster_id = '${DATA_PLANE_CLUSTER_CLUSTER_ID}'"
   KAS_FLEET_MANAGER_DB_POD=$(${KUBECTL} get pod -n ${KAS_FLEET_MANAGER_NAMESPACE} -l deploymentconfig=kas-fleet-manager-db -o jsonpath="{.items[0].metadata.name}")
-  echo "Adding data plane cluster '${DATA_PLANE_CLUSTER_CLUSTER_ID}' to KAS Fleet Manager database..."
-  ${KUBECTL} exec -n ${KAS_FLEET_MANAGER_NAMESPACE} ${KAS_FLEET_MANAGER_DB_POD} -- psql -d kas-fleet-manager -c "${INSERT_SQL_STATEMENT}"
+  echo "Setting client_id for data plane cluster '${DATA_PLANE_CLUSTER_CLUSTER_ID}' in KAS Fleet Manager database..."
+  ${KUBECTL} exec -n ${KAS_FLEET_MANAGER_NAMESPACE} ${KAS_FLEET_MANAGER_DB_POD} -- psql -d kas-fleet-manager -c "${UPDATE_SQL_STATEMENT}"
 }
 
 read_kasfleetmanager_env_file() {
@@ -339,7 +345,7 @@ disable_observability_operator_extras
 wait_for_observability_operator_availability
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager
-#####add_dataplane_cluster_to_kasfleetmanager_db
+set_dataplane_cluster_client_id
 
 cd ${ORIGINAL_DIR}
 

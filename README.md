@@ -74,7 +74,13 @@ There are a couple of things that are expected not to work when using the RHOAS 
 1. To list existing clusters, run `rhoas kafka list`
 1. To remove an existing cluster, run `rhoas kafka delete --name <clustername>`.
 
-Note: that managing ACLs via rhoas cli does not work yet (in kas-installer admin-server currently runs over plain).
+#### Kafka topics / consumergroups / ACL 
+
+To use these cli featurs, you must set `MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED=true` in your `kas-installer.env` so that the admin-server will run over TLS (edge terminated).
+
+1. To create a topic `rhoas kafka topic create --name=foo`
+1. To grant access `rhoas kafka acl grant-access  --topic=foo --all-accounts --producer`
+etc.
 
 ## Legacy scripts
 

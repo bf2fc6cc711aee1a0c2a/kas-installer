@@ -38,18 +38,6 @@ We use this information to acknowledge your contributions in release announcemen
 
 ### Code reviews
 
-All submissions, including submissions by project members, need to be reviewed by at least two kas-installer committers before being merged.
+All submissions, including submissions by project members, need to be reviewed by at least one kas-installer committers before being merged.
 
 [GitHub Pull Request Review Process](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews) is followed for every pull request.
-
-### Coding Guidelines
-
- * We decided to disallow `@author` tags in the Javadoc: they are hard to maintain
- * Commits should be atomic and semantic. Please properly squash your pull requests before submitting them. Fixup commits can be used temporarily during the review process but things should be squashed at the end to have meaningful commits.
- We use merge commits so the GitHub Merge button cannot do that for us. If you don't know how to do that, just ask in your pull request, we will be happy to help!
-
-
-### Tests and documentation are not optional
-
-Don't forget to include tests in your pull requests.
-Also don't forget the documentation (reference documentation, javadoc...).

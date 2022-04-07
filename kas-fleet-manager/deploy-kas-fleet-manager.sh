@@ -193,6 +193,16 @@ deploy_kasfleetmanager() {
   "status": "ready"
   "cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"
 ' \
+    -p SUPPORTED_CLOUD_PROVIDERS='
+- "name": "aws"
+  "default": true
+  "regions":
+    - "name": "'${DATA_PLANE_CLUSTER_REGION}'"
+      "default": true
+      "supported_instance_type":
+        "standard": {}
+        "eval": {} 
+' \
     -p REPLICAS=1 \
     -p KAFKA_CAPACITY_INGRESS_THROUGHPUT="${KAFKA_CAPACITY_INGRESS_THROUGHPUT}" \
     -p KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS="${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}" \

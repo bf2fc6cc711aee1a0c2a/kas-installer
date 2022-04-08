@@ -76,6 +76,7 @@ read_kas_installer_env_file() {
   OBSERVABILITY_CONFIG_TAG=${OBSERVABILITY_CONFIG_TAG:-main}
   KAS_FLEETSHARD_OPERATOR_NAMESPACE=${KAS_FLEETSHARD_OPERATOR_NAMESPACE:-redhat-kas-fleetshard-operator}
   STRIMZI_OPERATOR_NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE:-redhat-managed-kafka-operator}
+  DATA_PLANE_CLUSTER_REGION=${REGION:-us-east-1}
 }
 
 generate_kas_fleet_manager_env_config() {
@@ -124,7 +125,7 @@ generate_kas_fleet_manager_env_config() {
   echo "JWKS_URL=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "KAS_FLEET_MANAGER_NAMESPACE=kas-fleet-manager-${USER}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "DATA_PLANE_CLUSTER_CLUSTER_ID=dev-dataplane-cluster" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "DATA_PLANE_CLUSTER_REGION=us-east-1" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "DATA_PLANE_CLUSTER_REGION=${DATA_PLANE_CLUSTER_REGION}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "K8S_CLUSTER_DOMAIN=${K8S_CLUSTER_DOMAIN}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "DATA_PLANE_CLUSTER_DNS_NAME=apps.${K8S_CLUSTER_DOMAIN}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 }

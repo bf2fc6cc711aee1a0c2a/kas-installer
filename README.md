@@ -6,6 +6,7 @@ in a single K8s cluster.
 ## Prerequisites
 * [jq][jq]
 * [curl][curl]
+* gsed for macOS e.g. via `brew install gsed`
 * [OpenShift][openshift]. In the future there are plans to make it compatible
   with native K8s. Currently an OpenShift dedicated based environment is needed
   (Currently needs to be a multi-zone cluster if you want to create a Kafka
@@ -15,7 +16,7 @@ in a single K8s cluster.
 * kubectl
 * openssl CLI tool
 * rhoas CLI (https://github.com/redhat-developer/app-services-cli)
-* A user with administrative privileges in the OpenShift cluster
+* A user with administrative privileges in the OpenShift cluster and is logged in using `oc` or `kubectl`
 * brew coreutils (Mac only)
 * OSD Cluster with the following specs:
    * 3 compute nodes

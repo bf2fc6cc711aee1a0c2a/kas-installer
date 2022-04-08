@@ -46,6 +46,7 @@ same cluster set in the user's kubeconfig file.
 1. Create and fill the KAS installer configuration file `kas-installer.env`. An
    example of the needed values can be found in the `kas-installer.env.example`
    file
+1. make sure you have run `oc login --server=<api cluster url|https://api.xxx.openshiftapps.com:6443>` to your target OSD cluster. You will be asked a password or a token
 1. Run the KAS installer `kas-installer.sh` to deploy and configure Managed
    Kafka Service
 1. Run `uninstall.sh` to remove KAS from the cluster.  You should remove any deployed Kafkas before runnig this script.
@@ -54,6 +55,12 @@ same cluster set in the user's kubeconfig file.
 **NOTE:**
 Installer uses predefined bundle for installing Strimzi Operator, to use a different bundle you'll need to build a dev bundle and update STRIMZI_OPERATOR_BUNDLE_IMAGE environment variable.
 
+---
+
+---
+**Troubleshooting:**
+If the installer crashed due to configuration error in `kas-installer.env`, you often can rerun the installer after fixing the config issue.
+It is not necessary to run uninstall before retrying.
 ---
 
 ## Using rhoas CLI

@@ -118,8 +118,6 @@ spec:
                     type: string
                   clientId:
                     type: string
-                required:
-                - clientSecret
                 type: object
               deleted:
                 type: boolean

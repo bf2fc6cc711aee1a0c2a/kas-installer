@@ -13,6 +13,8 @@ objects:
       app: kas-fleetshard
   spec:
     sourceType: grpc
+    secrets:
+    - "rhoas-image-pull-secret"
     image: ${BUNDLE_IMAGE}
     displayName: Kas Strimzi Catalog
     publisher: Data Plane Team

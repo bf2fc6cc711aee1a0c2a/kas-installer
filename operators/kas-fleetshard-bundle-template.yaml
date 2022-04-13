@@ -13,6 +13,8 @@ objects:
       app: kas-fleetshard
   spec:
     sourceType: grpc
+    secrets:
+    - "rhoas-image-pull-secret"
     image: ${BUNDLE_IMAGE}
     displayName: Kas Fleetshard Catalog
     publisher: Data Plane Team
@@ -39,6 +41,8 @@ objects:
           memory: "1Gi"
           cpu: "500m"
       env:
+      - name: SSO_ENABLED
+        value: "true"
       - name: MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED
         value: "${MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED}"
       - name: STANDARD_KAFKA_CONTAINER_CPU

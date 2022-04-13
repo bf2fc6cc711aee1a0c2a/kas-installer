@@ -54,16 +54,6 @@ generate_kasfleetmanager_manual_terraforming_k8s_resources() {
     s|#placeholder_sso_secret#|${MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_SECRET}|" \
     ${TERRAFORM_TEMPLATES_DIR}/009-addon-kas-fleetshard-operator-parameters.yml.template > ${TERRAFORM_GENERATED_DIR}/009-addon-kas-fleetshard-operator-parameters.yml
 
-  # Generate Strimzi Operator Image Pull Secret K8s file
-  ${SED} \
-  "s/#placeholder_strimzi_imagepull_secret_dockercfg#/${STRIMZI_OPERATOR_IMAGEPULL_SECRET}/" \
-    ${TERRAFORM_TEMPLATES_DIR}/010-strimzi-operator-imagepull-secret.yml.template > ${TERRAFORM_GENERATED_DIR}/010-strimzi-operator-imagepull-secret.yml
-
-  # Generate KAS FleetShard Operator Image Pull Secret K8s file
-  ${SED} \
-  "s/#placeholder_kas_fleetshard_operator_imagepull_secret_dockercfg#/${KAS_FLEETSHARD_OPERATOR_IMAGEPULL_SECRET}/" \
-    ${TERRAFORM_TEMPLATES_DIR}/011-kas-fleetshard-operator-imagepull-secret.yml.template > ${TERRAFORM_GENERATED_DIR}/011-kas-fleetshard-operator-imagepull-secret.yml
-
   # Copy rest of the template files as there are no parameters to replace
   cp -a ${TERRAFORM_TEMPLATES_DIR}/001-mk-storageclass.yml.template ${TERRAFORM_GENERATED_DIR}/001-mk-storageclass.yml
   cp -a ${TERRAFORM_TEMPLATES_DIR}/003-observability-operator-project.yml.template ${TERRAFORM_GENERATED_DIR}/003-observability-operator-project.yml
@@ -201,7 +191,7 @@ deploy_kasfleetmanager() {
       "default": true
       "supported_instance_type":
         "standard": {}
-        "eval": {} 
+        "eval": {}
 ' \
     -p REPLICAS=1 \
     -p KAFKA_CAPACITY_INGRESS_THROUGHPUT="${KAFKA_CAPACITY_INGRESS_THROUGHPUT}" \

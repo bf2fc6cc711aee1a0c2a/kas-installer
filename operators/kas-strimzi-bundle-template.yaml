@@ -30,6 +30,14 @@ objects:
     name: kas-strimzi-bundle
     source: kas-strimzi-catalog
     sourceNamespace: ${NAMESPACE}
+    config:
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "500m"
+        limits:
+          memory: "1Gi"
+          cpu: "500m"
 - apiVersion: operators.coreos.com/v1
   kind: OperatorGroup
   metadata:

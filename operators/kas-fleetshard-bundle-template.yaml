@@ -31,9 +31,24 @@ objects:
     source: kas-fleetshard-catalog
     sourceNamespace: ${NAMESPACE}
     config:
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "500m"
+        limits:
+          memory: "1Gi"
+          cpu: "500m"
       env:
       - name: MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED
         value: "${MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED}"
+      - name: STANDARD_KAFKA_CONTAINER_CPU
+        value: 500m
+      - name: STANDARD_KAFKA_CONTAINER_MEMORY
+        value: 4Gi
+      - name: STANDARD_KAFKA_JVM_XMS
+        value: 1G
+      - name: STANDARD_ZOOKEEPER_CONTAINER_CPU
+        value: 500m
 - apiVersion: operators.coreos.com/v1
   kind: OperatorGroup
   metadata:

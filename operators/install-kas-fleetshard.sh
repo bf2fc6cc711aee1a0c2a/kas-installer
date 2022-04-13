@@ -2,7 +2,7 @@
 
 OS=$(uname)
 NAMESPACE=${KAS_FLEETSHARD_OPERATOR_NAMESPACE:-redhat-kas-fleetshard-operator}
-BUNDLE_IMAGE=${KAS_FLEETSHARD_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/kas-fleetshard-operator-index@sha256:83f2727cb660185d50a2f724d6cbf3d3e311a4d7f9daaf33c820ddc0caac51e5}
+BUNDLE_IMAGE=${KAS_FLEETSHARD_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/rhoas-fleetshard-operator-bundle-index:v4.9-v1.0.0.e301eb9-2}
 KUBECTL=$(which kubectl)
 OC=$(which oc)
 

@@ -83,7 +83,7 @@ clone_kasfleetmanager_code_repository() {
         ${GIT} fetch && \
         ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF} && \
         ${GIT} symbolic-ref -q HEAD && \
-        ${GIT} pull --ff-only)
+        ${GIT} pull --ff-only || echo "Skipping 'pull' for detached HEAD")
     fi
   else
     echo "KAS Fleet Manager code directory does not exist. Cloning it..."

@@ -69,7 +69,7 @@ metadata:
 spec:
   schedule: '*/30 * * * *'
   concurrencyPolicy: Forbid
-  suspend: false
+  suspend: true
   jobTemplate:
     metadata:
       creationTimestamp: null

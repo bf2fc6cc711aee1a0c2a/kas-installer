@@ -1,9 +1,11 @@
 #!/bin/bash
 
-./install-kas-fleetshard.sh &
+DIR_NAME="$(dirname $0)"
+
+${DIR_NAME}/install-kas-fleetshard.sh &
 FSO_PID=${!}
 
-./install-strimzi-cluster-operator.sh &
+${DIR_NAME}/install-strimzi-cluster-operator.sh &
 STRIMZI_PID=${!}
 
 cancel_func() {

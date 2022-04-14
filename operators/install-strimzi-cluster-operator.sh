@@ -4,7 +4,7 @@ DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/../kas-installer.env
 OS=$(uname)
 NAMESPACE=${STRIMZI_OPERATOR_NAMESPACE:-redhat-managed-kafka-operator}
-BUNDLE_IMAGE=${STRIMZI_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/rhosak-strimzi-operator-bundle-index:v4.9-v0.1.0-10}
+BUNDLE_IMAGE=${STRIMZI_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/rhosak-strimzi-operator-bundle-index:v4.9-v0.1.0-11}
 OC=$(which oc)
 
 # Create the namespace if it's not found

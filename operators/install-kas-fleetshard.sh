@@ -4,7 +4,7 @@ DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/../kas-installer.env
 OS=$(uname)
 NAMESPACE=${KAS_FLEETSHARD_OPERATOR_NAMESPACE:-redhat-kas-fleetshard-operator}
-BUNDLE_IMAGE=${KAS_FLEETSHARD_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/rhosak-fleetshard-operator-bundle-index:v4.9-v1.0.0.efe8ba8-1}
+BUNDLE_IMAGE=${KAS_FLEETSHARD_OPERATOR_BUNDLE_IMAGE:-quay.io/osd-addons/rhosak-fleetshard-operator-bundle-index:v4.9-v1.0.0.22eff54-2}
 OC=$(which oc)
 
 # Create the namespace if it's not found

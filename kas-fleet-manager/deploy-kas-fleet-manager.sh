@@ -187,13 +187,23 @@ deploy_kasfleetmanager() {
   "status": "ready"
   "cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"
 ' \
+    -p SUPPORTED_INSTANCE_TYPES='
+- "id": "standard"
+  "display_name": "Standard"
+  "sizes":
+  - "id": "x1"
+    "ingressThroughputPerSec": '"${KAFKA_CAPACITY_INGRESS_THROUGHPUT}"'
+    "egressThroughputPerSec": '"${KAFKA_CAPACITY_EGRESS_THROUGHPUT}"'
+    "totalMaxConnections": '"${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}"'
+    "maxConnectionAttemptsPerSec": '"${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}"'
+    "maxDataRetentionSize": '"${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}"'
+    "maxDataRetentionPeriod": '"${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}"'
+    "maxPartitions": '"${KAFKA_CAPACITY_MAX_PARTITIONS}"'
+    "quotaConsumed": "1"
+    "quotaType": "RHOSAK"
+    "capacityConsumed": "1"
+' \
     -p REPLICAS=1 \
-    -p KAFKA_CAPACITY_INGRESS_THROUGHPUT="${KAFKA_CAPACITY_INGRESS_THROUGHPUT}" \
-    -p KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS="${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}" \
-    -p KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE="${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}" \
-    -p KAFKA_CAPACITY_MAX_PARTITIONS="${KAFKA_CAPACITY_MAX_PARTITIONS}" \
-    -p KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD="${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}" \
-    -p KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC="${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}" \
     -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \
     -p TOKEN_ISSUER_URL="$(${KUBECTL} get route -n mas-sso keycloak -o jsonpath='https://{.status.ingress[0].host}/auth/realms/rhoas')" \
     -p ENABLE_OCM_MOCK=true \

@@ -194,8 +194,8 @@ deploy_kasfleetmanager() {
   "cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"
 ' \
     -p SUPPORTED_INSTANCE_TYPES='
-- "id": "standard"
-  "display_name": "Standard"
+- "id": "developer"
+  "display_name": "Trial"
   "sizes":
   - "id": "x1"
     "ingressThroughputPerSec": '"${KAFKA_CAPACITY_INGRESS_THROUGHPUT}"'
@@ -206,7 +206,7 @@ deploy_kasfleetmanager() {
     "maxDataRetentionPeriod": '"${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}"'
     "maxPartitions": '${KAFKA_CAPACITY_MAX_PARTITIONS}'
     "quotaConsumed": 1
-    "quotaType": "RHOSAK"
+    "quotaType": "RHOSAKTrial"
     "capacityConsumed": 1
 ' \
     -p SUPPORTED_CLOUD_PROVIDERS='
@@ -228,7 +228,7 @@ deploy_kasfleetmanager() {
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Waiting until KAS Fleet Manager Deployment is available..."
-  ${KUBECTL} wait --timeout=300s --for=condition=available deployment/kas-fleet-manager --namespace=${KAS_FLEET_MANAGER_NAMESPACE}
+  ${KUBECTL} wait --timeout=90s --for=condition=available deployment/kas-fleet-manager --namespace=${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Deploying KAS Fleet Manager OCP Route..."
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}

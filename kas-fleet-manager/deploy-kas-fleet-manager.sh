@@ -198,55 +198,16 @@ deploy_kasfleetmanager() {
   "display_name": "Standard"
   "sizes":
   - "id": "x1"
-    "ingressThroughputPerSec": "50Mi"
-    "egressThroughputPerSec": "100Mi"
-    "totalMaxConnections": "3000"
-    "maxConnectionAttemptsPerSec": "100"
-    "maxDataRetentionSize": "1000Gi"
-    "maxDataRetentionPeriod": "P14D"
-    "maxPartitions": "1500"
-    "quotaConsumed": "1"
+    "ingressThroughputPerSec": '"${KAFKA_CAPACITY_INGRESS_THROUGHPUT}"'
+    "egressThroughputPerSec": '"${KAFKA_CAPACITY_EGRESS_THROUGHPUT}"'
+    "totalMaxConnections": '${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}'
+    "maxConnectionAttemptsPerSec": '${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}'
+    "maxDataRetentionSize": '"${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}"'
+    "maxDataRetentionPeriod": '"${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}"'
+    "maxPartitions": '${KAFKA_CAPACITY_MAX_PARTITIONS}'
+    "quotaConsumed": 1
     "quotaType": "RHOSAK"
-    "capacityConsumed": "1"
-  - "id": "x2"
-    "ingressThroughputPerSec": "100Mi"
-    "egressThroughputPerSec": "200Mi"
-    "totalMaxConnections": "6000"
-    "maxDataRetentionSize": "2000Gi"
-    "maxPartitions": "3000"
-    "maxDataRetentionPeriod": "P14D"
-    "maxConnectionAttemptsPerSec": "200"
-    "quotaConsumed": "2"
-    "quotaType": "RHOSAK"
-    "capacityConsumed": "2"
-- "id": "developer"
-  "display_name": "Trial"
-  "sizes":
-  - "id": "x1"
-    "ingressThroughputPerSec": "1Mi"
-    "egressThroughputPerSec": "1Mi"
-    "totalMaxConnections": "100"
-    "maxConnectionAttemptsPerSec": "50"
-    "maxDataRetentionSize": "10Gi"
-    "maxDataRetentionPeriod": "P14D"
-    "maxPartitions": "100"
-    "quotaConsumed": "1"
-    "quotaType": "RHOSAKTrial"
-    "capacityConsumed": "1"
-- "id": "eval"
-  "display_name": "Eval"
-  "sizes":
-  - "id": "x1"
-    "ingressThroughputPerSec": "30Mi"
-    "egressThroughputPerSec": "30Mi"
-    "totalMaxConnections": "3000"
-    "maxConnectionAttemptsPerSec": "100"
-    "maxDataRetentionSize": "1000Gi"
-    "maxDataRetentionPeriod": "P14D"
-    "maxPartitions": "1000"
-    "quotaConsumed": "1"
-    "quotaType": "RHOSAKTrial"
-    "capacityConsumed": "1"
+    "capacityConsumed": 1
 ' \
     -p SUPPORTED_CLOUD_PROVIDERS='
 - "name": "aws"

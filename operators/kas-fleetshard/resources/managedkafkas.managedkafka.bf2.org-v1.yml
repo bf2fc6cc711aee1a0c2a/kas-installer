@@ -67,6 +67,11 @@ spec:
                 type: array
               capacity:
                 properties:
+                  ingressPerSec:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    x-kubernetes-int-or-string: true
                   maxDataRetentionSize:
                     anyOf:
                     - type: integer
@@ -85,6 +90,11 @@ spec:
                     type: integer
                   maxPartitions:
                     type: integer
+                  egressPerSec:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    x-kubernetes-int-or-string: true
                 type: object
               oauth:
                 properties:
@@ -108,8 +118,6 @@ spec:
                     type: string
                   clientId:
                     type: string
-                required:
-                - clientSecret
                 type: object
               deleted:
                 type: boolean
@@ -178,6 +186,11 @@ spec:
                 type: array
               capacity:
                 properties:
+                  ingressPerSec:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    x-kubernetes-int-or-string: true
                   maxDataRetentionSize:
                     anyOf:
                     - type: integer
@@ -196,6 +209,11 @@ spec:
                     type: integer
                   maxPartitions:
                     type: integer
+                  egressPerSec:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    x-kubernetes-int-or-string: true
                 type: object
             type: object
         type: object

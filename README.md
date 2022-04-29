@@ -6,6 +6,7 @@ in a single K8s cluster.
 ## Prerequisites
 * [jq][jq]
 * [curl][curl]
+* gsed for macOS e.g. via `brew install gsed`
 * [OpenShift][openshift]. In the future there are plans to make it compatible
   with native K8s. Currently an OpenShift dedicated based environment is needed
   (Currently needs to be a multi-zone cluster if you want to create a Kafka
@@ -15,7 +16,7 @@ in a single K8s cluster.
 * kubectl
 * openssl CLI tool
 * rhoas CLI (https://github.com/redhat-developer/app-services-cli)
-* A user with administrative privileges in the OpenShift cluster
+* A user with administrative privileges in the OpenShift cluster and is logged in using `oc` or `kubectl`
 * brew coreutils (Mac only)
 * OSD Cluster with the following specs:
    * 3 compute nodes
@@ -45,6 +46,7 @@ same cluster set in the user's kubeconfig file.
 1. Create and fill the KAS installer configuration file `kas-installer.env`. An
    example of the needed values can be found in the `kas-installer.env.example`
    file
+1. make sure you have run `oc login --server=<api cluster url|https://api.xxx.openshiftapps.com:6443>` to your target OSD cluster. You will be asked a password or a token
 1. Run the KAS installer `kas-installer.sh` to deploy and configure Managed
    Kafka Service
 1. Run `uninstall.sh` to remove KAS from the cluster.  You should remove any deployed Kafkas before runnig this script.
@@ -53,6 +55,12 @@ same cluster set in the user's kubeconfig file.
 **NOTE:**
 Installer uses predefined bundle for installing Strimzi Operator, to use a different bundle you'll need to build a dev bundle and update STRIMZI_OPERATOR_BUNDLE_IMAGE environment variable.
 
+---
+
+---
+**Troubleshooting:**
+If the installer crashed due to configuration error in `kas-installer.env`, you often can rerun the installer after fixing the config issue.
+It is not necessary to run uninstall before retrying.
 ---
 
 ## Using rhoas CLI
@@ -74,7 +82,13 @@ There are a couple of things that are expected not to work when using the RHOAS 
 1. To list existing clusters, run `rhoas kafka list`
 1. To remove an existing cluster, run `rhoas kafka delete --name <clustername>`.
 
-Note: that managing ACLs via rhoas cli does not work yet (in kas-installer admin-server currently runs over plain).
+#### Kafka topics / consumergroups / ACL
+
+To use these cli featurs, you must set `MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED=true` in your `kas-installer.env` so that the admin-server will run over TLS (edge terminated).
+
+1. To create a topic `rhoas kafka topic create --name=foo`
+1. To grant access `rhoas kafka acl grant-access  --topic=foo --all-accounts --producer`
+etc.
 
 ## Legacy scripts
 
@@ -111,11 +125,11 @@ To use the Kafka Cluster that is created with the `managed_kafka.sh` script with
 
 
    ```
-   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/rest/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"GROUP", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
+   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/api/v1/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"GROUP", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
    ```
    then for Topic
    ```
-   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/rest/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"TOPIC", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
+   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/api/v1/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"TOPIC", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
    ```
 
 1. Then execute the your tool like `kafka-topics.sh --bootstrap-server <bootstrap-host>:443 --command-config app-services.properties --topic foo --create --partitions 9`

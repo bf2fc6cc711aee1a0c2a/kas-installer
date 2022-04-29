@@ -210,11 +210,13 @@ spec:
     matchLabels:
       app: kas-fleetshard-operator
       app.kubernetes.io/name: kas-fleetshard-operator
+      name: kas-fleetshard-operator
   template:
     metadata:
       labels:
         app: kas-fleetshard-operator
         app.kubernetes.io/name: kas-fleetshard-operator
+        name: kas-fleetshard-operator
       name: kas-fleetshard-operator
     spec:
       serviceAccountName: kas-fleetshard-operator
@@ -229,7 +231,7 @@ spec:
       - name: rhoas-image-pull-secret
       containers:
       - name: kas-fleetshard-operator
-        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.19.0
+        image: quay.io/mk-ci-cd/kas-fleetshard-operator:0.21.0-1
         env:
         - name: QUARKUS_PROFILE
           value: prod

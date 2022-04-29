@@ -30,22 +30,26 @@ OBSERVABILITY_OPERATOR_K8S_NAMESPACE="managed-application-services-observability
 OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME="observability-operator-controller-manager"
 
 clone_kasfleetmanager_code_repository() {
-
   if [ -d "${KAS_FLEET_MANAGER_CODE_DIR}" ]; then
-    CURRENT_HASH=$(cd "${KAS_FLEET_MANAGER_CODE_DIR}" && ${GIT} rev-parse HEAD)
-    if [ "${CURRENT_HASH}" != "${KAS_FLEET_MANAGER_BF2_REF}" ]; then
-      echo "KAS Fleet Manager code directory was stale ${CURRENT_HASH} != ${KAS_FLEET_MANAGER_BF2_REF}. Updating it..."
+    CONFIGURED_GIT="${KAS_FLEET_MANAGER_GIT_URL}:${KAS_FLEET_MANAGER_GIT_REF}"
+    CURRENT_GIT=$(cd "${KAS_FLEET_MANAGER_CODE_DIR}" && echo "$(${GIT} remote get-url origin):$(${GIT} rev-parse HEAD)")
+
+    if [ "${CURRENT_GIT}" != "${CONFIGURED_GIT}" ] ; then
+      echo "Refreshing KAS Fleet Manager code directory (current ${CURRENT_GIT} != configured ${CONFIGURED_GIT})"
       # Checkout the configured git ref and pull only if not in detached HEAD state (rc of symbolic-ref == 0)
       (cd ${KAS_FLEET_MANAGER_CODE_DIR} && \
-        ${GIT} fetch && \
-        ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF} && \
+        ${GIT} remote set-url origin ${KAS_FLEET_MANAGER_GIT_URL}
+        ${GIT} fetch origin && \
+        ${GIT} checkout ${KAS_FLEET_MANAGER_GIT_REF} && \
         ${GIT} symbolic-ref -q HEAD && \
         ${GIT} pull --ff-only || echo "Skipping 'pull' for detached HEAD")
+    else
+      echo "KAS Fleet Manager code directory is current, not refreshing"
     fi
   else
     echo "KAS Fleet Manager code directory does not exist. Cloning it..."
-    ${GIT} clone "https://${OBSERVABILITY_CONFIG_ACCESS_TOKEN}@github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager.git" ${KAS_FLEET_MANAGER_CODE_DIR}
-    (cd ${KAS_FLEET_MANAGER_CODE_DIR} && ${GIT} checkout ${KAS_FLEET_MANAGER_BF2_REF})
+    ${GIT} clone "${KAS_FLEET_MANAGER_GIT_URL}" ${KAS_FLEET_MANAGER_CODE_DIR}
+    (cd ${KAS_FLEET_MANAGER_CODE_DIR} && ${GIT} checkout ${KAS_FLEET_MANAGER_GIT_REF})
   fi
 }
 
@@ -63,7 +67,7 @@ metadata:
 EOF
 )
 
-  if [ -z "$(kubectl get sa ${KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ]; then
+  if [ -z "$(${KUBECTL} get sa ${KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ]; then
     echo "KAS Fleet Manager service account does not exist. Creating it..."
     echo -n "${KAS_FLEET_MANAGER_SA_YAML}" | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
   fi
@@ -72,7 +76,7 @@ EOF
 
 create_kasfleetmanager_pull_credentials() {
   KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME="kas-fleet-manager-image-pull-secret"
-  if [ -z "$(kubectl get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ]; then
+  if [ -z "$(${KUBECTL} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ]; then
     echo "KAS Fleet Manager image pull secret does not exist. Creating it..."
     ${OC} create secret docker-registry ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} \
       --docker-server=${IMAGE_REGISTRY} \
@@ -108,7 +112,6 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_CRT="${MAS_SSO_CRT}" \
     -p KAFKA_TLS_CERT="${KAFKA_TLS_CERT}" \
     -p KAFKA_TLS_KEY="${KAFKA_TLS_KEY}" \
-    -p DATABASE_HOST="$(${KUBECTL} get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
     -p KUBE_CONFIG="$(${OC} config view --minify --raw | base64 -w0)" \
     -p IMAGE_PULL_DOCKER_CONFIG=$(${OC} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.data.\.dockerconfigjson}") \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
@@ -120,11 +123,12 @@ deploy_kasfleetmanager() {
   OCM_ENV="development"
 
   SERVICE_PARAMS=${DIR_NAME}/kas-fleet-manager-params.env
+  > ${SERVICE_PARAMS}
 
   if [ -n "${OCM_SERVICE_TOKEN}" ] ; then
       PROVIDER_TYPE="ocm"
+      ENABLE_OCM_MOCK="false"
       CLUSTER_STATUS="cluster_provisioned"
-      ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE="true"
 
       if [ -n "${STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG}" ] ; then
           echo "WARN: Strimzi operator subscription config will not be used with the 'ocm' cluster provider type"
@@ -133,13 +137,14 @@ deploy_kasfleetmanager() {
       if [ -n "${KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG}" ] ; then
           echo "WARN: Fleetshard operator subscription config will not be used with the 'ocm' cluster provider type"
       fi
+
+      echo 'AMS_URL="https://api.stage.openshift.com"' >> ${SERVICE_PARAMS}
+      echo 'OCM_URL="https://api.stage.openshift.com"' >> ${SERVICE_PARAMS}
   else
       PROVIDER_TYPE="standalone"
+      ENABLE_OCM_MOCK="true"
       CLUSTER_STATUS="ready"
-      ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE="false"
   fi
-
-  > ${SERVICE_PARAMS}
 
   if [ -n "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS:-}" ] ; then
       echo "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS}" >> ${SERVICE_PARAMS}
@@ -152,7 +157,6 @@ deploy_kasfleetmanager() {
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
     --param-file=${SERVICE_PARAMS} \
     -p ENVIRONMENT="${OCM_ENV}" \
-    -p OCM_URL="https://api.stage.openshift.com" \
     -p IMAGE_REGISTRY=${IMAGE_REGISTRY} \
     -p IMAGE_REPOSITORY=${IMAGE_REPOSITORY} \
     -p IMAGE_TAG=${IMAGE_TAG} \
@@ -161,7 +165,6 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_BASE_URL="${MAS_SSO_BASE_URL}" \
     -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
     -p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
-    -p ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE="${ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE}" \
     -p SERVICE_PUBLIC_HOST_URL="https://kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}" \
     -p DATAPLANE_CLUSTER_SCALING_TYPE="manual" \
     -p CLUSTER_LIST='
@@ -192,7 +195,7 @@ deploy_kasfleetmanager() {
     -p REPLICAS=1 \
     -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \
     -p TOKEN_ISSUER_URL="$(${KUBECTL} get route -n mas-sso keycloak -o jsonpath='https://{.status.ingress[0].host}/auth/realms/rhoas')" \
-    -p ENABLE_OCM_MOCK=true \
+    -p ENABLE_OCM_MOCK="${ENABLE_OCM_MOCK}" \
     -p OBSERVABILITY_CONFIG_REPO="${OBSERVABILITY_CONFIG_REPO}" \
     -p OBSERVABILITY_CONFIG_TAG="${OBSERVABILITY_CONFIG_TAG}" \
     -p STRIMZI_OLM_INDEX_IMAGE="${STRIMZI_OLM_INDEX_IMAGE}" \
@@ -219,7 +222,7 @@ read_kasfleetmanager_env_file() {
 
 wait_for_observability_operator_deployment_availability() {
   echo "Waiting until Observability operator deployment is created..."
-  while [ -z "$(kubectl get deployment ${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
+  while [ -z "$(${KUBECTL} get deployment ${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
     echo "Deployment ${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} still not created. Waiting..."
     sleep 10
   done
@@ -232,7 +235,7 @@ disable_observability_operator_extras() {
   wait_for_observability_operator_deployment_availability
   echo "Waiting until Observability CR is created..."
   OBSERVABILITY_CR_NAME="observability-stack"
-  while [ -z "$(kubectl get Observability ${OBSERVABILITY_CR_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
+  while [ -z "$(${KUBECTL} get Observability ${OBSERVABILITY_CR_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
     echo "Observability CR ${OBSERVABILITY_CR_NAME} still not created. Waiting..."
     sleep 3
   done

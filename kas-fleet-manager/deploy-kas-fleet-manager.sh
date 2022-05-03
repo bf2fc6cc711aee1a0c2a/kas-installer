@@ -197,7 +197,7 @@ deploy_kasfleetmanager() {
 - "id": "standard"
   "display_name": "Standard"
   "sizes":
-  - "id": "x1"
+  - "id": "x2"
     "ingressThroughputPerSec": '"${KAFKA_CAPACITY_INGRESS_THROUGHPUT}"'
     "egressThroughputPerSec": '"${KAFKA_CAPACITY_EGRESS_THROUGHPUT}"'
     "totalMaxConnections": '${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}'
@@ -205,9 +205,9 @@ deploy_kasfleetmanager() {
     "maxDataRetentionSize": '"${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}"'
     "maxDataRetentionPeriod": '"${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}"'
     "maxPartitions": '${KAFKA_CAPACITY_MAX_PARTITIONS}'
-    "quotaConsumed": 1
+    "quotaConsumed": 2
     "quotaType": "RHOSAK"
-    "capacityConsumed": 1
+    "capacityConsumed": 2
 ' \
     -p SUPPORTED_CLOUD_PROVIDERS='
 - "name": "aws"

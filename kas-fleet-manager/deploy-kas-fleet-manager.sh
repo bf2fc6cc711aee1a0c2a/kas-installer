@@ -129,29 +129,18 @@ deploy_kasfleetmanager() {
       PROVIDER_TYPE="ocm"
       ENABLE_OCM_MOCK="false"
       CLUSTER_STATUS="cluster_provisioned"
-
-      if [ -n "${STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG}" ] ; then
-          echo "WARN: Strimzi operator subscription config will not be used with the 'ocm' cluster provider type"
-      fi
-
-      if [ -n "${KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG}" ] ; then
-          echo "WARN: Fleetshard operator subscription config will not be used with the 'ocm' cluster provider type"
-      fi
-
       echo 'AMS_URL="https://api.stage.openshift.com"' >> ${SERVICE_PARAMS}
       echo 'OCM_URL="https://api.stage.openshift.com"' >> ${SERVICE_PARAMS}
+      echo 'ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="false"' >> ${SERVICE_PARAMS}
   else
       PROVIDER_TYPE="standalone"
       ENABLE_OCM_MOCK="true"
       CLUSTER_STATUS="ready"
   fi
 
-  if [ -n "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS:-}" ] ; then
-      echo "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS}" >> ${SERVICE_PARAMS}
-  fi
-
-  if [ -n "${SUPPORTED_INSTANCE_TYPES:-}" ] ; then
-      echo "SUPPORTED_INSTANCE_TYPES='${SUPPORTED_INSTANCE_TYPES}'" >> ${SERVICE_PARAMS}
+  if [ -n "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS:-}" ] && [ -x "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS}" ] ; then
+      echo "Executing ${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS} to generate user-supplied service-template.yml parameters"
+      ${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS} >> ${SERVICE_PARAMS}
   fi
 
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
@@ -190,8 +179,6 @@ deploy_kasfleetmanager() {
         "standard": {}
         "developer": {}
 ' \
-    -p STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG="${STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG}" \
-    -p KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG="${KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG}" \
     -p REPLICAS=1 \
     -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \
     -p TOKEN_ISSUER_URL="$(${KUBECTL} get route -n mas-sso keycloak -o jsonpath='https://{.status.ingress[0].host}/auth/realms/rhoas')" \

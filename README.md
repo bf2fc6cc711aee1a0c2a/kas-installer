@@ -10,6 +10,7 @@ in a single K8s cluster.
 - [Installation Modes](#installation-modes)
   - [Standalone Mode](#standalone)
   - [OCM Mode](#ocm)
+- [Fleet Manager Parameter Customization](#fleet-manager-parameter-customization)
 - [Using rhoas CLI](#using-rhoas-cli)
 - [Legacy Scripts](#legacy-scripts)
 - [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
@@ -70,12 +71,39 @@ It is not necessary to run uninstall before retrying.
 ### Standalone
 
 Deploying a cluster with kas-fleet-manager in `standalone` is the default for kas-installer (when `OCM_SERVICE_TOKEN` is not defined).
-In this mode, the fleet manager deploys the data plane components from OLM bundles. Additional configuration can be set on the bundle
-subscriptions using environment variables `KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG` and `STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG`.
+In this mode, the fleet manager deploys the data plane components from OLM bundles.
 
-For example, to set resources used by fleetshard operator, sync, Kafka, and Zookeeper and enable TLS for the admin API server, the following could be used:
+**NOTE:**
+In standalone mode, predefined bundles are used for Strimzi and KAS Fleetshard operators. To use a different bundle
+you'll need to build a dev bundle and set either `STRIMZI_OLM_INDEX_IMAGE` or `KAS_FLEETSHARD_OLM_INDEX_IMAGE` environment variables.
+
+### OCM
+
+Installation with OCM mode allows kas-fleet-manager to deploy the data plane components as OCM addons. This mode can be
+used by setting `OCM_SERVICE_TOKEN` to your [OCM offline token](https://console.redhat.com/openshift/token) and also setting
+`OCM_CLUSTER_ID` to the idenfier for the OSD cluster used in deployment.
+
+**NOTE:**
+In OCM mode, it may take up to 10 minutes after the `kas-installer.sh` completes before the addon installations are ready. Until ready,
+the fleet-manager API will reject new Kafka requests.
+
+## Fleet Manager Parameter Customization
+
+The `kas-installer.sh` process will check for the presence of an executable named `kas-fleet-manager-service-template-params` in
+the project root. When available, it will be executed with the expection that key/value pairs will be output to stdout. The output
+will used when processing the kas-fleet-manager's [service-template.yml](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/templates/service-template.yml).
+The name of the executable is intentially missing an extension to indicate that any language may be used that is known to the user
+to be supported in their own environment.
+
+Note that `oc process` requires that individual parameters are specified on a single line.
+
+For example, to provide a custom `KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG` parameter value to the fleet manager template,
+something like the following may be used for a `kas-fleet-manager-service-template-params` executable:
 ```shell
-KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG='---
+#!/bin/bash
+
+# Declare the subscription config using multi-line YAML
+MY_CUSTOM_SUBSCRIPTION_CONFIG='---
 resources:
   requests:
     memory: "1Gi"
@@ -97,21 +125,11 @@ env:
 - name: STANDARD_ZOOKEEPER_CONTAINER_CPU
   value: 500m
 '
+
+# Serialize to a single line as JSON (subset of YAML) to standard output
+echo "KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG='$(echo "${MY_CUSTOM_SUBSCRIPTION_CONFIG}" | yq -o=json -I=0)'"
+
 ```
-
-**NOTE:**
-In standalone mode, predefined bundles are used for Strimzi and KAS Fleetshard operators. To use a different bundle
-you'll need to build a dev bundle and set either `STRIMZI_OLM_INDEX_IMAGE` or `KAS_FLEETSHARD_OLM_INDEX_IMAGE` environment variables.
-
-### OCM
-
-Installation with OCM mode allows kas-fleet-manager to deploy the data plane components as OCM addons. This mode can be
-used by setting `OCM_SERVICE_TOKEN` to your [OCM offline token](https://console.redhat.com/openshift/token) and also setting
-`OCM_CLUSTER_ID` to the idenfier for the OSD cluster used in deployment.
-
-**NOTE:**
-In OCM mode, it may take up to 10 minutes after the `kas-installer.sh` completes before the addon installations are ready. Until ready,
-the fleet-manager API will reject new Kafka requests.
 
 ## Using rhoas CLI
 

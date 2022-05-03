@@ -131,7 +131,6 @@ deploy_kasfleetmanager() {
       CLUSTER_STATUS="cluster_provisioned"
       echo 'AMS_URL="https://api.stage.openshift.com"' >> ${SERVICE_PARAMS}
       echo 'OCM_URL="https://api.stage.openshift.com"' >> ${SERVICE_PARAMS}
-      echo 'ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="false"' >> ${SERVICE_PARAMS}
   else
       PROVIDER_TYPE="standalone"
       ENABLE_OCM_MOCK="true"
@@ -154,6 +153,7 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_BASE_URL="${MAS_SSO_BASE_URL}" \
     -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
     -p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
+    -p ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="false" \
     -p SERVICE_PUBLIC_HOST_URL="https://kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}" \
     -p DATAPLANE_CLUSTER_SCALING_TYPE="manual" \
     -p CLUSTER_LIST='

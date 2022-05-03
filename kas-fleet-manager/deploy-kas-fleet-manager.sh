@@ -189,7 +189,7 @@ deploy_kasfleetmanager() {
   "multi_az": true
   "schedulable": true
   "kafka_instance_limit": 5
-  "supported_instance_type": "standard,eval"
+  "supported_instance_type": "standard,developer"
   "status": "ready"
   "cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"
 ' \

@@ -217,7 +217,7 @@ deploy_kasfleetmanager() {
       "default": true
       "supported_instance_type":
         "standard": {}
-        "eval": {} 
+        "developer": {} 
 ' \
     -p REPLICAS=1 \
     -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \

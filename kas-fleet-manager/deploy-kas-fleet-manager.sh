@@ -194,8 +194,8 @@ deploy_kasfleetmanager() {
   "cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"
 ' \
     -p SUPPORTED_INSTANCE_TYPES='
-- "id": "developer"
-  "display_name": "Trial"
+- "id": "standard"
+  "display_name": "Standard"
   "sizes":
   - "id": "x1"
     "ingressThroughputPerSec": '"${KAFKA_CAPACITY_INGRESS_THROUGHPUT}"'
@@ -206,7 +206,7 @@ deploy_kasfleetmanager() {
     "maxDataRetentionPeriod": '"${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}"'
     "maxPartitions": '${KAFKA_CAPACITY_MAX_PARTITIONS}'
     "quotaConsumed": 1
-    "quotaType": "RHOSAKTrial"
+    "quotaType": "RHOSAK"
     "capacityConsumed": 1
 ' \
     -p SUPPORTED_CLOUD_PROVIDERS='

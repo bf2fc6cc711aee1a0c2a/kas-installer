@@ -13,10 +13,12 @@ if [ "$OS" = 'Darwin' ]; then
   # for MacOS
   SED=$(which gsed)
   DATE=$(which gdate)
+  BASE64=$(which gbase64)
 else
   # for Linux and Windows
   SED=$(which sed)
   DATE=$(which date)
+  BASE64=$(which base64)
 fi
 
 ORIGINAL_DIR=$(pwd)
@@ -112,7 +114,7 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_CRT="${MAS_SSO_CRT}" \
     -p KAFKA_TLS_CERT="${KAFKA_TLS_CERT}" \
     -p KAFKA_TLS_KEY="${KAFKA_TLS_KEY}" \
-    -p KUBE_CONFIG="$(${OC} config view --minify --raw | base64 -w0)" \
+    -p KUBE_CONFIG="$(${OC} config view --minify --raw | ${BASE64} -w0)" \
     -p IMAGE_PULL_DOCKER_CONFIG=$(${OC} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.data.\.dockerconfigjson}") \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 

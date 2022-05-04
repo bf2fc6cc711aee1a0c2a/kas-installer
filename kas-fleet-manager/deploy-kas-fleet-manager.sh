@@ -144,6 +144,11 @@ deploy_kasfleetmanager() {
       ${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS} >> ${SERVICE_PARAMS}
   fi
 
+  if [ -z "${OCM_SERVICE_TOKEN}" ] && [ -z "$(grep 'KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG' ${SERVICE_PARAMS})" ]; then
+      # kas-fleetshard sync requires `SSO_ENABLED=true`. Set the value if no user-provided sub config is given
+      echo 'KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG={ "env":[{"name":"SSO_ENABLED","value":"true"}] }' >> ${SERVICE_PARAMS}
+  fi
+
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
     --param-file=${SERVICE_PARAMS} \
     -p ENVIRONMENT="${OCM_ENV}" \

@@ -53,6 +53,14 @@ clone_kasfleetmanager_code_repository() {
     ${GIT} clone "${KAS_FLEET_MANAGER_GIT_URL}" ${KAS_FLEET_MANAGER_CODE_DIR}
     (cd ${KAS_FLEET_MANAGER_CODE_DIR} && ${GIT} checkout ${KAS_FLEET_MANAGER_GIT_REF})
   fi
+
+  if [ "${IMAGE_BUILD}" = "true" ] ; then
+      (cd ${KAS_FLEET_MANAGER_CODE_DIR} && \
+        make image/build/push/internal NAMESPACE=${KAS_FLEET_MANAGER_NAMESPACE} IMAGE_TAG=${IMAGE_TAG})
+
+      IMAGE_REGISTRY='image-registry.openshift-image-registry.svc:5000'
+      IMAGE_REPOSITORY=${KAS_FLEET_MANAGER_NAMESPACE}/kas-fleet-manager
+  fi
 }
 
 create_kasfleetmanager_service_account() {
@@ -81,7 +89,7 @@ create_kasfleetmanager_pull_credentials() {
   if [ -z "$(${KUBECTL} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ]; then
     echo "KAS Fleet Manager image pull secret does not exist. Creating it..."
     ${OC} create secret docker-registry ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} \
-      --docker-server=${IMAGE_REGISTRY} \
+      --docker-server=${PULL_SECRET_REGISTRY} \
       --docker-username=${IMAGE_REPOSITORY_USERNAME} \
       --docker-password=${IMAGE_REPOSITORY_PASSWORD}
 
@@ -91,8 +99,6 @@ create_kasfleetmanager_pull_credentials() {
 }
 
 deploy_kasfleetmanager() {
-  create_kas_fleet_manager_namespace
-
   echo "Deploying KAS Fleet Manager Database..."
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/db-template.yml | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
   echo "Waiting until KAS Fleet Manager Database is ready..."
@@ -212,6 +218,7 @@ read_kasfleetmanager_env_file() {
   fi
 
   . ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  PULL_SECRET_REGISTRY=${IMAGE_REGISTRY}
 }
 
 wait_for_observability_operator_deployment_availability() {
@@ -274,6 +281,7 @@ create_kas_fleet_manager_namespace() {
 ## Main body of the script starts here
 
 read_kasfleetmanager_env_file
+create_kas_fleet_manager_namespace
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager
 disable_observability_operator_extras

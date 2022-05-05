@@ -9,6 +9,7 @@ OC=$(which oc)
 KUBECTL=$(which kubectl)
 MAKE=$(which make)
 OPENSSL=$(which openssl)
+OCM=$(which ocm)
 
 if [ "$OS" = 'Darwin' ]; then
   # for MacOS
@@ -25,41 +26,47 @@ source ${KAS_INSTALLER_ENV_FILE}
 
 KAS_FLEET_MANAGER_DIR="${DIR_NAME}/kas-fleet-manager"
 KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="${KAS_FLEET_MANAGER_DIR}/kas-fleet-manager-deploy.env"
-TERRAFORM_FILES_BASE_DIR="terraforming"
-TERRAFORM_GENERATED_DIR="${KAS_FLEET_MANAGER_DIR}/${TERRAFORM_FILES_BASE_DIR}/terraforming-generated-k8s-resources"
 source ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
-if [ "${SKIP_KAS_FLEETSHARD:-""}n" = "n" ]; then
-    (cd ${DIR_NAME}/operators && ./uninstall-all.sh)
-    ${KUBECTL} delete namespace ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} || true
-    ${KUBECTL} delete namespace ${STRIMZI_OPERATOR_NAMESPACE} || true
-fi
-
-
-${KUBECTL} delete observabilities --all -n managed-application-services-observability || true
-
-for i in $(find ${TERRAFORM_GENERATED_DIR} -type f | sort); do
-    echo "Deleting K8s resource ${i} ..."
-    ${KUBECTL} delete -f ${i} || true
-done
-
 ${KUBECTL} delete namespace ${KAS_FLEET_MANAGER_NAMESPACE} || true
-${KUBECTL} delete namespace managed-application-services-observability || true
 
-if [ "${SKIP_SSO:-""}n" = "n" ] ; then
+if [ "${SKIP_SSO:-"n"}" = "y" ] ; then
+    echo "Skipping removal of MAS SSO"
+else
     ${KUBECTL} delete keycloakusers -l app=mas-sso --all-namespaces || true
     ${KUBECTL} delete keycloakclients -l app=mas-sso --all-namespaces || true
     ${KUBECTL} delete keycloakrealms --all -n mas-sso || true
     ${KUBECTL} delete keycloaks -l app=mas-sso --all-namespaces || true
     ${KUBECTL} delete namespace mas-sso || true
-else
-    echo "MAS SSO not uninstalled"
 fi
 
-if [ "${SKIP_OBSERVATORIUM:-""}n" = "n" ] ; then
-  ${KUBECTL} delete namespace observatorium
-  ${KUBECTL} delete namespace dex
-  ${KUBECTL} delete namespace observatorium-minio
+if [ "${SKIP_OBSERVATORIUM:-"n"}" = "y" ] ; then
+    echo "Skipping removal of Observatorium"
 else
-    echo "Observatorium not uninstalled"
+  ${KUBECTL} delete namespace observatorium || true
+  ${KUBECTL} delete namespace dex || true
+  ${KUBECTL} delete namespace observatorium-minio || true
 fi
+
+if [ "${SKIP_KAS_FLEETSHARD:-"n"}" = "y" ]; then
+    echo "Skipping removal of Strimzi and Fleetshard operators"
+else
+    if [ -n "${OCM_CLUSTER_ID-""}" ] ; then
+        if [ -n "${OCM}" ] ; then
+            ${OCM} delete "/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons/kas-fleetshard-operator-qe" || true
+            ${OCM} delete "/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons/managed-kafka-qe" || true
+        fi
+    fi
+
+    (cd ${DIR_NAME}/operators && ./uninstall-all.sh)
+    ${KUBECTL} delete namespace ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} || true
+    ${KUBECTL} delete namespace ${STRIMZI_OPERATOR_NAMESPACE} || true
+fi
+
+OBSERVABILITY_NS=managed-application-services-observability
+${KUBECTL} delete subscription --all -n ${OBSERVABILITY_NS} || true
+${KUBECTL} delete catalogsource --all -n ${OBSERVABILITY_NS} || true
+${KUBECTL} delete observabilities --all -n ${OBSERVABILITY_NS} || true
+${KUBECTL} delete csv --all -n ${OBSERVABILITY_NS} || true
+${KUBECTL} delete operatorgroup --all -n ${OBSERVABILITY_NS} || true
+${KUBECTL} delete namespace ${OBSERVABILITY_NS} || true

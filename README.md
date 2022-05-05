@@ -32,10 +32,14 @@ in a single K8s cluster.
 * A user with administrative privileges in the OpenShift cluster and is logged in using `oc` or `kubectl`
 * brew coreutils (Mac only)
 * OSD Cluster with the following specs:
-   * 3 compute nodes
-   * Size: m5.4xlarge
-   * MultiAz: True
-
+   * Plan `developer.x1` (clusters with less resources _may_ work, but have not been verified with kas-installer)
+      * 3 compute nodes
+      * Size: r5.2xlarge
+      * MultiAz: N/A
+   * Plan `standard.x1`
+      * 3 compute nodes
+      * Size: m5.4xlarge
+      * MultiAz: True
 
 ## Description
 
@@ -56,9 +60,8 @@ same cluster set in the user's kubeconfig file.
 ## Usage
 
 ### Deploy Managed Kafka Service
-1. Create and fill the KAS installer configuration file `kas-installer.env`. An
-   example of the needed values can be found in the `kas-installer.env.example`
-   file
+1. Create and fill the KAS installer configuration file `kas-installer.env`. Minimally, the
+   values identified as [required] in [kas-installer-defaults.env](kas-installer-defaults.env) must be configured.
 1. make sure you have run `oc login --server=<api cluster url|https://api.xxx.openshiftapps.com:6443>` to your target OSD cluster. You will be asked a password or a token
 1. Run the KAS installer `kas-installer.sh` to deploy and configure Managed
    Kafka Service

@@ -130,7 +130,7 @@ env:
 # Quota override for my organization
 MY_CUSTOM_ORG_QUOTA='
 - id: <YOUR ORG HERE>
-  max_allowed_instances: 1
+  max_allowed_instances: 10
   any_user: true
   registered_users: []
 '

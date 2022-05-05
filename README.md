@@ -11,6 +11,7 @@ in a single K8s cluster.
   - [Standalone Mode](#standalone)
   - [OCM Mode](#ocm)
 - [Fleet Manager Parameter Customization](#fleet-manager-parameter-customization)
+  - [Instance Types](#instance-types)
 - [Using rhoas CLI](#using-rhoas-cli)
 - [Legacy Scripts](#legacy-scripts)
 - [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
@@ -126,9 +127,33 @@ env:
   value: 500m
 '
 
+# Quota override for my organization
+MY_CUSTOM_ORG_QUOTA='
+- id: <YOUR ORG HERE>
+  max_allowed_instances: 10
+  any_user: true
+  registered_users: []
+'
+
 # Serialize to a single line as JSON (subset of YAML) to standard output
 echo "KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG='$(echo "${MY_CUSTOM_SUBSCRIPTION_CONFIG}" | yq -o=json -I=0)'"
 
+# Disable organization quotas (allows deployment of developer instances)
+echo "REGISTERED_USERS_PER_ORGANISATION='[]'"
+# Custom organization quota (allows deployment of standard instances), disabled/commented here
+#echo "REGISTERED_USERS_PER_ORGANISATION='$(echo "${MY_CUSTOM_ORG_QUOTA}" | yq -o=json -I=0)'"
+
+```
+### Instance Types
+The default kas-fleet-manager configuration enables the deployment of two instance types, `standard` and `developer`. Permission
+to create an instance of a particular type depends on the organization's quota for the user creating the instance.
+
+1. Creating a `developer` instance type requires that the user creating the instance does not have an instance quota. Use [parameter customization](#fleet-manager-parameter-customization) to set the `REGISTERED_USERS_PER_ORGANISATION` property to an empty array `[]`.
+1. Creating a `standard` instance type requires that the user creating the instance _does_ have an instance quota. Use [parameter customization](#fleet-manager-parameter-customization) to set the `REGISTERED_USERS_PER_ORGANISATION` property to an array containing the user's org. See the `MY_CUSTOM_ORG_QUOTA` variable in the sample script for an example.
+
+To create a `standard.x2` (or other non-default types) instance type, the `plan` must be provided to the Kafka create request. If using the `managed_kafka.sh` script, the `--plan` argument may be used:
+```shell
+managed_kafka.sh --create mykafka --plan standard.x2
 ```
 
 ## Using rhoas CLI

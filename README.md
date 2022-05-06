@@ -136,12 +136,12 @@ MY_CUSTOM_ORG_QUOTA='
 '
 
 # Serialize to a single line as JSON (subset of YAML) to standard output
-echo "KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG='$(echo "${MY_CUSTOM_SUBSCRIPTION_CONFIG}" | yq -o=json -I=0)'"
+echo "KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG='$(echo "${MY_CUSTOM_SUBSCRIPTION_CONFIG}" | yq e -o=json -I=0)'"
 
 # Disable organization quotas (allows deployment of developer instances)
 echo "REGISTERED_USERS_PER_ORGANISATION='[]'"
 # Custom organization quota (allows deployment of standard instances), disabled/commented here
-#echo "REGISTERED_USERS_PER_ORGANISATION='$(echo "${MY_CUSTOM_ORG_QUOTA}" | yq -o=json -I=0)'"
+#echo "REGISTERED_USERS_PER_ORGANISATION='$(echo "${MY_CUSTOM_ORG_QUOTA}" | yq e -o=json -I=0)'"
 
 ```
 ### Instance Types

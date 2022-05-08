@@ -31,14 +31,18 @@ in a single K8s cluster.
 * rhoas CLI (https://github.com/redhat-developer/app-services-cli)
 * A user with administrative privileges in the OpenShift cluster and is logged in using `oc` or `kubectl`
 * brew coreutils (Mac only)
-* OSD Cluster with the following specs:
-   * Plan `developer.x1` (clusters with less resources _may_ work, but have not been verified with kas-installer)
-      * 3 compute nodes
-      * Size: r5.2xlarge
+* OSD Cluster with the following specs. Clusters with fewer/smaller compute nodes _may_ work, but have not been verified with kas-installer.
+   * Plan `developer.x1`
+      * 6 compute nodes
+      * Size: m5.2xlarge
       * MultiAz: N/A
    * Plan `standard.x1`
-      * 3 compute nodes
-      * Size: m5.4xlarge
+      * 9 compute nodes
+      * Size: m5.2xlarge
+      * MultiAz: True
+   * Plan `standard.x2`
+      * 12 compute nodes
+      * Size: m5.2xlarge
       * MultiAz: True
 
 ## Description

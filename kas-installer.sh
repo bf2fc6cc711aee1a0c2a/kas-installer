@@ -20,6 +20,7 @@ fi
 
 DIR_NAME="$(dirname $0)"
 
+KAS_INSTALLER_DEFAULTS_ENV_FILE="kas-installer-defaults.env"
 KAS_INSTALLER_ENV_FILE="kas-installer.env"
 KAS_FLEET_MANAGER_PARAM_GEN_SCRIPT="kas-fleet-manager-service-template-params"
 
@@ -33,6 +34,7 @@ read_kas_installer_env_file() {
   fi
 
   . ${KAS_INSTALLER_ENV_FILE}
+  . ${KAS_INSTALLER_DEFAULTS_ENV_FILE}
 
   if [ -f "${DIR_NAME}/${KAS_FLEET_MANAGER_PARAM_GEN_SCRIPT}" ] ; then
     KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS="${DIR_NAME}/${KAS_FLEET_MANAGER_PARAM_GEN_SCRIPT}"
@@ -56,40 +58,6 @@ read_kas_installer_env_file() {
       fi
   fi
 
-  for var in RH_USERNAME RH_USER_ID RH_ORG_ID
-  do
-    if [ -z ${!var+x} ]; then
-      echo "Exiting ${0} $var must be specified in ${KAS_INSTALLER_ENV_FILE}"
-      exit 1
-    fi
-  done
-
-  # Apply Default values for the optional .env variables
-  KAS_FLEET_MANAGER_IMAGE_REGISTRY=${KAS_FLEET_MANAGER_IMAGE_REGISTRY:-quay.io}
-  KAS_FLEET_MANAGER_IMAGE_REPOSITORY=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY:-bf2fc6cc711aee1a0c2a82e312df7f2e6b37baa12bd9b1f2fd752e260d93a6f8144ac730947f25caa2bfe6ad0f410da360940ee6d28d6c1688d3822c4055650e/kas-fleet-manager}
-
-  KAS_FLEET_MANAGER_IMAGE_TAG=${KAS_FLEET_MANAGER_IMAGE_TAG:-main}
-  KAS_FLEET_MANAGER_IMAGE_REPOSITORY_USERNAME=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY_USERNAME:-${IMAGE_REPOSITORY_USERNAME}}
-  KAS_FLEET_MANAGER_IMAGE_REPOSITORY_PASSWORD=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY_PASSWORD:-${IMAGE_REPOSITORY_PASSWORD}}
-  KAS_FLEET_MANAGER_IMAGE_BUILD=${KAS_FLEET_MANAGER_IMAGE_BUILD:-false}
-
-  KAS_FLEET_MANAGER_GIT_URL=${KAS_FLEET_MANAGER_GIT_URL:-https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager}
-  KAS_FLEET_MANAGER_GIT_REF=${KAS_FLEET_MANAGER_GIT_REF:-main}
-  KAS_FLEETSHARD_RESYNC_INTERVAL=${KAS_FLEETSHARD_RESYNC_INTERVAL:-60s}
-
-  OBSERVABILITY_CONFIG_REPO=${OBSERVABILITY_CONFIG_REPO:-https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents}
-  OBSERVABILITY_CONFIG_TAG=${OBSERVABILITY_CONFIG_TAG:-main}
-
-  OCM_SERVICE_TOKEN=${OCM_SERVICE_TOKEN:-}
-  OCM_CLUSTER_ID=${OCM_CLUSTER_ID:-dev-dataplane-cluster}
-  DATA_PLANE_CLUSTER_REGION=${REGION:-us-east-1}
-
-  KAS_FLEETSHARD_OLM_INDEX_IMAGE=${KAS_FLEETSHARD_OLM_INDEX_IMAGE:-quay.io/osd-addons/rhosak-fleetshard-operator-bundle-index:v4.9-v1.0.0-9}
-  KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG=${KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG:-"{}"}
-
-  STRIMZI_OLM_INDEX_IMAGE=${STRIMZI_OLM_INDEX_IMAGE:-quay.io/osd-addons/rhosak-strimzi-operator-bundle-index:v4.9-v0.1.0-13}
-  STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG=${STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG:-"{}"}
-
   if [ -z "${KAS_FLEETSHARD_OPERATOR_NAMESPACE:-}" ] ; then
     if [ -n "${OCM_SERVICE_TOKEN}" ] ; then
       KAS_FLEETSHARD_OPERATOR_NAMESPACE='redhat-kas-fleetshard-operator-qe'
@@ -105,7 +73,6 @@ read_kas_installer_env_file() {
       STRIMZI_OPERATOR_NAMESPACE='redhat-managed-kafka-operator'
     fi
   fi
-
 }
 
 generate_kas_fleet_manager_env_config() {
@@ -153,7 +120,7 @@ generate_kas_fleet_manager_env_config() {
   echo "K8S_CLUSTER_DOMAIN=${K8S_CLUSTER_DOMAIN}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
   echo "DATA_PLANE_CLUSTER_CLUSTER_ID=${OCM_CLUSTER_ID}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "DATA_PLANE_CLUSTER_REGION=${DATA_PLANE_CLUSTER_REGION}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "DATA_PLANE_CLUSTER_REGION=${REGION}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "DATA_PLANE_CLUSTER_DNS_NAME=apps.${K8S_CLUSTER_DOMAIN}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 }
 
@@ -167,7 +134,7 @@ install_mas_sso() {
   export DOCKER_USER_NAME=${IMAGE_REPOSITORY_USERNAME}
   export DOCKER_PASSWORD=${IMAGE_REPOSITORY_PASSWORD}
   export MAS_SSO_NAMESPACE=mas-sso
-  export RH_USERNAME RH_USER_ID RH_ORG_ID
+  export RH_USERNAME RH_USER_ID RH_ORG_ID MAS_SSO_OLM_INDEX_IMAGE MAS_SSO_OLM_INDEX_IMAGE_TAG
 
   if [ "${SKIP_SSO:-""}n" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
     echo "MAS SSO route not found or SKIP_SSO not configured, installing MAS SSO ..."
@@ -181,22 +148,14 @@ install_mas_sso() {
   export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | $OPENSSL x509)
 }
 
-deploy_kas_fleetshard() {
-  echo "Deploying KAS Fleet Shard ..."
-  (cd ${DIR_NAME}/operators && ./install-all.sh) && \
-  echo "KAS Fleet Shard deployed" || \
-  echo "KAS Fleet Shard failed to deploy"
-}
-
 deploy_observatorium() {
   echo "Deploying Observatorium ..."
   ${DIR_NAME}/observatorium/install-observatorium.sh && \
   echo "Observatorium deployed" || \
   echo "Observatorium deployment failed"
-
 }
 
-## Main body of the script starts here
+# Main body of the script starts here
 
 read_kas_installer_env_file
 
@@ -207,7 +166,6 @@ install_mas_sso
 if [ "${INSTALL_OBSERVATORIUM:-"n"}" = "y" ]; then
     deploy_observatorium
 fi
-
 
 # Deploy and configure KAS Fleet Manager and its
 # dependencies (Observability Operator, Sharded NLB, manual

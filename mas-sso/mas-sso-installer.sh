@@ -20,8 +20,11 @@ $OC secrets link default rhoas-pull-docker --for=pull
 
 #create the operator
 
-$OC process -f mas-sso/sso-template.yaml -p NAMESPACE=${NAMESPACE} | $OC create -f -
-
+$OC process -f mas-sso/sso-template.yaml \
+ -p NAMESPACE=${NAMESPACE} \
+ -p IMAGE=${MAS_SSO_OLM_INDEX_IMAGE} \
+ -p IMAGE_TAG=${MAS_SSO_OLM_INDEX_IMAGE_TAG} \
+ | $OC create -f -
 
 #wait for the CRD
 while [ $($OC get crd | grep keycloaks.keycloak.org | wc -l) != 1 ]

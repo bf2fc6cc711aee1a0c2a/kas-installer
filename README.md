@@ -37,11 +37,11 @@ in a single K8s cluster.
       * Size: m5.2xlarge
       * MultiAz: N/A
    * Plan `standard.x1`
-      * 9 compute nodes
+      * 9 compute nodes (3 per zone)
       * Size: m5.2xlarge
       * MultiAz: True
    * Plan `standard.x2`
-      * 12 compute nodes
+      * 12 compute nodes (4 per zone)
       * Size: m5.2xlarge
       * MultiAz: True
 

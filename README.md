@@ -159,6 +159,7 @@ managed_kafka.sh --create mykafka --plan standard.x2
 ## Using rhoas CLI
 
 Use `./rhoas_login.sh` as a short cut to login to the CLI.  Login using the username you specified as RH_USERNAME in the env file.  The password is the same as the RH_USERNAME value.
+Alternatively (and likely preferably), use `./login-all.sh` which makes sure you are also logged to your OpenShift Dedicated cluster.
 
 There are a couple of things that are expected not to work when using the RHOAS CLI with a kas-installer installed instance.  These are noted below.
 

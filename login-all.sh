@@ -3,7 +3,8 @@
 # open URL to login to OpenShift via oc as needed
 # logs to rhoas
 
-. kas-installer.env
+DIR_NAME="$(dirname $0)"
+. ${DIR_NAME}/kas-installer.env
 oc get route -n mas-sso keycloak > /dev/null 2>&1
 status=$?
 if [ $status -eq 1 ]; then
@@ -11,5 +12,5 @@ if [ $status -eq 1 ]; then
     open https://oauth-openshift.apps.${K8S_CLUSTER_DOMAIN}/oauth/token/request
     exit 1;
 else
-    ./rhoas_login.sh
+    ${DIR_NAME}/rhoas_login.sh
 fi

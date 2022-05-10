@@ -6,10 +6,22 @@ source ${DIR_NAME}/kas-installer.env
 
 login() {
     echo "Login with ${RH_USERNAME}/${RH_USERNAME}"
-    which pbcopy &>/dev/null
-    if  [ $? -eq 0 ]; then
+    OS=$(uname)
+
+    if [ "$OS" = 'Darwin' ]; then
+        # for MacOS
+        COPYCMD=$(which pbcopy &>/dev/null)
+    else
+        # for Linux and Windows
+        COPYCMD=$(which xclip &>/dev/null)
+        if [ -n "${COPYCMD}" ] ; then
+            COPYCMD="${COPYCMD} -selection clipboard"
+        fi
+    fi
+
+    if [ -n "${COPYCMD}" ] ; then
         echo "Copying ${RH_USERNAME} in the clipboard"
-        echo "${RH_USERNAME}" | pbcopy
+        echo "${RH_USERNAME}" | ${COPYCMD}
     fi
 
     rhoas login \

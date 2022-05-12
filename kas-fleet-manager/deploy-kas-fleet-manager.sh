@@ -152,7 +152,7 @@ deploy_kasfleetmanager() {
 
   if [ -z "${OCM_SERVICE_TOKEN}" ] && [ -z "$(grep 'KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG' ${SERVICE_PARAMS})" ]; then
       # kas-fleetshard sync requires `SSO_ENABLED=true`. Set the value if no user-provided sub config is given
-      echo 'KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG={ "env":[{"name":"SSO_ENABLED","value":"true"}] }' >> ${SERVICE_PARAMS}
+      echo 'KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG={ "env":[{"name":"SSO_ENABLED","value":"true"}, {"name":"MANAGEDKAFKA_KAFKA_PARTITION_LIMIT_ENFORCED","value":"true"}] }' >> ${SERVICE_PARAMS}
   fi
 
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \

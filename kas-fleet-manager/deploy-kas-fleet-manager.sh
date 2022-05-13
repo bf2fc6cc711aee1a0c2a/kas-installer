@@ -170,7 +170,7 @@ deploy_kasfleetmanager() {
     -p SERVICE_PUBLIC_HOST_URL="https://kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}" \
     -p DATAPLANE_CLUSTER_SCALING_TYPE="manual" \
     -p CLUSTER_LIST='
-- "name": "'$(${OC} config view --minify --raw | yq e '.contexts[0].name' -)'"
+- "name": "'$(${OC} config view --minify --raw -o json | jq -r '.contexts[0].name')'"
   "provider_type": "'${PROVIDER_TYPE}'"
   "cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'"
   "cloud_provider": "aws"
@@ -278,6 +278,19 @@ create_kas_fleet_manager_namespace() {
     create_namespace ${KAS_FLEET_MANAGER_NAMESPACE}
 }
 
+await_kas_fleetshard_agent() {
+  MANAGED_KAFKA_AGENT_NAME="managed-agent"
+  echo "Waiting until ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} CR is created..."
+
+  while [ -z "$(${OC} get ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE})" ]; do
+    echo "ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} CR still not created. Waiting..."
+    sleep 10
+  done
+
+  ${OC} wait ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} --for=condition=Ready --timeout=180s
+  echo "ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} is ready."
+}
+
 ## Main body of the script starts here
 
 read_kasfleetmanager_env_file
@@ -285,6 +298,7 @@ create_kas_fleet_manager_namespace
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager
 disable_observability_operator_extras
+await_kas_fleetshard_agent
 
 cd ${ORIGINAL_DIR}
 

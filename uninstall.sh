@@ -2,27 +2,17 @@
 
 set -euo pipefail
 
-OS=$(uname)
-
-GIT=$(which git)
-OC=$(which oc)
-KUBECTL=$(which kubectl)
-MAKE=$(which make)
-OPENSSL=$(which openssl)
-OCM=$(which ocm)
-
-if [ "$OS" = 'Darwin' ]; then
-  # for MacOS
-  SED=$(which gsed)
-else
-  # for Linux and Windows
-  SED=$(which sed)
-fi
-
 DIR_NAME="$(dirname $0)"
+
+source "${DIR_NAME}/utils/common.sh"
 
 KAS_INSTALLER_ENV_FILE="kas-installer.env"
 source ${KAS_INSTALLER_ENV_FILE}
+
+if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "uninstall"; then 
+    echo "Exiting ${0}"
+    exit 1
+fi
 
 KAS_FLEET_MANAGER_DIR="${DIR_NAME}/kas-fleet-manager"
 KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="${KAS_FLEET_MANAGER_DIR}/kas-fleet-manager-deploy.env"

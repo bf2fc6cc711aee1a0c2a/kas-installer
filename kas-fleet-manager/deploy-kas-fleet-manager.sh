@@ -108,16 +108,26 @@ deploy_kasfleetmanager() {
   create_kasfleetmanager_pull_credentials
 
   echo "Deploying KAS Fleet Manager K8s Secrets..."
+  SECRET_PARAMS=${DIR_NAME}/kas-fleet-manager-secrets.env
+  > ${SECRET_PARAMS}
+
+  if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
+    echo "REDHAT_SSO_CLIENT_ID='${SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
+    echo "REDHAT_SSO_CLIENT_SECRET='${SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
+  else
+    echo "MAS_SSO_CLIENT_ID='${SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
+    echo "MAS_SSO_CLIENT_SECRET='${SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
+    echo "OSD_IDP_MAS_SSO_CLIENT_ID='${SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
+    echo "OSD_IDP_MAS_SSO_CLIENT_SECRET='${SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
+  fi
+
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml \
+    --param-file=${SECRET_PARAMS} \
     -p OCM_SERVICE_CLIENT_ID="" \
     -p OCM_SERVICE_CLIENT_SECRET="" \
     -p OCM_SERVICE_TOKEN="${OCM_SERVICE_TOKEN}" \
     -p OBSERVABILITY_CONFIG_ACCESS_TOKEN="${OBSERVABILITY_CONFIG_ACCESS_TOKEN}" \
-    -p MAS_SSO_CLIENT_ID="${MAS_SSO_CLIENT_ID}" \
-    -p MAS_SSO_CLIENT_SECRET="${MAS_SSO_CLIENT_SECRET}" \
-    -p OSD_IDP_MAS_SSO_CLIENT_ID="${MAS_SSO_CLIENT_ID}" \
-    -p OSD_IDP_MAS_SSO_CLIENT_SECRET="${MAS_SSO_CLIENT_SECRET}" \
-    -p MAS_SSO_CRT="${MAS_SSO_CRT}" \
+    -p MAS_SSO_CRT="${SSO_TRUSTED_CA}" \
     -p KAFKA_TLS_CERT="${KAFKA_TLS_CERT}" \
     -p KAFKA_TLS_KEY="${KAFKA_TLS_KEY}" \
     -p KUBE_CONFIG="$(${OC} config view --minify --raw | ${BASE64} -w0)" \

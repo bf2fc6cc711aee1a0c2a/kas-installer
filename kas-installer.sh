@@ -28,7 +28,7 @@ read_kas_installer_env_file() {
     KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS=''
   fi
 
-  if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "install"; then 
+  if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "install"; then
     echo "Exiting ${0}"
     exit 1
   fi
@@ -65,34 +65,29 @@ generate_kas_fleet_manager_env_config() {
   echo "KAS_FLEETSHARD_OPERATOR_NAMESPACE=${KAS_FLEETSHARD_OPERATOR_NAMESPACE}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "KAS_FLEETSHARD_OLM_INDEX_IMAGE=${KAS_FLEETSHARD_OLM_INDEX_IMAGE}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
-  if [ "${INSTALL_MAS_SSO:-"n"}" = "y" ]; then
+  echo "SSO_PROVIDER_TYPE='${SSO_PROVIDER_TYPE}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+
+  if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] ; then
     MAS_SSO_BASE_URL=https://${MAS_SSO_ROUTE}
     MAS_SSO_REALM='rhoas'
 
-    echo "MAS_SSO_CLIENT_ID=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    echo "MAS_SSO_CLIENT_SECRET=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_SECRET=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    echo "MAS_SSO_DATA_PLANE_CLUSTER_REALM=rhoas" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    echo "SSO_CLIENT_ID=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    echo "SSO_CLIENT_SECRET=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
     echo "OSD_IDP_MAS_SSO_REALM=rhoas-kafka-sre" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   else
     MAS_SSO_BASE_URL=https://${SSO_BASE_URL}
     MAS_SSO_REALM=${SSO_REALM}
 
-    echo "MAS_SSO_CLIENT_ID='$SSO_CLIENT_ID'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    echo "MAS_SSO_CLIENT_SECRET='$SSO_CLIENT_SECRET'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_ID=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    echo "MAS_SSO_DATA_PLANE_CLUSTER_CLIENT_SECRET=kas-fleetshard-agent" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $SSO_BASE_URL -connect $SSO_BASE_URL:443 -prexit 2>/dev/null | $OPENSSL x509)
-    echo "MAS_SSO_DATA_PLANE_CLUSTER_REALM=$SSO_REALM" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    echo "OSD_IDP_MAS_SSO_REALM=$SSO_REALM" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    echo "SSO_CLIENT_ID='${SSO_CLIENT_ID}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    echo "SSO_CLIENT_SECRET='${SSO_CLIENT_SECRET}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    export MAS_SSO_CERTS=$(echo "" | ${OPENSSL} s_client -servername $SSO_BASE_URL -connect $SSO_BASE_URL:443 -prexit 2>/dev/null | $OPENSSL x509)
+    echo "OSD_IDP_MAS_SSO_REALM=${SSO_REALM}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   fi
 
   if [ -n "${SSO_TRUSTED_CA:-}" ] ; then
-    echo "MAS_SSO_CRT='$SSO_TRUSTED_CA'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-    export SSO_TRUSTED_CA
+    echo "SSO_TRUSTED_CA='${SSO_TRUSTED_CA}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   else
-    echo "MAS_SSO_CRT='$MAS_SSO_CERTS'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    echo "SSO_TRUSTED_CA='${MAS_SSO_CERTS}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   fi
 
   echo "MAS_SSO_BASE_URL=${MAS_SSO_BASE_URL}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
@@ -137,7 +132,7 @@ install_mas_sso() {
   export MAS_SSO_NAMESPACE=mas-sso
   export RH_USERNAME RH_USER_ID RH_ORG_ID MAS_SSO_OLM_INDEX_IMAGE MAS_SSO_OLM_INDEX_IMAGE_TAG
 
-  if [ "${SKIP_SSO:-""}n" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
+  if [ "${SKIP_SSO:-"n"}" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
     echo "MAS SSO route not found or SKIP_SSO not configured, installing MAS SSO ..."
     ${DIR_NAME}/mas-sso/mas-sso-installer.sh
     echo "MAS SSO deployed"
@@ -161,7 +156,7 @@ deploy_observatorium() {
 read_kas_installer_env_file
 
 # Deploy and configure MAS SSO
-if [ "${INSTALL_MAS_SSO:-"n"}" = "y" ]; then
+if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] ; then
     install_mas_sso
 fi
 

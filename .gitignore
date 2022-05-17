@@ -2,6 +2,7 @@ kas-installer.env
 kas-fleet-manager-service-template-params
 kas-fleet-manager/kas-fleet-manager-deploy.env
 kas-fleet-manager/kas-fleet-manager-params.env
+kas-fleet-manager/kas-fleet-manager-secrets.env
 kas-fleet-manager/terraforming/terraforming-generated-k8s-resources
 kas-fleet-manager/kas-fleet-manager-source
 /.project

@@ -2,9 +2,10 @@
 
 DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/kas-installer.env
+source ${DIR_NAME}/kas-installer-defaults.env
 source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
 
-if [ "${INSTALL_MAS_SSO:-"n"}" = "y" ]; then
+if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] ; then
     # Service accounts via kas-fleet-manager when using MAS SSO
     SA_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/service_accounts"
 else

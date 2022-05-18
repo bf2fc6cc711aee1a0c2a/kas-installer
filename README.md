@@ -13,6 +13,7 @@ in a single K8s cluster.
 - [Fleet Manager Parameter Customization](#fleet-manager-parameter-customization)
   - [Instance Types](#instance-types)
 - [SSO Providers](#sso-providers)
+- [Custom Components](#custom-components)
 - [Using rhoas CLI](#using-rhoas-cli)
 - [Legacy Scripts](#legacy-scripts)
 - [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
@@ -170,6 +171,15 @@ Configuration of kas-fleet-manager's SSO providers is done by setting the `SSO_P
 the variable may be set to `redhat_sso` and additional configuration can be provided for `REDHAT_SSO_HOSTNAME` (default sso.stage.redhat.com), `REDHAT_SSO_REALM` (default `redhat-external`),
 `REDHAT_SSO_CLIENT_ID` (required), and `REDHAT_SSO_CLIENT_SECRET` (required). See the description for each variable in the [kas-installer-defaults.env](kas-installer-defaults.env)
 file for more information.
+
+## Custom Components
+
+Custom-built components are supported for kas-fleet-manager and kas-fleetshard.
+
+1. kas-fleet-manager: see the documentation for `KAS_FLEET_MANAGER_IMAGE_BUILD` in the [kas-installer-defaults.env](kas-installer-defaults.env) file.
+1. kas-fleetshard: prior to running `kas-installer.sh`, execute `operators/generate-kas-fleetshard-olm-bundle.sh`, passing the required
+   parameters (see `operators/generate-kas-fleetshard-olm-bundle.sh --help` for details). The script will build kas-fleetshard from source and an OLM bundle index,
+   optionally updating the `kas-installer.env` file with the configuration. Running `kas-installer.sh` will deploy the custom-built operator.
 
 ## Using rhoas CLI
 

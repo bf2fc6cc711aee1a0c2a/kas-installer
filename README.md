@@ -178,7 +178,7 @@ There are a couple of things that are expected not to work when using the RHOAS 
 
 ### Kafka Instance Maintenance
 
-1. To create a cluster, run `rhoas kafka create --bypass-terms-check --provider aws --region us-east-1 --name <clustername>`.  Note that `--bypass-terms-check` is required as the T&Cs endpoint will not
+1. To create a cluster, run `rhoas kafka create --bypass-checks --provider aws --region us-east-1 --name <clustername>`.  Note that `--bypass-terms-check` is required as the T&Cs endpoint will not
    exist in your environment. The provider and region must be passed on the command line.
 1. To list existing clusters, run `rhoas kafka list`
 1. To remove an existing cluster, run `rhoas kafka delete --name <clustername>`.

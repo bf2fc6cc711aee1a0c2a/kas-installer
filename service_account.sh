@@ -112,7 +112,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "${ACCESS_TOKEN}" ] ; then
-    ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner)"
+    ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
 fi
 
 case "${OPERATION}" in

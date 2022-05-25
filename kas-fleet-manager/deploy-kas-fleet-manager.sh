@@ -114,13 +114,13 @@ deploy_kasfleetmanager() {
   if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
     echo "REDHAT_SSO_CLIENT_ID='${REDHAT_SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
     echo "REDHAT_SSO_CLIENT_SECRET='${REDHAT_SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
-    echo "OSD_IDP_MAS_SSO_CLIENT_ID='${SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
-    echo "OSD_IDP_MAS_SSO_CLIENT_SECRET='${SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
+    echo "OSD_IDP_MAS_SSO_CLIENT_ID='${MAS_SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
+    echo "OSD_IDP_MAS_SSO_CLIENT_SECRET='${MAS_SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
   else
-    echo "MAS_SSO_CLIENT_ID='${SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
-    echo "MAS_SSO_CLIENT_SECRET='${SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
-    echo "OSD_IDP_MAS_SSO_CLIENT_ID='${SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
-    echo "OSD_IDP_MAS_SSO_CLIENT_SECRET='${SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
+    echo "MAS_SSO_CLIENT_ID='${MAS_SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
+    echo "MAS_SSO_CLIENT_SECRET='${MAS_SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
+    echo "OSD_IDP_MAS_SSO_CLIENT_ID='${MAS_SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
+    echo "OSD_IDP_MAS_SSO_CLIENT_SECRET='${MAS_SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
   fi
 
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml \
@@ -167,6 +167,12 @@ deploy_kasfleetmanager() {
       echo 'KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG={ "env":[{"name":"SSO_ENABLED","value":"true"}, {"name":"MANAGEDKAFKA_KAFKA_PARTITION_LIMIT_ENFORCED","value":"true"}] }' >> ${SERVICE_PARAMS}
   fi
 
+  if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
+      echo "REDHAT_SSO_BASE_URL='${REDHAT_SSO_BASE_URL}'" >> ${SERVICE_PARAMS}
+      echo "ENABLE_KAFKA_OWNER='true'" >> ${SERVICE_PARAMS}
+      echo 'KAFKA_OWNERS=[ "'${REDHAT_SSO_CLIENT_ID}'" ]' >> ${SERVICE_PARAMS}
+  fi
+
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
     --param-file=${SERVICE_PARAMS} \
     -p ENVIRONMENT="${OCM_ENV}" \
@@ -180,7 +186,6 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_BASE_URL="${MAS_SSO_BASE_URL}" \
     -p MAS_SSO_INSECURE=true \
     -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
-    -p REDHAT_SSO_BASE_URL="${REDHAT_SSO_BASE_URL}" \
     -p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
     -p ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="false" \
     -p SERVICE_PUBLIC_HOST_URL="https://kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}" \
@@ -210,7 +215,7 @@ deploy_kasfleetmanager() {
 ' \
     -p REPLICAS=1 \
     -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \
-    -p TOKEN_ISSUER_URL="${ISSUER_URL}" \
+    -p TOKEN_ISSUER_URL="${SSO_REALM_URL}" \
     -p ENABLE_OCM_MOCK="${ENABLE_OCM_MOCK}" \
     -p OBSERVABILITY_CONFIG_REPO="${OBSERVABILITY_CONFIG_REPO}" \
     -p OBSERVABILITY_CONFIG_TAG="${OBSERVABILITY_CONFIG_TAG}" \

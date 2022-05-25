@@ -16,7 +16,6 @@ source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
 
 GRANT_TYPE=''
 USER_PARAMS=''
-KEYCLOAK_REALM=${KEYCLOAK_REALM:-rhoas}
 
 case ${1} in
     "--owner" )
@@ -33,16 +32,22 @@ case ${1} in
             exit 0
         fi
 
-        if [ -n "${OWNER_CLIENT_ID:-}" ] && [ -n "${OWNER_CLIENT_SECRET:-}" ]; then
+        if [ -n "${REDHAT_SSO_CLIENT_ID:-}" ] && [ -n "${REDHAT_SSO_CLIENT_SECRET:-}" ]; then
             GRANT_TYPE='client_credentials'
-            CLIENT_ID=${OWNER_CLIENT_ID}
-            CLIENT_SECRET=${OWNER_CLIENT_SECRET}
+            CLIENT_ID=${REDHAT_SSO_CLIENT_ID}
+            CLIENT_SECRET=${REDHAT_SSO_CLIENT_SECRET}
         else
             GRANT_TYPE='password'
             CLIENT_ID='kas-installer-client'
             CLIENT_SECRET='kas-installer-client'
             USER_PARAMS="&username=${RH_USERNAME}&password=${RH_USERNAME}"
         fi
+        ;;
+    "--sre-admin" )
+        SSO_REALM_URL=${MAS_SSO_BASE_URL}/auth/realms/rhoas-kafka-sre
+        GRANT_TYPE='client_credentials'
+        CLIENT_ID='kafka-admin'
+        CLIENT_SECRET='kafka-admin'
         ;;
     *) # Assume client ID and secret were provided
         GRANT_TYPE='client_credentials'
@@ -57,7 +62,7 @@ if [ -z "${CLIENT_ID}" ] || [ -z "${CLIENT_SECRET}" ]; then
     exit 1
 fi
 
-TOKEN_URI="${MAS_SSO_BASE_URL}/auth/realms/${MAS_SSO_REALM}/protocol/openid-connect/token"
+TOKEN_URI="${SSO_REALM_URL}/protocol/openid-connect/token"
 
 RESPONSE=$(curl --fail --show-error -sX POST -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=${GRANT_TYPE}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}${USER_PARAMS}" \

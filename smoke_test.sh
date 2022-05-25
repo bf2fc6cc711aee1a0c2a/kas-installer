@@ -50,15 +50,16 @@ fi
 SMOKE_TOPIC="smoke_topic-$(${DATE} +%Y%j%H%M)"
 
 SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create --access-token ${OWNER_TOKEN})
+SA_ID=''
 
 if [ ${?} -ne 0 ] ; then
     echo "Failed to create a service account!"
     exit 1
 else
-    echo "Service account created"
+    SA_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .id)
+    echo "Service account created: ${SA_ID}"
 fi
 
-SA_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .id)
 # MAS SSO (via KFM API) use different properties for client ID/secret than SSO directly. Support both forms here
 SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r '.client_id // .clientId')
 SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r '.client_secret // .secret')

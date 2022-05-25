@@ -9,7 +9,7 @@ if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] ; then
     # Service accounts via kas-fleet-manager when using MAS SSO
     SA_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/service_accounts"
 else
-    SA_BASE_URL="${MAS_SSO_BASE_URL}/auth/realms/${MAS_SSO_REALM}/apis/service_accounts/v1"
+    SA_BASE_URL="${SSO_REALM_URL}/apis/service_accounts/v1"
 fi
 
 create() {

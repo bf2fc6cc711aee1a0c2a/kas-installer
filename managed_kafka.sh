@@ -42,10 +42,7 @@ access_token() {
 
     if [ "${FETCH_TOKEN}" = "true" ] ; then
         if [ "${ADMIN_OPERATION}" = "true" ] ; then
-            USER=kafka-admin
-            PWD=kafka-admin
-            REALM=rhoas-kafka-sre
-            ACCESS_TOKEN="$(export KEYCLOAK_REALM=${REALM} && ${DIR_NAME}/get_access_token.sh ${USER} ${PWD} 2>/dev/null)"
+            ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --sre-admin 2>/dev/null)"
         else
             USER=owner
             ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"

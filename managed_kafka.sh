@@ -1,19 +1,11 @@
 #!/bin/bash
 
-KUBECTL=$(which kubectl)
 DIR_NAME="$(dirname $0)"
+source "${DIR_NAME}/utils/common.sh"
 source ${DIR_NAME}/kas-installer.env
 MK_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1"
 
 OS=$(uname)
-
-if [ "$OS" = 'Darwin' ]; then
-  # for MacOS
-  BASE64=$(which gbase64)
-else
-  # for Linux and Windows
-  BASE64=$(which base64)
-fi
 
 OPERATION='<NONE>'
 OPERATION_PATH='/kafkas'
@@ -149,11 +141,25 @@ certgen() {
 
     KAFKA_RESOURCE=$(get ${KAFKA_ID})
     KAFKA_USERNAME=$(echo ${KAFKA_RESOURCE} | jq -r .name)
-    KAFKA_CERT=$(mktemp)
+    CRT_PEM=$(mktemp)
     KAFKA_INSTANCE_NAMESPACE='kafka-'$(echo ${KAFKA_RESOURCE} | jq -r .id  | tr '[:upper:]' '[:lower:]')
-    oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${KAFKA_CERT}
-    keytool -import -trustcacerts -keystore truststore.jks -storepass password -noprompt -alias mk${KAFKA_ID} -file ${KAFKA_CERT}
-    rm ${KAFKA_CERT}
+    TRUSTSTORE=truststore.jks
+    TRUSTSTORE_PASSWORD=password
+
+    rm -f ${TRUSTSTORE} 
+
+    oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${CRT_PEM}
+    keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass ${TRUSTSTORE_PASSWORD} -noprompt -alias mk${KAFKA_ID} -file ${CRT_PEM}
+
+    echo "Adding JVM platformm trust to truststore in order to enable OAuth use-cases.."
+    i=0
+    while IFS= read -r -d $'\0' file; do
+        printf -- "${file}" > ${CRT_PEM}
+        keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass ${TRUSTSTORE_PASSWORD} -noprompt -alias crt${i} -file ${CRT_PEM} 2>/dev/null
+        i=$((i+1))
+    done < <(keytool --cacerts --list --rfc | gawk -v ORS='\0' -v RS='-----BEGIN CERTIFICATE-----.[^-]*-----END CERTIFICATE-----' 'RT {print RT}')
+
+    rm ${CRT_PEM}
 
     if [ -z "${SA_CLIENT_ID:-}" ] ; then
         echo "No service account provided, creating new account..."

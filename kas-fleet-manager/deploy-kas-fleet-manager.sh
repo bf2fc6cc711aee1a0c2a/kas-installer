@@ -248,7 +248,8 @@ disable_observability_operator_extras() {
     "selfContained": {
       "disablePagerDuty": true,
       "disableObservatorium": true,
-      "disableDeadmansSnitch": true
+      "disableDeadmansSnitch": true,
+      "disableSmtp": true
     }
   }
 }

@@ -157,7 +157,7 @@ certgen() {
         printf -- "${file}" > ${CRT_PEM}
         keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass ${TRUSTSTORE_PASSWORD} -noprompt -alias crt${i} -file ${CRT_PEM} 2>/dev/null
         i=$((i+1))
-    done < <(keytool --cacerts --list --rfc | gawk -v ORS='\0' -v RS='-----BEGIN CERTIFICATE-----.[^-]*-----END CERTIFICATE-----' 'RT {print RT}')
+    done < <(keytool --cacerts --list --rfc | ${AWK} -v ORS='\0' -v RS='-----BEGIN CERTIFICATE-----.[^-]*-----END CERTIFICATE-----' 'RT {print RT}')
 
     rm ${CRT_PEM}
 

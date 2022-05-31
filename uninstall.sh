@@ -9,7 +9,7 @@ source "${DIR_NAME}/utils/common.sh"
 KAS_INSTALLER_ENV_FILE="kas-installer.env"
 source ${KAS_INSTALLER_ENV_FILE}
 
-if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "uninstall"; then 
+if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "uninstall"; then
     echo "Exiting ${0}"
     exit 1
 fi
@@ -41,6 +41,10 @@ fi
 if [ "${SKIP_KAS_FLEETSHARD:-"n"}" = "y" ]; then
     echo "Skipping removal of Strimzi and Fleetshard operators"
 else
+    if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
+        FLEETSHARD_AGENT_CLIENT_ID=$(${OC} get secret addon-kas-fleetshard-operator-parameters -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} -o json | jq -r '.data."sso-client-id"' | base64 -d)
+    fi
+
     if [ -n "${OCM_CLUSTER_ID-""}" ] ; then
         if [ -n "${OCM}" ] ; then
             ${OCM} delete "/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons/kas-fleetshard-operator-qe" || true
@@ -51,6 +55,11 @@ else
     (cd ${DIR_NAME}/operators && ./uninstall-all.sh)
     ${KUBECTL} delete namespace ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} || true
     ${KUBECTL} delete namespace ${STRIMZI_OPERATOR_NAMESPACE} || true
+
+    if [ -n "${FLEETSHARD_AGENT_CLIENT_ID:-}" ] ; then
+        echo "Deleting fleetshard agent service account: ${FLEETSHARD_AGENT_CLIENT_ID}"
+        ${DIR_NAME}/service_account.sh --delete "${FLEETSHARD_AGENT_CLIENT_ID}"
+    fi
 fi
 
 OBSERVABILITY_NS=managed-application-services-observability

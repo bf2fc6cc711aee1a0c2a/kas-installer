@@ -28,7 +28,7 @@ read_kas_installer_env_file() {
     KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS=''
   fi
 
-  if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "install"; then 
+  if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "install"; then
     echo "Exiting ${0}"
     exit 1
   fi
@@ -65,12 +65,37 @@ generate_kas_fleet_manager_env_config() {
   echo "KAS_FLEETSHARD_OPERATOR_NAMESPACE=${KAS_FLEETSHARD_OPERATOR_NAMESPACE}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "KAS_FLEETSHARD_OLM_INDEX_IMAGE=${KAS_FLEETSHARD_OLM_INDEX_IMAGE}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
-  echo "MAS_SSO_BASE_URL=https://$MAS_SSO_ROUTE" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "SSO_PROVIDER_TYPE='${SSO_PROVIDER_TYPE}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+
+  if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] ; then
+    MAS_SSO_BASE_URL=https://${MAS_SSO_ROUTE}
+    MAS_SSO_REALM='rhoas'
+
+    echo "JWKS_URL=${MAS_SSO_BASE_URL}/auth/realms/${MAS_SSO_REALM}/protocol/openid-connect/certs" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    echo "SSO_REALM_URL=${MAS_SSO_BASE_URL}/auth/realms/${MAS_SSO_REALM}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  else
+    MAS_SSO_BASE_URL=https://${MAS_SSO_BASE_URL:-${MAS_SSO_ROUTE}}
+    MAS_SSO_REALM=${MAS_SSO_REALM:-"rhoas"}
+    REDHAT_SSO_BASE_URL=https://${REDHAT_SSO_HOSTNAME}
+
+    echo "REDHAT_SSO_CLIENT_ID='${REDHAT_SSO_CLIENT_ID}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    echo "REDHAT_SSO_CLIENT_SECRET='${REDHAT_SSO_CLIENT_SECRET}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    export MAS_SSO_CERTS=$(echo "" | ${OPENSSL} s_client -servername ${REDHAT_SSO_HOSTNAME} -connect ${REDHAT_SSO_HOSTNAME}:443 -prexit 2>/dev/null | $OPENSSL x509)
+    echo "REDHAT_SSO_BASE_URL=${REDHAT_SSO_BASE_URL}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    echo "JWKS_URL=${REDHAT_SSO_BASE_URL}/auth/realms/${REDHAT_SSO_REALM}/protocol/openid-connect/certs" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+    echo "SSO_REALM_URL=${REDHAT_SSO_BASE_URL}/auth/realms/${REDHAT_SSO_REALM}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  fi
+
+  if [ -n "${SSO_TRUSTED_CA:-}" ] ; then
+    echo "SSO_TRUSTED_CA='${SSO_TRUSTED_CA}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  else
+    echo "SSO_TRUSTED_CA='${MAS_SSO_CERTS}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  fi
+
+  echo "MAS_SSO_BASE_URL=${MAS_SSO_BASE_URL}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  echo "MAS_SSO_REALM=${MAS_SSO_REALM}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_CLIENT_ID=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_CLIENT_SECRET=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_CRT='$MAS_SSO_CERTS'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_REALM=rhoas" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  echo "MAS_SSO_DATA_PLANE_CLUSTER_REALM=rhoas" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "OSD_IDP_MAS_SSO_REALM=rhoas-kafka-sre" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
   echo "KAFKA_TLS_CERT=dummyvalue" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
@@ -89,7 +114,6 @@ generate_kas_fleet_manager_env_config() {
   echo "KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS=${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "OCM_SERVICE_TOKEN=${OCM_SERVICE_TOKEN}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
-  echo "JWKS_URL=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "KAS_FLEET_MANAGER_NAMESPACE=kas-fleet-manager-${USER}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 
   echo "K8S_CLUSTER_DOMAIN=${K8S_CLUSTER_DOMAIN}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
@@ -111,7 +135,7 @@ install_mas_sso() {
   export MAS_SSO_NAMESPACE=mas-sso
   export RH_USERNAME RH_USER_ID RH_ORG_ID MAS_SSO_OLM_INDEX_IMAGE MAS_SSO_OLM_INDEX_IMAGE_TAG
 
-  if [ "${SKIP_SSO:-""}n" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
+  if [ "${SKIP_SSO:-"n"}" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
     echo "MAS SSO route not found or SKIP_SSO not configured, installing MAS SSO ..."
     ${DIR_NAME}/mas-sso/mas-sso-installer.sh
     echo "MAS SSO deployed"
@@ -135,7 +159,9 @@ deploy_observatorium() {
 read_kas_installer_env_file
 
 # Deploy and configure MAS SSO
-install_mas_sso
+if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] || [ -z "${MAS_SSO_BASE_URL:-}" ] ; then
+    install_mas_sso
+fi
 
 # Deploy and configure Observatorium
 if [ "${INSTALL_OBSERVATORIUM:-"n"}" = "y" ]; then

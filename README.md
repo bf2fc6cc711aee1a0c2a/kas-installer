@@ -12,6 +12,7 @@ in a single K8s cluster.
   - [OCM Mode](#ocm)
 - [Fleet Manager Parameter Customization](#fleet-manager-parameter-customization)
   - [Instance Types](#instance-types)
+- [SSO Providers](#sso-providers)
 - [Using rhoas CLI](#using-rhoas-cli)
 - [Legacy Scripts](#legacy-scripts)
 - [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
@@ -162,6 +163,13 @@ To create a `standard.x2` (or other non-default types) instance type, the `plan`
 ```shell
 managed_kafka.sh --create mykafka --plan standard.x2
 ```
+
+## SSO Providers
+
+Configuration of kas-fleet-manager's SSO providers is done by setting the `SSO_PROVIDER_TYPE` configuration variable. When not set, the default provider is `mas_sso`. To use RH SSO,
+the variable may be set to `redhat_sso` and additional configuration can be provided for `REDHAT_SSO_HOSTNAME` (default sso.stage.redhat.com), `REDHAT_SSO_REALM` (default `redhat-external`),
+`REDHAT_SSO_CLIENT_ID` (required), and `REDHAT_SSO_CLIENT_SECRET` (required). See the description for each variable in the [kas-installer-defaults.env](kas-installer-defaults.env)
+file for more information.
 
 ## Using rhoas CLI
 

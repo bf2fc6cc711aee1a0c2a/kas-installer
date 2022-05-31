@@ -2,12 +2,21 @@
 
 DIR_NAME="$(dirname $0)"
 source ${DIR_NAME}/kas-installer.env
-SA_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/service_accounts"
+source ${DIR_NAME}/kas-installer-defaults.env
+source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
+
+if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] ; then
+    # Service accounts via kas-fleet-manager when using MAS SSO
+    SA_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/service_accounts"
+else
+    SA_BASE_URL="${SSO_REALM_URL}/apis/service_accounts/v1"
+fi
 
 create() {
     local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+      -H 'Content-Type: application/json' \
       ${SA_BASE_URL} \
-      -d '{ "name": "'${USER}-kafka-service-account'" }')
+      --data-raw '{ "name": "'${USER}'-kafka-service-account", "description": "Test service account" }')
 
     local KIND=$(echo ${RESPONSE} | jq -r .kind)
 
@@ -103,7 +112,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "${ACCESS_TOKEN}" ] ; then
-    ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner)"
+    ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
 fi
 
 case "${OPERATION}" in

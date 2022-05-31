@@ -42,10 +42,7 @@ access_token() {
 
     if [ "${FETCH_TOKEN}" = "true" ] ; then
         if [ "${ADMIN_OPERATION}" = "true" ] ; then
-            USER=kafka-admin
-            PWD=kafka-admin
-            REALM=rhoas-kafka-sre
-            ACCESS_TOKEN="$(export KEYCLOAK_REALM=${REALM} && ${DIR_NAME}/get_access_token.sh ${USER} ${PWD} 2>/dev/null)"
+            ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --sre-admin 2>/dev/null)"
         else
             USER=owner
             ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
@@ -164,8 +161,9 @@ certgen() {
             exit 1
         fi
 
-        SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_id)
-        SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r .client_secret)
+        # MAS SSO (via KFM API) use different properties for client ID/secret than SSO directly. Support both forms here
+        SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r '.client_id // .clientId')
+        SA_CLIENT_SECRET=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r '.client_secret // .secret')
         echo "Service account created: ${SA_CLIENT_ID}"
     fi
 

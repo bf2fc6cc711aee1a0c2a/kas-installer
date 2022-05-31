@@ -144,18 +144,18 @@ certgen() {
     CRT_PEM=$(mktemp)
     KAFKA_INSTANCE_NAMESPACE='kafka-'$(echo ${KAFKA_RESOURCE} | jq -r .id  | tr '[:upper:]' '[:lower:]')
     TRUSTSTORE=truststore.jks
-    TRUSTSTORE_PASSWORD=password
+    export TRUSTSTORE_PASSWORD=${TRUSTSTORE_PASSWORD:-password}
 
     rm -f ${TRUSTSTORE} 
 
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${CRT_PEM}
-    keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass ${TRUSTSTORE_PASSWORD} -noprompt -alias mk${KAFKA_ID} -file ${CRT_PEM}
+    keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass:env TRUSTSTORE_PASSWORD -noprompt -alias mk${KAFKA_ID} -file ${CRT_PEM}
 
-    echo "Adding JVM platformm trust to truststore in order to enable OAuth use-cases.."
+    echo "Adding JVM platform trust to truststore in order to enable OAuth use-cases.."
     i=0
     while IFS= read -r -d $'\0' file; do
         printf -- "${file}" > ${CRT_PEM}
-        keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass ${TRUSTSTORE_PASSWORD} -noprompt -alias crt${i} -file ${CRT_PEM} 2>/dev/null
+        keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass:env TRUSTSTORE_PASSWORD -noprompt -alias crt${i} -file ${CRT_PEM} 2>/dev/null
         i=$((i+1))
     done < <(keytool --cacerts --list --rfc | ${AWK} -v ORS='\0' -v RS='-----BEGIN CERTIFICATE-----.[^-]*-----END CERTIFICATE-----' 'RT {print RT}')
 

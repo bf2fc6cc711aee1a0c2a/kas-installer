@@ -27,6 +27,7 @@ in a single K8s cluster.
   (Currently needs to be a multi-zone cluster if you want to create a Kafka
   instance through the fleet manager by using `managed_kafka.sh`).
 * [git][git_tool]
+* [opm][opm] required to build custom kas-fleetshard OLM bundle from source (see [Custom Components](#custom-components))
 * oc
 * kubectl
 * openssl CLI tool
@@ -268,3 +269,4 @@ To use the Kafka Cluster that is created with the `managed_kafka.sh` script with
 [openshift]:https://www.openshift.com/
 [curl]:https://curl.se/
 [e2e_test_suite]:https://github.com/bf2fc6cc711aee1a0c2a/e2e-test-suite
+[opm]:https://github.com/operator-framework/operator-registry

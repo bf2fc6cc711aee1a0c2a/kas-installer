@@ -13,6 +13,7 @@ in a single K8s cluster.
 - [Fleet Manager Parameter Customization](#fleet-manager-parameter-customization)
   - [Instance Types](#instance-types)
 - [SSO Providers](#sso-providers)
+- [Custom Components](#custom-components)
 - [Using rhoas CLI](#using-rhoas-cli)
 - [Legacy Scripts](#legacy-scripts)
 - [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
@@ -26,6 +27,7 @@ in a single K8s cluster.
   (Currently needs to be a multi-zone cluster if you want to create a Kafka
   instance through the fleet manager by using `managed_kafka.sh`).
 * [git][git_tool]
+* [opm][opm] required to build custom kas-fleetshard OLM bundle from source (see [Custom Components](#custom-components))
 * oc
 * kubectl
 * openssl CLI tool
@@ -171,6 +173,15 @@ the variable may be set to `redhat_sso` and additional configuration can be prov
 `REDHAT_SSO_CLIENT_ID` (required), and `REDHAT_SSO_CLIENT_SECRET` (required). See the description for each variable in the [kas-installer-defaults.env](kas-installer-defaults.env)
 file for more information.
 
+## Custom Components
+
+Custom-built components are supported for kas-fleet-manager and kas-fleetshard.
+
+1. kas-fleet-manager: see the documentation for `KAS_FLEET_MANAGER_IMAGE_BUILD` in the [kas-installer-defaults.env](kas-installer-defaults.env) file.
+1. kas-fleetshard: prior to running `kas-installer.sh`, execute `operators/generate-kas-fleetshard-olm-bundle.sh`, passing the required
+   parameters (see `operators/generate-kas-fleetshard-olm-bundle.sh --help` for details). The script will build kas-fleetshard from source and an OLM bundle index,
+   optionally updating the `kas-installer.env` file with the configuration. Running `kas-installer.sh` will deploy the custom-built operator.
+
 ## Using rhoas CLI
 
 Use `./rhoas_login.sh` as a short cut to login to the CLI.  Login using the username you specified as RH_USERNAME in the env file.  The password is the same as the RH_USERNAME value.
@@ -258,3 +269,4 @@ To use the Kafka Cluster that is created with the `managed_kafka.sh` script with
 [openshift]:https://www.openshift.com/
 [curl]:https://curl.se/
 [e2e_test_suite]:https://github.com/bf2fc6cc711aee1a0c2a/e2e-test-suite
+[opm]:https://github.com/operator-framework/operator-registry

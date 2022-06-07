@@ -258,7 +258,13 @@ To use the Kafka Cluster that is created with the `managed_kafka.sh` script with
 
 1. Install all cluster components using `kas-installer.sh`
 1. Clone the [e2e-test-suite][e2e_test_suite] repository locally and change directory to the test suite project root
-1. Generate the test suite configuration with `${KAS_INSTALLER_DIR}/e2e-test-config.sh > config.json`
+1. Generate the test suite configuration with `${KAS_INSTALLER_DIR}/e2e-test-config.sh > config.json`. When using `kas-installer.sh`
+   with the [`redhat_sso` provider type](#sso-providers), the user accounts to be used by the E2E tests must be preconfigured. The
+   `e2e-test-config.sh` script will set all variables named like `E2E_USER_` in the test suite's `config.json` file. The `E2E_USER_`
+   prefix is not included in the JSON configuration.
+
+   For example, an environment variable `E2E_USER_PRIMARY_USERNAME='my-primary-user'` will be added to `config.json` as key/value
+   pair `"PRIMARY_USERNAME": "my-primary-user"`.
 1. Execute individual test classes:
    - `./hack/testrunner.sh test KafkaAdminPermissionTest`
    - `./hack/testrunner.sh test KafkaInstanceAPITest`

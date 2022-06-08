@@ -100,9 +100,11 @@ the fleet-manager API will reject new Kafka requests.
 
 ## Fleet Manager Parameter Customization
 
+### Service Customization
+
 The `kas-installer.sh` process will check for the presence of an executable named `kas-fleet-manager-service-template-params` in
 the project root. When available, it will be executed with the expection that key/value pairs will be output to stdout. The output
-will used when processing the kas-fleet-manager's [service-template.yml](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/templates/service-template.yml).
+will be used when processing the kas-fleet-manager's [service-template.yml](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/templates/service-template.yml).
 The name of the executable is intentially missing an extension to indicate that any language may be used that is known to the user
 to be supported in their own environment.
 
@@ -154,6 +156,12 @@ echo "REGISTERED_USERS_PER_ORGANISATION='[]'"
 #echo "REGISTERED_USERS_PER_ORGANISATION='$(echo "${MY_CUSTOM_ORG_QUOTA}" | yq e -o=json -I=0)'"
 
 ```
+
+### Secret Customization
+Similar to the `kas-fleet-manager-service-template-params` previously described, the `kas-installer.sh` process will check for the presence of an executable named `kas-fleet-manager-secrets-template-params` in
+the project root. When available, it will be executed with the expection that key/value pairs will be output to stdout. The output
+will be used when processing the kas-fleet-manager's [secrets-template.yml](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/templates/secrets-template.yml).
+
 ### Instance Types
 The default kas-fleet-manager configuration enables the deployment of two instance types, `standard` and `developer`. Permission
 to create an instance of a particular type depends on the organization's quota for the user creating the instance.
@@ -164,6 +172,42 @@ to create an instance of a particular type depends on the organization's quota f
 To create a `standard.x2` (or other non-default types) instance type, the `plan` must be provided to the Kafka create request. If using the `managed_kafka.sh` script, the `--plan` argument may be used:
 ```shell
 managed_kafka.sh --create mykafka --plan standard.x2
+```
+
+### Deploying to multiple clusters/zones
+In order to allow clients to deploy Kafka clusters to multiple clusters and/or zones, the following parameters must be customized:
+
+   * KUBE_CONFIG in `kas-fleet-manager-secrets-template-params`
+   * SUPPORTED_CLOUD_PROVIDERS in `kas-fleet-manager-service-template-params`
+   * CLUSTER_LIST in `kas-fleet-manager-service-template-params`
+
+The following sections describe the contents of these parameters in detail.
+
+#### SUPPORTED_CLOUD_PROVIDERS
+
+The SUPPORTED_CLOUD_PROVIDERS paramter contains a list of supported cloud providers in a yaml format.  See [deploying-kas-fleet-manager-to-openshift.md](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/docs/deploying-kas-fleet-manager-to-openshift.md) for more details.
+
+
+#### CLUSTER_LIST
+
+The CLUSTER_LIST parameter contains a list clusters for kas fleet manager.  See [data-plane-osd-cluster-options.md](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/docs/data-plane-osd-cluster-options.md) for more details.
+
+#### KUBE_CONFIG
+
+The KUBE_CONFIG contains cluster connection information for each cluster to which Kafka can be deployed.  There should be one entry in KUBE_CONFIG for each entry in CLUSTER_LIST.  For example, to generate a KUBE_CONFIG for two clusters:
+
+```shell
+oc login -u kubeadmin -p <first_cluster_password> <first_cluster_url>
+oc config view --minify --raw > /tmp/c1.yaml
+oc login -u kubeadmin -p <second_cluster_password> <second_cluster_url>
+oc config view --minify --raw > /tmp/c2.yaml
+(KUBECONFIG=/tmp/c1.yaml:/tmp/c2.yaml oc config view --raw)
+```
+
+The KUBE_CONFIG value must be base64 encoded.  For example, the following may be used to encode the value in the `kas-fleet-manager-secrets-template-params`:
+
+```shell
+echo "KUBE_CONFIG='$(echo "${KUBE_CONFIG}"  | yq -o=json -I=0 |  ${BASE64} -w0)'"
 ```
 
 ## SSO Providers

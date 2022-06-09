@@ -166,9 +166,11 @@ deploy_kasfleetmanager() {
       # kas-fleetshard sync requires `SSO_ENABLED=true`. Set the value if no user-provided sub config is given
       echo 'KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG={ "env":[{"name":"SSO_ENABLED","value":"true"}, {"name":"MANAGEDKAFKA_KAFKA_PARTITION_LIMIT_ENFORCED","value":"true"}] }' >> ${SERVICE_PARAMS}
   fi
+  
+  echo "REDHAT_SSO_BASE_URL='${REDHAT_SSO_BASE_URL}'" >> ${SERVICE_PARAMS}
 
   if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
-      echo "REDHAT_SSO_BASE_URL='${REDHAT_SSO_BASE_URL}'" >> ${SERVICE_PARAMS}
+     
       echo "ENABLE_KAFKA_OWNER='true'" >> ${SERVICE_PARAMS}
       echo 'KAFKA_OWNERS=[ "'${REDHAT_SSO_CLIENT_ID}'" ]' >> ${SERVICE_PARAMS}
   fi

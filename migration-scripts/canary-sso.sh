@@ -30,10 +30,40 @@ $OC get ManagedKafkas --all-namespaces -o json | jq -r '.items[].spec.serviceAcc
    "description": "kas-fleet-manager",
    "name": "kas-fleet-manager",
    "secret":"'$pass'",
+   "protocolMappers":[
+            {
+                        "name": "rh-org-id",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-usermodel-attribute-mapper",
+                        "consentRequired": false,
+                        "config": {
+                            "userinfo.token.claim": "true",
+                            "user.attribute": "rh-org-id",
+                            "id.token.claim": "true",
+                            "access.token.claim": "true",
+                            "claim.name": "rh-org-id",
+                            "jsonType.label": "String"
+                        }
+                    }
+        ],
     "directAccessGrantsEnabled": false,
     "serviceAccountsEnabled": true,
     "publicClient": false,
     "protocol": "openid-connect"
 }' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/clients`
 echo $CREATE
+R=`curl -k --data "grant_type=client_credentials&client_id=$user&client_secret=$pass" https://sso.stage.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token`
+SSOTOKEN=$(jq -r '.access_token' <<< $R)
+decodejwt=$(jq -R 'split(".") | .[1] | @base64d | fromjson' <<< $SSOTOKEN )
+orgId=$(jq -r '."rh-org-id"' <<< $decodejwt)
+echo $orgId
+KAS=`curl -sk --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/clients?clientId=$user`
+kasClientId=$(jq -r '.[].id' <<< $KAS)
+SVC=`curl -sk --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/rhoas/clients/$kasClientId/service-account-user`
+svcUserId=$(jq -r '.id' <<< $SVC)
+echo $svcUserId
+UPUSER=`curl -sk -X PUT --data-raw '{"attributes": {"rh-org-id": ["'$orgId'"]}}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/$REALM/users/$svcUserId`
+echo $UPUSER
   done
+
+

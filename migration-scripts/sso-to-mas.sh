@@ -1,6 +1,7 @@
 #!/bin/bash
 
-
+# Creates a kas-fleetshard agent service account in a developer's MAS-SSO instance based on the credentials stored in the existing dataplane addon secret.
+# Assumes the existing deployments are utilizing RH SSO.
 OC=$(which oc)
 
 NAMESPACE=redhat-kas-fleetshard-operator

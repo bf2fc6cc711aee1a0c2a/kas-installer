@@ -1,6 +1,7 @@
 #!/bin/bash
 
-
+# Creates canary service accounts in a developer's MAS-SSO instance based on the credentials stored in any existing `ManagedKafka` resources.
+# Assumes the existing deployments are utilizing RH SSO.
 OC=$(which oc)
 export MAS_SSO_NAMESPACE=mas-sso
 export KEYCLOAK_ROUTE=https://$(${OC} get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}')

@@ -32,12 +32,13 @@ login() {
 
     if [ "$OS" = 'Darwin' ]; then
         # for MacOS
-        COPYCMD=$(which pbcopy &>/dev/null)
+        if command -v pbcopy >/dev/null 2>&1; then
+          COPYCMD=$(command -v pbcopy)
+        fi
     else
         # for Linux and Windows
-        COPYCMD=$(which xclip &>/dev/null)
-        if [ -n "${COPYCMD}" ] ; then
-            COPYCMD="${COPYCMD} -selection clipboard"
+        if command -v xclip >/dev/null 2>&1; then
+            COPYCMD="$(command -v xclip) -selection clipboard"
         fi
     fi
 

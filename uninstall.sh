@@ -63,9 +63,9 @@ else
 fi
 
 OBSERVABILITY_NS=managed-application-services-observability
+${KUBECTL} delete observabilities observability-stack -n ${OBSERVABILITY_NS} || true
+${KUBECTL} delete csv --all -n ${OBSERVABILITY_NS} || true
 ${KUBECTL} delete subscription --all -n ${OBSERVABILITY_NS} || true
 ${KUBECTL} delete catalogsource --all -n ${OBSERVABILITY_NS} || true
-${KUBECTL} delete observabilities --all -n ${OBSERVABILITY_NS} || true
-${KUBECTL} delete csv --all -n ${OBSERVABILITY_NS} || true
 ${KUBECTL} delete operatorgroup --all -n ${OBSERVABILITY_NS} || true
 ${KUBECTL} delete namespace ${OBSERVABILITY_NS} || true

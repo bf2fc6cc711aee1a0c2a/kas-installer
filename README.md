@@ -185,7 +185,7 @@ The following sections describe the contents of these parameters in detail.
 
 #### SUPPORTED_CLOUD_PROVIDERS
 
-The SUPPORTED_CLOUD_PROVIDERS paramter contains a list of supported cloud providers in a yaml format.  See [deploying-kas-fleet-manager-to-openshift.md](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/docs/deploying-kas-fleet-manager-to-openshift.md) for more details.
+The SUPPORTED_CLOUD_PROVIDERS parameter contains a list of supported cloud providers in a yaml format.  See [deploying-kas-fleet-manager-to-openshift.md](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/docs/deploying-kas-fleet-manager-to-openshift.md) for more details.
 
 
 #### CLUSTER_LIST

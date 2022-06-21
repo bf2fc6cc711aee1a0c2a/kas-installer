@@ -177,7 +177,7 @@ managed_kafka.sh --create mykafka --plan standard.x2
 ### Deploying to multiple clusters/zones
 In order to allow clients to deploy Kafka clusters to multiple clusters and/or zones, the following parameters must be customized:
 
-   * KUBE_CONFIG in `kas-fleet-manager-secrets-template-params`
+   * KUBE_CONFIG in `kas-fleet-manager-secrets-template-params` (standalone only)
    * SUPPORTED_CLOUD_PROVIDERS in `kas-fleet-manager-service-template-params`
    * CLUSTER_LIST in `kas-fleet-manager-service-template-params`
 
@@ -192,9 +192,9 @@ The SUPPORTED_CLOUD_PROVIDERS parameter contains a list of supported cloud provi
 
 The CLUSTER_LIST parameter contains a list clusters for kas fleet manager.  See [data-plane-osd-cluster-options.md](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/docs/data-plane-osd-cluster-options.md) for more details.
 
-#### KUBE_CONFIG
+#### KUBE_CONFIG (standalone only)
 
-The KUBE_CONFIG contains cluster connection information for each cluster to which Kafka can be deployed.  There should be one entry in KUBE_CONFIG for each entry in CLUSTER_LIST.  For example, to generate a KUBE_CONFIG for two clusters:
+When running in standalone mode, the KUBE_CONFIG contains cluster connection information for each cluster to which Kafka can be deployed.  There should be one entry in KUBE_CONFIG for each entry in CLUSTER_LIST.  For example, to generate a KUBE_CONFIG for two clusters:
 
 ```shell
 oc login -u kubeadmin -p <first_cluster_password> <first_cluster_url>

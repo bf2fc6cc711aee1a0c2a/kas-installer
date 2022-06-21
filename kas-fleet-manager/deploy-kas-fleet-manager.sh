@@ -123,6 +123,16 @@ deploy_kasfleetmanager() {
     echo "OSD_IDP_MAS_SSO_CLIENT_SECRET='${MAS_SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
   fi
 
+  if [ -n "${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS:-}" ] && [ -x "${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS}" ] ; then
+      echo "Executing ${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS} to generate user-supplied secrets-template.yml parameters"
+      ${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS} >> ${SECRET_PARAMS}
+  fi
+
+  if [ -z "$( grep 'KUBE_CONFIG' $SECRET_PARAMS || true; )" ]; then
+      echo "adding default KUBE_CONFIG to ${SECRET_PARAMS}"
+      echo "KUBE_CONFIG='$(${OC} config view --minify --raw | ${BASE64} -w0)'" >> ${SECRET_PARAMS}
+  fi
+
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml \
     --param-file=${SECRET_PARAMS} \
     -p OCM_SERVICE_CLIENT_ID="" \
@@ -132,7 +142,6 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_CRT="${SSO_TRUSTED_CA}" \
     -p KAFKA_TLS_CERT="${KAFKA_TLS_CERT}" \
     -p KAFKA_TLS_KEY="${KAFKA_TLS_KEY}" \
-    -p KUBE_CONFIG="$(${OC} config view --minify --raw | ${BASE64} -w0)" \
     -p IMAGE_PULL_DOCKER_CONFIG=$(${OC} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.data.\.dockerconfigjson}") \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
@@ -169,6 +178,16 @@ deploy_kasfleetmanager() {
   
   echo "REDHAT_SSO_BASE_URL='${REDHAT_SSO_BASE_URL}'" >> ${SERVICE_PARAMS}
 
+  if [ -z "$( grep 'CLUSTER_LIST' $SERVICE_PARAMS || true; )" ]; then
+      echo "adding default CLUSTER_LIST to ${SERVICE_PARAMS}"
+      echo 'CLUSTER_LIST=[{"name": "'$(${OC} config view --minify --raw -o json | jq -r '.contexts[0].name')'","provider_type": "'${PROVIDER_TYPE}'","cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'","cloud_provider": "aws","region": "'${DATA_PLANE_CLUSTER_REGION}'","multi_az": true,"schedulable": true,"kafka_instance_limit": 5,"supported_instance_type": "standard,developer","status": "'${CLUSTER_STATUS}'","cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"}]'  >> ${SERVICE_PARAMS}
+  fi
+
+  if [ -z "$( grep 'SUPPORTED_CLOUD_PROVIDERS' $SERVICE_PARAMS || true; )" ]; then
+      echo "adding default SUPPORTED_CLOUD_PROVIDERS to ${SERVICE_PARAMS}"
+      echo 'SUPPORTED_CLOUD_PROVIDERS=[{name: aws, default: true, regions: [{name: "'${DATA_PLANE_CLUSTER_REGION}'", default: true, supported_instance_type: {standard: {}, developer: {}}}]}]'  >> ${SERVICE_PARAMS}
+  fi
+
   if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
      
       echo "ENABLE_KAFKA_OWNER='true'" >> ${SERVICE_PARAMS}
@@ -192,29 +211,6 @@ deploy_kasfleetmanager() {
     -p ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="false" \
     -p SERVICE_PUBLIC_HOST_URL="https://kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}" \
     -p DATAPLANE_CLUSTER_SCALING_TYPE="manual" \
-    -p CLUSTER_LIST='
-- "name": "'$(${OC} config view --minify --raw -o json | jq -r '.contexts[0].name')'"
-  "provider_type": "'${PROVIDER_TYPE}'"
-  "cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'"
-  "cloud_provider": "aws"
-  "region": "'${DATA_PLANE_CLUSTER_REGION}'"
-  "multi_az": true
-  "schedulable": true
-  "kafka_instance_limit": 5
-  "supported_instance_type": "standard,developer"
-  "status": "'${CLUSTER_STATUS}'"
-  "cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"
-' \
-    -p SUPPORTED_CLOUD_PROVIDERS='
-- "name": "aws"
-  "default": true
-  "regions":
-    - "name": "'${DATA_PLANE_CLUSTER_REGION}'"
-      "default": true
-      "supported_instance_type":
-        "standard": {}
-        "developer": {}
-' \
     -p REPLICAS=1 \
     -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \
     -p TOKEN_ISSUER_URL="${SSO_REALM_URL}" \

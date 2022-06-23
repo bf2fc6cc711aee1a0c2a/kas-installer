@@ -75,7 +75,7 @@ generate_kas_fleet_manager_env_config() {
   echo "SSO_PROVIDER_TYPE='${SSO_PROVIDER_TYPE}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   REDHAT_SSO_BASE_URL=https://${REDHAT_SSO_HOSTNAME}
   echo "REDHAT_SSO_BASE_URL=${REDHAT_SSO_BASE_URL}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  
+
   if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] ; then
     MAS_SSO_BASE_URL=https://${MAS_SSO_ROUTE}
     MAS_SSO_REALM='rhoas'
@@ -85,7 +85,7 @@ generate_kas_fleet_manager_env_config() {
   else
     MAS_SSO_BASE_URL=https://${MAS_SSO_BASE_URL:-${MAS_SSO_ROUTE}}
     MAS_SSO_REALM=${MAS_SSO_REALM:-"rhoas"}
-   
+
     echo "REDHAT_SSO_CLIENT_ID='${REDHAT_SSO_CLIENT_ID}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
     echo "REDHAT_SSO_CLIENT_SECRET='${REDHAT_SSO_CLIENT_SECRET}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
     export MAS_SSO_CERTS=$(echo "" | ${OPENSSL} s_client -servername ${REDHAT_SSO_HOSTNAME} -connect ${REDHAT_SSO_HOSTNAME}:443 -prexit 2>/dev/null | $OPENSSL x509)
@@ -93,12 +93,7 @@ generate_kas_fleet_manager_env_config() {
     echo "SSO_REALM_URL=${REDHAT_SSO_BASE_URL}/auth/realms/${REDHAT_SSO_REALM}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   fi
 
-  if [ -n "${SSO_TRUSTED_CA:-}" ] ; then
-    echo "SSO_TRUSTED_CA='${SSO_TRUSTED_CA}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  else
-    echo "SSO_TRUSTED_CA='${MAS_SSO_CERTS}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
-  fi
-
+  echo "SSO_TRUSTED_CA='${SSO_TRUSTED_CA-${MAS_SSO_CERTS}}'" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_BASE_URL=${MAS_SSO_BASE_URL}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_REALM=${MAS_SSO_REALM}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "MAS_SSO_CLIENT_ID=kas-fleet-manager" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}

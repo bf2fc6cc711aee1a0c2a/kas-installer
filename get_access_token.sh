@@ -16,6 +16,7 @@ source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
 
 GRANT_TYPE=''
 USER_PARAMS=''
+SCOPES=''
 
 case ${1} in
     "--owner" )
@@ -36,6 +37,7 @@ case ${1} in
             GRANT_TYPE='client_credentials'
             CLIENT_ID=${REDHAT_SSO_CLIENT_ID}
             CLIENT_SECRET=${REDHAT_SSO_CLIENT_SECRET}
+            SCOPES='&scope=api.iam.service_accounts'
         else
             GRANT_TYPE='password'
             CLIENT_ID='kas-installer-client'
@@ -65,7 +67,7 @@ fi
 TOKEN_URI="${SSO_REALM_URL}/protocol/openid-connect/token"
 
 RESPONSE=$(curl --fail --show-error -sX POST -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=${GRANT_TYPE}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}${USER_PARAMS}" \
+  -d "grant_type=${GRANT_TYPE}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}${USER_PARAMS}${SCOPES}" \
   ${TOKEN_URI})
 
 if [ ${?} -ne 0 ]; then

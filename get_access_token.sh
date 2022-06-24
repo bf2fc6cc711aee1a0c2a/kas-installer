@@ -33,11 +33,14 @@ case ${1} in
             exit 0
         fi
 
-        if [ -n "${REDHAT_SSO_CLIENT_ID:-}" ] && [ -n "${REDHAT_SSO_CLIENT_SECRET:-}" ]; then
+        if [ "${SSO_PROVIDER_TYPE:-}" = "redhat_sso" ] && [ -n "${REDHAT_SSO_CLIENT_ID:-}" ] && [ -n "${REDHAT_SSO_CLIENT_SECRET:-}" ]; then
             GRANT_TYPE='client_credentials'
             CLIENT_ID=${REDHAT_SSO_CLIENT_ID}
             CLIENT_SECRET=${REDHAT_SSO_CLIENT_SECRET}
-            SCOPES='&scope=api.iam.service_accounts'
+
+            if [ -n "${REDHAT_SSO_SCOPE:-}" ] ; then
+                SCOPES="&scope=${REDHAT_SSO_SCOPE}"
+            fi
         else
             GRANT_TYPE='password'
             CLIENT_ID='kas-installer-client'

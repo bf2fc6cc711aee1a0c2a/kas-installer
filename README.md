@@ -34,6 +34,7 @@ in a single K8s cluster.
 * rhoas CLI (https://github.com/redhat-developer/app-services-cli)
 * A user with administrative privileges in the OpenShift cluster and is logged in using `oc` or `kubectl`
 * brew coreutils (Mac only)
+* [yq][yq] if `kas-fleet-manager-service-template-params` is provided
 * OSD Cluster with the following specs. Clusters with fewer/smaller compute nodes _may_ work, but have not been verified with kas-installer.
    * Plan `developer.x1`
       * 6 compute nodes
@@ -320,3 +321,4 @@ To use the Kafka Cluster that is created with the `managed_kafka.sh` script with
 [curl]:https://curl.se/
 [e2e_test_suite]:https://github.com/bf2fc6cc711aee1a0c2a/e2e-test-suite
 [opm]:https://github.com/operator-framework/operator-registry
+[yq]:https://github.com/mikefarah/yq

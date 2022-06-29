@@ -16,6 +16,7 @@ source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
 
 GRANT_TYPE=''
 USER_PARAMS=''
+SCOPES=''
 
 case ${1} in
     "--owner" )
@@ -32,10 +33,14 @@ case ${1} in
             exit 0
         fi
 
-        if [ -n "${REDHAT_SSO_CLIENT_ID:-}" ] && [ -n "${REDHAT_SSO_CLIENT_SECRET:-}" ]; then
+        if [ "${SSO_PROVIDER_TYPE:-}" = "redhat_sso" ] && [ -n "${REDHAT_SSO_CLIENT_ID:-}" ] && [ -n "${REDHAT_SSO_CLIENT_SECRET:-}" ]; then
             GRANT_TYPE='client_credentials'
             CLIENT_ID=${REDHAT_SSO_CLIENT_ID}
             CLIENT_SECRET=${REDHAT_SSO_CLIENT_SECRET}
+
+            if [ -n "${REDHAT_SSO_SCOPE:-}" ] ; then
+                SCOPES="&scope=${REDHAT_SSO_SCOPE}"
+            fi
         else
             GRANT_TYPE='password'
             CLIENT_ID='kas-installer-client'
@@ -65,7 +70,7 @@ fi
 TOKEN_URI="${SSO_REALM_URL}/protocol/openid-connect/token"
 
 RESPONSE=$(curl --fail --show-error -sX POST -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=${GRANT_TYPE}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}${USER_PARAMS}" \
+  -d "grant_type=${GRANT_TYPE}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}${USER_PARAMS}${SCOPES}" \
   ${TOKEN_URI})
 
 if [ ${?} -ne 0 ]; then

@@ -102,7 +102,7 @@ deploy_kasfleetmanager() {
   echo "Deploying KAS Fleet Manager Database..."
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/db-template.yml | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
   echo "Waiting until KAS Fleet Manager Database is ready..."
-  time timeout --foreground 3m bash -c "until ${OC} get pods -n ${KAS_FLEET_MANAGER_NAMESPACE}| grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
+  ${OC} wait DeploymentConfig/kas-fleet-manager-db -n ${KAS_FLEET_MANAGER_NAMESPACE} --for=condition=available --timeout=180s
 
   create_kasfleetmanager_service_account
   create_kasfleetmanager_pull_credentials
@@ -183,7 +183,7 @@ deploy_kasfleetmanager() {
       # kas-fleetshard sync requires `SSO_ENABLED=true`. Set the value if no user-provided sub config is given
       echo 'KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG={ "env":[{"name":"SSO_ENABLED","value":"true"}, {"name":"MANAGEDKAFKA_KAFKA_PARTITION_LIMIT_ENFORCED","value":"true"}] }' >> ${SERVICE_PARAMS}
   fi
-  
+
   echo "REDHAT_SSO_BASE_URL='${REDHAT_SSO_BASE_URL}'" >> ${SERVICE_PARAMS}
 
   if [ -z "$( grep 'CLUSTER_LIST' $SERVICE_PARAMS || true; )" ]; then
@@ -197,7 +197,7 @@ deploy_kasfleetmanager() {
   fi
 
   if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
-     
+
       echo "ENABLE_KAFKA_OWNER='true'" >> ${SERVICE_PARAMS}
       echo 'KAFKA_OWNERS=[ "'${REDHAT_SSO_CLIENT_ID}'" ]' >> ${SERVICE_PARAMS}
   fi
@@ -249,26 +249,27 @@ read_kasfleetmanager_env_file() {
 }
 
 wait_for_observability_operator_deployment_availability() {
-  echo "Waiting until Observability operator deployment is created..."
   while [ -z "$(${KUBECTL} get deployment ${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
     echo "Deployment ${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} still not created. Waiting..."
-    sleep 10
+    sleep 3
   done
 
   echo "Waiting until Observability operator deployment is available..."
   ${KUBECTL} wait --timeout=120s --for=condition=available deployment/${OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME} --namespace=${OBSERVABILITY_OPERATOR_K8S_NAMESPACE}
+  echo "Observability operator deployment is available"
 }
 
 disable_observability_operator_extras() {
   wait_for_observability_operator_deployment_availability
-  echo "Waiting until Observability CR is created..."
+
   OBSERVABILITY_CR_NAME="observability-stack"
+
   while [ -z "$(${KUBECTL} get Observability ${OBSERVABILITY_CR_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE})" ]; do
     echo "Observability CR ${OBSERVABILITY_CR_NAME} still not created. Waiting..."
     sleep 3
   done
 
-  echo "Patching Observability CR to disable Observatorium, PagerDuty and DeadmanSnitch functionality"
+  echo "Patching Observability CR to disable: Observatorium, PagerDuty, DeadmanSnitch, Smtp"
   OBSERVABILITY_MERGE_PATCH_CONTENT=$(cat << EOF
 {
   "spec": {
@@ -282,7 +283,11 @@ disable_observability_operator_extras() {
 }
 EOF
 )
-  ${KUBECTL} patch Observability observability-stack --type=merge --patch "${OBSERVABILITY_MERGE_PATCH_CONTENT}" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE}
+  while [ "$(${KUBECTL} patch Observability observability-stack --type=merge --patch "${OBSERVABILITY_MERGE_PATCH_CONTENT}" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE} || echo 'false')" = 'false' ] ; do
+    echo "Failed to patch Observability CR, retrying"
+    sleep 2
+  done
+  echo "Observability CR patch complete"
 }
 
 create_namespace() {
@@ -308,13 +313,13 @@ create_kas_fleet_manager_namespace() {
 
 await_kas_fleetshard_agent() {
   MANAGED_KAFKA_AGENT_NAME="managed-agent"
-  echo "Waiting until ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} CR is created..."
 
-  while [ -z "$(${OC} get ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE})" ]; do
+  while [ -z "$(${OC} get ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} 2>/dev/null)" ]; do
     echo "ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} CR still not created. Waiting..."
     sleep 10
   done
 
+  echo "Waiting until ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} CR is ready"
   ${OC} wait ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} --for=condition=Ready --timeout=180s
   echo "ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} is ready."
 }

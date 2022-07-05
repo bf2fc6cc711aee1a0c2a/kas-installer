@@ -123,9 +123,13 @@ deploy_kasfleetmanager() {
     echo "OSD_IDP_MAS_SSO_CLIENT_SECRET='${MAS_SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
   fi
 
-  if [ -n "${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS:-}" ] && [ -x "${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS}" ] ; then
-      echo "Executing ${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS} to generate user-supplied secrets-template.yml parameters"
-      ${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS} >> ${SECRET_PARAMS}
+  if [ -n "${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS:-}" ] ; then
+      if [ -x "${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS}" ] ; then
+          echo "Executing ${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS} to generate user-supplied secrets-template.yml parameters"
+          ${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS} >> ${SECRET_PARAMS}
+      else
+          echo "Found ${KAS_FLEET_MANAGER_SECRETS_TEMPLATE_PARAMS} script, but having no executable permission. Ignoring it."
+      fi
   fi
 
   if [ -z "$( grep 'KUBE_CONFIG' $SECRET_PARAMS || true; )" ]; then
@@ -166,9 +170,13 @@ deploy_kasfleetmanager() {
       CLUSTER_STATUS="ready"
   fi
 
-  if [ -n "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS:-}" ] && [ -x "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS}" ] ; then
-      echo "Executing ${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS} to generate user-supplied service-template.yml parameters"
-      ${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS} >> ${SERVICE_PARAMS}
+  if [ -n "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS:-}" ]; then
+      if [ -x "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS}" ]; then
+          echo "Executing ${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS} to generate user-supplied service-template.yml parameters"
+          ${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS} >> ${SERVICE_PARAMS}
+      else
+          echo "Found ${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS} script, but having no executable permission. Ignoring it."
+      fi
   fi
 
   if [ -z "${OCM_SERVICE_TOKEN}" ] && [ -z "$(grep 'KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG' ${SERVICE_PARAMS})" ]; then

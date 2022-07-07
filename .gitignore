@@ -13,3 +13,4 @@ mas-sso/sso-template-params.env
 truststore.jks
 app-services.properties
 service_account.json
+/certs/

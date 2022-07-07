@@ -15,6 +15,8 @@ in a single K8s cluster.
 - [SSO Providers](#sso-providers)
 - [Custom Components](#custom-components)
 - [Using rhoas CLI](#using-rhoas-cli)
+- [Running the User Interface](#running-the-user-interface)
+- [Custom TLS](#custom-tls)
 - [Legacy Scripts](#legacy-scripts)
 - [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
 
@@ -273,6 +275,50 @@ To use these cli featurs, you must set `MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLE
 1. To create a topic `rhoas kafka topic create --name=foo`
 1. To grant access `rhoas kafka acl grant-access  --topic=foo --all-accounts --producer`
 etc.
+
+## Running the User Interface
+
+*Only with `SSO_PROVIDER_TYPE=redhat_sso` and `REDHAT_SSO_HOSTNAME=sso.redhat.com` (production)*
+
+Local instances of the [app-services-ui](https://github.com/redhat-developer/app-services-ui),
+[kas-ui](https://github.com/bf2fc6cc711aee1a0c2a/kas-ui), and [kafka-ui](https://github.com/bf2fc6cc711aee1a0c2a/kafka-ui)
+may be run locally by using the `ui/install.sh` script. Running the UI installation will start three containers using
+`podman` or `docker` (auto-detected, but can be forced by setting `CONTAINER_CLI` to `docker` or `podman`)
+with a main entrypoint of `https://127.0.0.1:1337`. The IP must be configured with name `prod.foo.redhat.com` in the user's
+local `/etc/hosts` file.
+```
+...
+127.0.0.1 prod.foo.redhat.com
+...
+```
+
+The repository and branch (or tag/commit) maybe configured in the `kas-installer.env` file using the following variables
+- `APP_SERVICES_UI_GIT_URL`
+- `APP_SERVICES_UI_GIT_REF`
+- `KAS_UI_GIT_URL`
+- `KAS_UI_GIT_REF`
+- `KAFKA_UI_GIT_URL`
+- `KAFKA_UI_GIT_REF`
+
+*Note*, when navigating to `https://prod.foo.redhat.com:1337/`, you may be prompted to login to `sso.redhat.com` as well
+as the local MAS-SSO instance. The credentials for MAS-SSO should be the value of the `RH_USERNAME` variable for both
+username and password.
+
+## Custom TLS
+
+Users may provide custom-generated TLS certificates using the `gen-certs.sh` script. The output is placed in the `certs`
+directory (ignored by git) and includes a CA certificate, CA key, server certificate, and server key. Each time the script
+is run, the server files will be replaced, but the CA certificate and key will be retained. The server certificate is issued
+specifically for the current session's domain name, as determined by the `K8S_CLUSTER_DOMAIN` variable. To configure the
+certificates for a Kafka instance, set the following variables in `kas-installer.env`, where `KAS_INSTALLER_HOME` is the
+path to the project root:
+```shell
+KAFKA_TLS_CERT="$(cat ${KAS_INSTALLER_HOME}/certs/server-cert.pem)"
+KAFKA_TLS_KEY="$(cat ${KAS_INSTALLER_HOME}/certs/server-key.pem)"
+```
+
+The CA certificate may be (for example) imported to your browser, enabling the generated server certificates used by
+the admin API endpoint and the UI to be trusted during testing without the needing to trust them individually.
 
 ## Legacy scripts
 

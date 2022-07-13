@@ -213,6 +213,25 @@ The KUBE_CONFIG value must be base64 encoded.  For example, the following may be
 echo "KUBE_CONFIG='$(echo "${KUBE_CONFIG}"  | yq -o=json -I=0 |  ${BASE64} -w0)'"
 ```
 
+### Custom Domain for the Data Plane
+
+Custom domain name registration for the data plane routes may be enabled using the following configurations in the kas-fleet-manager
+[customization](#fleet-manager-parameter-customization) scripts. If `KAFKA_DOMAIN_NAME` is not specified, the default value of in the
+KFM template will be used.
+1. `kas-fleet-manager-service-template-params`
+    ```shell
+    echo "ENABLE_KAFKA_CNAME_REGISTRATION='true'"
+    echo "KAFKA_DOMAIN_NAME='<your domain here>'"
+    ```
+1. `kas-fleet-manager-secrets-template-params`
+   ```shell
+    echo "ROUTE53_ACCESS_KEY='<your AWS Route53 access key>'"
+    echo "ROUTE53_SECRET_ACCESS_KEY='<your AWS Route53 secret access key>'"
+    ```
+With this configuration, you will likely also want to provide a certificate and key, either by generating one using
+the [custom TLS instructions](#custom-tls), or by directly providing values for `KAFKA_TLS_CERT` and `KAFKA_TLS_KEY`
+in the `kas-installer.env` file or environment.
+
 ## SSO Providers
 
 Configuration of kas-fleet-manager's SSO providers is done by setting the `SSO_PROVIDER_TYPE` configuration variable. When not set, the default provider is `mas_sso`. To use RH SSO,

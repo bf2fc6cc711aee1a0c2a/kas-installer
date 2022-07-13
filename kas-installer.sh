@@ -138,6 +138,14 @@ install_mas_sso() {
   export MAS_SSO_NAMESPACE=mas-sso
   export RH_USERNAME RH_USER_ID RH_ORG_ID MAS_SSO_OLM_INDEX_IMAGE MAS_SSO_OLM_INDEX_IMAGE_TAG
 
+  if [ -n "${MAS_SSO_OPERATOR_SUBSCRIPTION_CONFIG:-}" ] ; then
+      export MAS_SSO_OPERATOR_SUBSCRIPTION_CONFIG
+  fi
+
+  if [ -n "${MAS_SSO_KEYCLOAK_RESOURCES:-}" ] ; then
+      export MAS_SSO_KEYCLOAK_RESOURCES
+  fi
+
   if [ "${SKIP_SSO:-"n"}" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
     echo "MAS SSO route not found or SKIP_SSO not configured, installing MAS SSO ..."
     ${DIR_NAME}/mas-sso/mas-sso-installer.sh

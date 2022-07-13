@@ -218,6 +218,25 @@ the variable may be set to `redhat_sso` and additional configuration can be prov
 `REDHAT_SSO_CLIENT_ID` (required), and `REDHAT_SSO_CLIENT_SECRET` (required). See the description for each variable in the [kas-installer-defaults.env](kas-installer-defaults.env)
 file for more information.
 
+### MAS SSO Resources
+
+MAS SSO (must always available to support kas-fleet-manager admin operations) may optionally be installed with modified
+resource requests and limits. The two environment variable should be in JSON format on a single line.
+
+Configuration of the SSO operator can be done using the `MAS_SSO_OPERATOR_SUBSCRIPTION_CONFIG`
+variable, the format of which must conform to the [Subscription Config object](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/subscription-config.md).
+Example with custom CPU and memory requests:
+```shell
+MAS_SSO_OPERATOR_SUBSCRIPTION_CONFIG='{"resources": { "requests": { "cpu": "500m", "memory": "512Mi" }, "limits": { "cpu": "500m", "memory": "512Mi" }}}'
+```
+
+The MAS SSO Keycloak instance may be configured using the `MAS_SSO_KEYCLOAK_RESOURCES` variable. The format is the same
+as the Kubernetes `resources` object for other types. See `mas-sso/keycloak.yaml` for the defaults.
+Example custom CPU and memory requests:
+```shell
+MAS_SSO_KEYCLOAK_RESOURCES='{ "requests": { "cpu": "500m", "memory": "768Mi" }, "limits": { "cpu": "500m", "memory": "768Mi" }}'
+```
+
 ## Custom Components
 
 Custom-built components are supported for kas-fleet-manager and kas-fleetshard.

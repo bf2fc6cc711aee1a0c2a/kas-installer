@@ -6,6 +6,8 @@ kas-fleet-manager/kas-fleet-manager-params.env
 kas-fleet-manager/kas-fleet-manager-secrets.env
 kas-fleet-manager/terraforming/terraforming-generated-k8s-resources
 kas-fleet-manager/kas-fleet-manager-source
+mas-sso/sso-keycloak-params.env
+mas-sso/sso-template-params.env
 /.project
 .idea
 truststore.jks

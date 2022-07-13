@@ -22,6 +22,8 @@ objects:
     name: mas-sso-operator
     source: mas-sso-operator-catalog
     sourceNamespace: ${NAMESPACE}
+    config: ${{OPERATOR_SUBSCRIPTION_CONFIG}}
+
 - apiVersion: operators.coreos.com/v1
   kind: OperatorGroup
   metadata:
@@ -48,43 +50,47 @@ parameters:
   description: the namespace to deploy into
   required: true
 - name: CHANNEL
-  value: "alpha"     
+  value: "alpha"
   displayName: OLM subscription channel
   description: OLM subscription channel
   required: true
 - name: OPERATOR_NAME
-  value: "mas-sso-operator"     
+  value: "mas-sso-operator"
   displayName: Operator name for mas-sso operator
   description: Operator name for mas-sso operator
   required: true
 - name: RHSSO_OPERATOR_IMAGE
-  value: "quay.io/rhoas/rhsso-operator"     
+  value: "quay.io/rhoas/rhsso-operator"
   displayName: Image for RHSSO init container
   description: Image for RHSSO init continer
   required: true
 - name: RHSSO_OPERATOR_IMAGE_TAG
-  value: "rh-sso-operator-c84f5f1"     
+  value: "rh-sso-operator-c84f5f1"
   displayName: Image tag for RHSSO init container
   description: Image tag RHSSO init container
   required: true
 - name: RELATED_IMAGE_RHSSO
-  value: "quay.io/rhoas/rhsso"     
+  value: "quay.io/rhoas/rhsso"
   displayName: Image for RHSSO
   description: Image for RHSSO
   required: true
 - name: RELATED_IMAGE_RHSSO_TAG
-  value: "rh-sso-c84f5f1"     
+  value: "rh-sso-c84f5f1"
   displayName: Image tag for RHSSO
   description: Image tag RHSSO
   required: true
 - name: RELATED_IMAGE_RHSSO_INIT_CONTAINER
-  value: "quay.io/rhoas/rhsso-init-container"     
+  value: "quay.io/rhoas/rhsso-init-container"
   displayName: Image for RHSSO init container
   description: Image for RHSSO init continer
   required: true
 - name: RELATED_IMAGE_RHSSO_INIT_CONTAINER_TAG
-  value: "rh-sso-init-container-c84f5f1"     
+  value: "rh-sso-init-container-c84f5f1"
   displayName: Image tag for RHSSO init container
   description: Image tag RHSSO init container
   required: true
-  
+- name: OPERATOR_SUBSCRIPTION_CONFIG
+  value: '{}'
+  displayName: Subscription configuration for RHSSO
+  description: Subscription configuration for RHSSO, resources and env
+  required: true

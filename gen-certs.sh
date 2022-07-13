@@ -8,7 +8,7 @@ source ${KI_CONFIG}
 
 mkdir -vp ${DIR_NAME}/certs
 
-if ! [ -f ${DIR_NAME}/certs/ca-key.pem] ; then
+if ! [ -f ${DIR_NAME}/certs/ca-key.pem ] ; then
     openssl genrsa 4096 > ${DIR_NAME}/certs/ca-key.pem
     openssl req -new -x509 -nodes -days 365000 \
       -subj "/CN=kas-installer Root CA" \
@@ -22,7 +22,7 @@ rm -vf \
   ${DIR_NAME}/certs/server-req.pem \
   ${DIR_NAME}/certs/server-cert.pem
 
-echo "subjectAltName = DNS:*.kas.${K8S_CLUSTER_DOMAIN},DNS:prod.foo.redhat.com" > ${DIR_NAME}/certs/san.ext
+echo "subjectAltName = DNS:*.kas.${K8S_CLUSTER_DOMAIN},DNS:*.kafka.bf2.dev,DNS:prod.foo.redhat.com" > ${DIR_NAME}/certs/san.ext
 
 openssl req -newkey rsa:2048 -nodes \
   -subj "/CN=*.kas.${K8S_CLUSTER_DOMAIN}" \

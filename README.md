@@ -299,6 +299,9 @@ etc.
 
 *Only with `SSO_PROVIDER_TYPE=redhat_sso` and `REDHAT_SSO_HOSTNAME=sso.redhat.com` (production)*
 
+See the [Running the UI wiki page](https://github.com/bf2fc6cc711aee1a0c2a/kas-installer/wiki/Running-the-UI) for more
+detailed instructions.
+
 Local instances of the [app-services-ui](https://github.com/redhat-developer/app-services-ui),
 [kas-ui](https://github.com/bf2fc6cc711aee1a0c2a/kas-ui), and [kafka-ui](https://github.com/bf2fc6cc711aee1a0c2a/kafka-ui)
 may be run locally by using the `ui/install.sh` script. Running the UI installation will start three containers using

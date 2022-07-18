@@ -116,7 +116,7 @@ WEBPACK_EXTRA=''
 CERTS="${DIR_NAME}/../certs"
 
 if [ -f ${CERTS}/server-cert.pem ] ; then
-    EXTRA_APP_SERVICES_UI="${EXTRA_APP_SERVICES_UI} -v "$(realpath ${DIR_NAME}/../certs)":/certs:z -eTLS_CA=/certs/ca-cert.pem -eTLS_KEY=/certs/server-key.pem -eTLS_CERT=/certs/server-cert.pem"
+    EXTRA_APP_SERVICES_UI="${EXTRA_APP_SERVICES_UI} -v "$(realpath ${DIR_NAME}/../certs)":/certs -eTLS_CA=/certs/ca-cert.pem -eTLS_KEY=/certs/server-key.pem -eTLS_CERT=/certs/server-cert.pem"
 fi
 
 ${CONTAINER_CLI} run -d -eHOST=0.0.0.0 -ePORT=1337 -ePROTOCOL=https ${EXTRA_APP_SERVICES_UI} --name kas-installer-app-services-ui ${REPO}/app-services-ui:latest

@@ -7,18 +7,19 @@ OC=$(which oc)
 OCM=$(which ocm)
 KUBECTL=$(which kubectl)
 MAKE=$(which make)
-OPENSSL=$(which openssl)
 
 if [ "$OS" = 'Darwin' ]; then
   # for MacOS
   SED=$(which gsed)
   AWK=$(which gawk)
   BASE64=$(which gbase64)
+  OPENSSL=/usr/local/opt/openssl/bin/openssl
 else
   # for Linux and Windows
   SED=$(which sed)
   AWK=$(which awk)
   BASE64=$(which base64)
+  OPENSSL=$(which openssl)
 fi
 
 function cluster_domain_check() {

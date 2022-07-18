@@ -21,9 +21,9 @@ in a single K8s cluster.
 - [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
 
 ## Prerequisites
+
 * [jq][jq]
 * [curl][curl]
-* gsed for macOS e.g. via `brew install gsed`
 * [OpenShift][openshift]. In the future there are plans to make it compatible
   with native K8s. Currently an OpenShift dedicated based environment is needed
   (Currently needs to be a multi-zone cluster if you want to create a Kafka
@@ -35,7 +35,6 @@ in a single K8s cluster.
 * openssl CLI tool
 * rhoas CLI (https://github.com/redhat-developer/app-services-cli)
 * A user with administrative privileges in the OpenShift cluster and is logged in using `oc` or `kubectl`
-* brew coreutils (Mac only)
 * [yq][yq] if `kas-fleet-manager-service-template-params` is provided
 * OSD Cluster with the following specs. Clusters with fewer/smaller compute nodes _may_ work, but have not been verified with kas-installer.
    * Plan `developer.x1`
@@ -50,6 +49,12 @@ in a single K8s cluster.
       * 12 compute nodes (4 per zone)
       * Size: m5.2xlarge
       * MultiAz: True
+
+On Mac install:
+
+* brew gsed
+* brew coreutils
+* brew openssl
 
 ## Description
 

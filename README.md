@@ -15,13 +15,15 @@ in a single K8s cluster.
 - [SSO Providers](#sso-providers)
 - [Custom Components](#custom-components)
 - [Using rhoas CLI](#using-rhoas-cli)
+- [Running the User Interface](#running-the-user-interface)
+- [Custom TLS](#custom-tls)
 - [Legacy Scripts](#legacy-scripts)
 - [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
 
 ## Prerequisites
+
 * [jq][jq]
 * [curl][curl]
-* gsed for macOS e.g. via `brew install gsed`
 * [OpenShift][openshift]. In the future there are plans to make it compatible
   with native K8s. Currently an OpenShift dedicated based environment is needed
   (Currently needs to be a multi-zone cluster if you want to create a Kafka
@@ -33,7 +35,6 @@ in a single K8s cluster.
 * openssl CLI tool
 * rhoas CLI (https://github.com/redhat-developer/app-services-cli)
 * A user with administrative privileges in the OpenShift cluster and is logged in using `oc` or `kubectl`
-* brew coreutils (Mac only)
 * [yq][yq] if `kas-fleet-manager-service-template-params` is provided
 * OSD Cluster with the following specs. Clusters with fewer/smaller compute nodes _may_ work, but have not been verified with kas-installer.
    * Plan `developer.x1`
@@ -48,6 +49,12 @@ in a single K8s cluster.
       * 12 compute nodes (4 per zone)
       * Size: m5.2xlarge
       * MultiAz: True
+
+On Mac install:
+
+* brew gsed
+* brew coreutils
+* brew openssl
 
 ## Description
 
@@ -211,6 +218,25 @@ The KUBE_CONFIG value must be base64 encoded.  For example, the following may be
 echo "KUBE_CONFIG='$(echo "${KUBE_CONFIG}"  | yq -o=json -I=0 |  ${BASE64} -w0)'"
 ```
 
+### Custom Domain for the Data Plane
+
+Custom domain name registration for the data plane routes may be enabled using the following configurations in the kas-fleet-manager
+[customization](#fleet-manager-parameter-customization) scripts. If `KAFKA_DOMAIN_NAME` is not specified, the default value of in the
+KFM template will be used.
+1. `kas-fleet-manager-service-template-params`
+    ```shell
+    echo "ENABLE_KAFKA_CNAME_REGISTRATION='true'"
+    echo "KAFKA_DOMAIN_NAME='<your domain here>'"
+    ```
+1. `kas-fleet-manager-secrets-template-params`
+   ```shell
+    echo "ROUTE53_ACCESS_KEY='<your AWS Route53 access key>'"
+    echo "ROUTE53_SECRET_ACCESS_KEY='<your AWS Route53 secret access key>'"
+    ```
+With this configuration, you will likely also want to provide a certificate and key, either by generating one using
+the [custom TLS instructions](#custom-tls), or by directly providing values for `KAFKA_TLS_CERT` and `KAFKA_TLS_KEY`
+in the `kas-installer.env` file or environment.
+
 ## SSO Providers
 
 Configuration of kas-fleet-manager's SSO providers is done by setting the `SSO_PROVIDER_TYPE` configuration variable. When not set, the default provider is `mas_sso`. To use RH SSO,
@@ -273,6 +299,53 @@ To use these cli featurs, you must set `MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLE
 1. To create a topic `rhoas kafka topic create --name=foo`
 1. To grant access `rhoas kafka acl grant-access  --topic=foo --all-accounts --producer`
 etc.
+
+## Running the User Interface
+
+*Only with `SSO_PROVIDER_TYPE=redhat_sso` and `REDHAT_SSO_HOSTNAME=sso.redhat.com` (production)*
+
+See the [Running the UI wiki page](https://github.com/bf2fc6cc711aee1a0c2a/kas-installer/wiki/Running-the-UI) for more
+detailed instructions.
+
+Local instances of the [app-services-ui](https://github.com/redhat-developer/app-services-ui),
+[kas-ui](https://github.com/bf2fc6cc711aee1a0c2a/kas-ui), and [kafka-ui](https://github.com/bf2fc6cc711aee1a0c2a/kafka-ui)
+may be run locally by using the `ui/install.sh` script. Running the UI installation will start three containers using
+`podman` or `docker` (auto-detected, but can be forced by setting `CONTAINER_CLI` to `docker` or `podman`)
+with a main entrypoint of `https://127.0.0.1:1337`. The IP must be configured with name `prod.foo.redhat.com` in the user's
+local `/etc/hosts` file.
+```
+...
+127.0.0.1 prod.foo.redhat.com
+...
+```
+
+The repository and branch (or tag/commit) maybe configured in the `kas-installer.env` file using the following variables
+- `APP_SERVICES_UI_GIT_URL`
+- `APP_SERVICES_UI_GIT_REF`
+- `KAS_UI_GIT_URL`
+- `KAS_UI_GIT_REF`
+- `KAFKA_UI_GIT_URL`
+- `KAFKA_UI_GIT_REF`
+
+*Note*, when navigating to `https://prod.foo.redhat.com:1337/`, you may be prompted to login to `sso.redhat.com` as well
+as the local MAS-SSO instance. The credentials for MAS-SSO should be the value of the `RH_USERNAME` variable for both
+username and password.
+
+## Custom TLS
+
+Users may provide custom-generated TLS certificates using the `gen-certs.sh` script. The output is placed in the `certs`
+directory (ignored by git) and includes a CA certificate, CA key, server certificate, and server key. Each time the script
+is run, the server files will be replaced, but the CA certificate and key will be retained. The server certificate is issued
+specifically for the current session's domain name, as determined by the `K8S_CLUSTER_DOMAIN` variable. To configure the
+certificates for a Kafka instance, set the following variables in `kas-installer.env`, where `KAS_INSTALLER_HOME` is the
+path to the project root:
+```shell
+KAFKA_TLS_CERT="$(cat ${KAS_INSTALLER_HOME}/certs/server-cert.pem)"
+KAFKA_TLS_KEY="$(cat ${KAS_INSTALLER_HOME}/certs/server-key.pem)"
+```
+
+The CA certificate may be (for example) imported to your browser, enabling the generated server certificates used by
+the admin API endpoint and the UI to be trusted during testing without the needing to trust them individually.
 
 ## Legacy scripts
 

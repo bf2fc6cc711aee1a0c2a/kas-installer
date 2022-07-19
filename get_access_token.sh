@@ -12,6 +12,7 @@ else
 fi
 
 source ${DIR_NAME}/kas-installer.env
+source ${DIR_NAME}/kas-installer-defaults.env
 source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
 
 GRANT_TYPE=''

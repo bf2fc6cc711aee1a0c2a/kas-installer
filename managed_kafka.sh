@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 DIR_NAME="$(dirname $0)"
 source "${DIR_NAME}/utils/common.sh"
 source ${DIR_NAME}/kas-installer.env
@@ -131,8 +133,8 @@ delete() {
 
 certgen() {
     local KAFKA_ID=${1}
-    local SA_CLIENT_ID=${2}
-    local SA_CLIENT_SECRET=${3}
+    local SA_CLIENT_ID=${2:-}
+    local SA_CLIENT_SECRET=${3:-}
 
     echo "Creating truststore and app-services.properties files for kafka bin script utilization."
 
@@ -144,7 +146,7 @@ certgen() {
     export TRUSTSTORE_PASSWORD=${TRUSTSTORE_PASSWORD:-password}
     export JDK_TRUSTSTORE_PASSWORD=${JDK_TRUSTSTORE_PASSWORD:-changeit}
 
-    rm -f ${TRUSTSTORE} 
+    rm -f ${TRUSTSTORE} || true
 
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${CRT_PEM}
     keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass:env TRUSTSTORE_PASSWORD -noprompt -alias mk${KAFKA_ID} -file ${CRT_PEM}
@@ -161,12 +163,7 @@ certgen() {
 
     if [ -z "${SA_CLIENT_ID:-}" ] ; then
         echo "No service account provided, creating new account..."
-        SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create)
-
-        if [ ${?} -ne 0 ] ; then
-            echo "Failed to create a service account!"
-            exit 1
-        fi
+        SERVICE_ACCOUNT_RESOURCE=$(${DIR_NAME}/service_account.sh --create )
 
         # MAS SSO (via KFM API) use different properties for client ID/secret than SSO directly. Support both forms here
         SA_CLIENT_ID=$(echo ${SERVICE_ACCOUNT_RESOURCE} | jq -r '.client_id // .clientId')
@@ -184,6 +181,7 @@ certgen() {
     echo "Certificate generation complete. Please use app-services.properties as the --command-config flag when using kafka bin scripts."
 }
 
+
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
@@ -194,14 +192,12 @@ while [[ $# -gt 0 ]]; do
         ;;
     "--create" )
         OPERATION='create'
-        CREATE_NAME="${2}"
-        shift
-        shift
+        CREATE_NAME="${2:?${key} requires a name argument}"
+        shift 2
         ;;
     "--plan" )
-        CREATE_PLAN="${2}"
-        shift
-        shift
+        CREATE_PLAN="${2:?${key} requires a name argument}"
+        shift 2
         ;;
     "--list" )
         OPERATION='list'
@@ -209,38 +205,31 @@ while [[ $# -gt 0 ]]; do
         ;;
     "--get" )
         OPERATION='get'
-        OP_KAFKA_ID="${2}"
-        shift
-        shift
+        OP_KAFKA_ID="${2:?${key} requires a kafka id}"
+        shift 2
         ;;
     "--patch" )
         OPERATION='patch'
-        OP_KAFKA_ID="${2}"
-        REQUEST_BODY="${3}"
-        shift
-        shift
-        shift
+        OP_KAFKA_ID="${2:?${key} requires a kafka id and request body}"
+        REQUEST_BODY="${3:?${key} requires a kafka id and request body}"
+        shift 3
         ;;
     "--delete" )
         OPERATION='delete'
-        OP_KAFKA_ID="${2}"
+        OP_KAFKA_ID="${2:?${key} requires a kafka id}"
         shift
         shift
         ;;
     "--certgen" )
         OPERATION='certgen'
-        OP_KAFKA_ID="${2}"
-        OP_CLIENT_ID="${3}"
-        OP_CLIENT_SECRET="${4}"
-        shift
-        shift
-        shift
-        shift
+        OP_KAFKA_ID="${2:?${key} requires a kafka id}"
+        shift 2
+        CERTGEN_ARGS=("${@:1:2}")
         ;;
     "--access-token" )
+        ACCESS_TOKEN="${2:?--access-token requires an access token}"
         ACCESS_TOKEN="${2}"
-        shift
-        shift
+        shift 2
         ;;
     *) # unknown option
         shift
@@ -275,7 +264,7 @@ case "${OPERATION}" in
         delete ${OP_KAFKA_ID}
         ;;
     "certgen" )
-        certgen "${OP_KAFKA_ID}" "${OP_CLIENT_ID}" "${OP_CLIENT_SECRET}"
+        certgen "${OP_KAFKA_ID}" ${CERTGEN_ARGS[@]+"${CERTGEN_ARGS[@]}"}
         ;;
     *)
         echo "Unknown operation '${OPERATION}'";

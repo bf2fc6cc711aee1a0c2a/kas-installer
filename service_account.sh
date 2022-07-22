@@ -23,12 +23,12 @@ create() {
     if [ "${KIND}" = "Error" ]; then
         local ERRCODE=$(echo ${RESPONSE} | jq -r .code)
         local ERR_REASON=$(echo ${RESPONSE} | jq -r .reason)
-        echo "[ERROR] - ${ERRCODE} - ${ERR_REASON}"
+        echo "[ERROR] - ${ERRCODE} - ${ERR_REASON}" >>/dev/stderr
 
         # Display existing service accounts if limit has been reached
         if [ "${ERRCODE}" = "KAFKAS-MGMT-4" ]; then
-            echo "Existing service accounts:"
-            list | jq
+            echo "Existing service accounts:" >>/dev/stderr
+            list | jq >>/dev/stderr
         fi
 
         exit 1
@@ -65,11 +65,11 @@ delete() {
     local CODE=$(echo "${RESPONSE}" | tail -n -1)
 
     if [ ${CODE} -ge 400 ] ; then
-        echo "Status code: ${CODE}"
+        echo "Status code: ${CODE}" >>/dev/stderr
         # Pretty print
-        echo "${BODY}" | jq
+        echo "${BODY}" | jq >>/dev/stderr
     else
-        echo "Service account successfully deleted"
+        echo "Service account successfully deleted" >>/dev/stderr
     fi
 }
 

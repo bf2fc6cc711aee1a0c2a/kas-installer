@@ -13,7 +13,7 @@ if [ "$OS" = 'Darwin' ]; then
   SED=$(which gsed)
   AWK=$(which gawk)
   BASE64=$(which gbase64)
-  OPENSSL=/usr/local/opt/openssl/bin/openssl
+  OPENSSL=$(brew --prefix openssl)/bin/openssl
 else
   # for Linux and Windows
   SED=$(which sed)

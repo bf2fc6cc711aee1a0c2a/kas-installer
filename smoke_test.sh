@@ -8,6 +8,8 @@ source "${DIR_NAME}/utils/common.sh"
 
 if [ $(type -P "kcat") ]; then
   KCAT=$(which kcat)
+else
+  KCAT=''
 fi
 
 source ${DIR_NAME}/kas-installer.env

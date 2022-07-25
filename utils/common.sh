@@ -14,12 +14,14 @@ if [ "$OS" = 'Darwin' ]; then
   AWK=$(which gawk)
   BASE64=$(which gbase64)
   OPENSSL=$(brew --prefix openssl)/bin/openssl
+  DATE=$(which gdate)
 else
   # for Linux and Windows
   SED=$(which sed)
   AWK=$(which awk)
   BASE64=$(which base64)
   OPENSSL=$(which openssl)
+  DATE=$(which date)
 fi
 
 function cluster_domain_check() {

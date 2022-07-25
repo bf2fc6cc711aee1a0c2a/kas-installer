@@ -381,11 +381,11 @@ To use the Kafka Cluster that is created with the `managed_kafka.sh` script with
 1. Run the following to give the current user the permissions to create a topic and group. For the `<service-acct>` for below script take the service account from generated `app-services.properties` file
 
    ```
-   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/api/v1/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"GROUP", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
+   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   $(./managed_kafka.sh --list | jq -r '.items[0].admin_api_server_url')/api/v1/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"GROUP", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
    ```
    then for Topic
    ```
-   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   http://admin-server-$(./managed_kafka.sh --list | jq -r .items[0].bootstrap_server_host | awk -F: '{print $1}')/api/v1/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"TOPIC", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
+   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   $(./managed_kafka.sh --list | jq -r '.items[0].admin_api_server_url')/api/v1/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"TOPIC", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
    ```
 
 1. Then execute the your tool like `kafka-topics.sh --bootstrap-server <bootstrap-host>:443 --command-config app-services.properties --topic foo --create --partitions 9`

@@ -42,7 +42,7 @@ if [ "${SKIP_KAS_FLEETSHARD:-"n"}" = "y" ]; then
     echo "Skipping removal of Strimzi and Fleetshard operators"
 else
     if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
-        FLEETSHARD_AGENT_CLIENT_ID=$(${OC} get secret addon-kas-fleetshard-operator-parameters -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} -o json | jq -r '.data."sso-client-id"' | base64 -d)
+        FLEETSHARD_AGENT_CLIENT_ID=$(${OC} get secret addon-kas-fleetshard-operator-parameters -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} -o json | jq -r '.data."sso-client-id"' | base64 -d || echo "")
     fi
 
     if [ -n "${OCM_CLUSTER_ID-""}" ] ; then
@@ -69,3 +69,6 @@ ${KUBECTL} delete subscription --all -n ${OBSERVABILITY_NS} || true
 ${KUBECTL} delete catalogsource --all -n ${OBSERVABILITY_NS} || true
 ${KUBECTL} delete operatorgroup --all -n ${OBSERVABILITY_NS} || true
 ${KUBECTL} delete namespace ${OBSERVABILITY_NS} || true
+for pc in $(${KUBECTL} get priorityclass -o=json | jq -r '.items[] | select(.metadata.labels["olm.owner.namespace"] == "'${OBSERVABILITY_NS}'") | .metadata.name'); do
+    ${KUBECTL} delete priorityclass ${pc}
+done

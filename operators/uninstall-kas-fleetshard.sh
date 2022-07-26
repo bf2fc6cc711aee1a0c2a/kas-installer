@@ -18,4 +18,8 @@ for c in $(${KUBECTL} get crd -l operators.coreos.com/kas-fleetshard-operator.re
     ${KUBECTL} delete crd ${c}
 done
 
+for pc in $(${KUBECTL} get priorityclass -o=json | jq -r '.items[] | select(.metadata.labels["olm.owner.namespace"] == "'${NAMESPACE}'") | .metadata.name'); do
+    ${KUBECTL} delete priorityclass ${pc}
+done
+
 exit 0

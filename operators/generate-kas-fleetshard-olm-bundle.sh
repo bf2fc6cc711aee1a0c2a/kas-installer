@@ -183,10 +183,11 @@ initialize_inputs() {
     ${YQ} e '. | select(.kind == "ClusterRole")'   ${OPERATOR_YAML} > ${CRD_DIR}/operator-clusterrole.yml
     ${YQ} e '. | select(.kind == "Deployment")'    ${OPERATOR_YAML} > ${CRD_DIR}/operator-deployment.yml
 
-    while read -r PRIORITYCLASS_NAME ; do
+    ${YQ} e '. | select(.kind == "PriorityClass") | .metadata.name' ${OPERATOR_YAML} -o=json | tr -d '"' | grep -v '^$' | \
+      while read -r PRIORITYCLASS_NAME ; do
         ${YQ} e '. | select(.kind == "PriorityClass" and .metadata.name == "'${PRIORITYCLASS_NAME}'")' ${OPERATOR_YAML} \
             > ${CRD_DIR}/operator-priorityclass-$(echo ${PRIORITYCLASS_NAME} | ${SED} 's/-//g').yml
-    done <<< $(${YQ} e '. | select(.kind == "PriorityClass") | .metadata.name' ${OPERATOR_YAML} -o=json | tr -d '"' | grep -v '^$')
+      done || true
 
     # Extract Sync cluster role (from source), role (from generat (from generated output) to input directory
     ${YQ} e '. | select(.kind == "ClusterRole")'   ${SYNC_YAML} > ${CRD_DIR}/sync-clusterrole.yml
@@ -204,7 +205,7 @@ generate_olm_bundle() {
 
     # Copy CRD files to manifests directory
     ${CP} -v ${KAS_FLEETSHARD_CODE_DIR}/operator/target/kubernetes/*-v1.yml ${MANIFESTS}
-    ${CP} -v ${CRD_DIR}/operator-priorityclass-*.yml                        ${MANIFESTS}
+    ls ${CRD_DIR}/operator-priorityclass-*.yml && ${CP} -v ${CRD_DIR}/operator-priorityclass-*.yml ${MANIFESTS}
 
     CSV_FILE="${MANIFESTS}/${PACKAGE_NAME}.clusterserviceversion.yaml"
     echo "${CSV_BASE}" > ${CSV_FILE}
@@ -225,6 +226,7 @@ generate_olm_bundle() {
 	ADD /metadata /metadata
 	EOF
 
+    # TODO: remove when moved to upstream kas-fleetshard
     cat <<-EOF > ${MANIFESTS}/${PACKAGE_NAME}.priorityclass.yaml
 	apiVersion: scheduling.k8s.io/v1
 	kind: PriorityClass

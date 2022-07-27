@@ -17,4 +17,8 @@ for c in $(${KUBECTL} get crd -l app=strimzi --no-headers | cut -d " " -f1); do
     ${KUBECTL} delete crd ${c}
 done
 
+for pc in $(${KUBECTL} get priorityclass -o=json | jq -r '.items[] | select(.metadata.labels["olm.owner.namespace"] == "'${NAMESPACE}'") | .metadata.name'); do
+    ${KUBECTL} delete priorityclass ${pc}
+done
+
 exit 0

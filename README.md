@@ -377,19 +377,10 @@ The `managed_kafka.sh` script supports creating, listing, and deleting Kafka clu
 
 To use the Kafka Cluster that is created with the `managed_kafka.sh` script with command line tools like `kafka-topics.sh` or `kafka-console-consumer.sh` do the following.
 
-1. Generate the certificate and `app-services.properties` file, run `managed_kafka.sh --certgen <instance-id>` where `instance-id` can found by running `managed_kafka.sh --list` and also bootstrap host to the cluster in same response.
-1. Run the following to give the current user the permissions to create a topic and group. For the `<service-acct>` for below script take the service account from generated `app-services.properties` file
-
-   ```
-   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   $(./managed_kafka.sh --list | jq -r '.items[0].admin_api_server_url')/api/v1/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"GROUP", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
-   ```
-   then for Topic
-   ```
-   curl -vs   -H"Authorization: Bearer $(./get_access_token.sh --owner)"   $(./managed_kafka.sh --list | jq -r '.items[0].admin_api_server_url')/api/v1/acls   -XPOST   -H'Content-type: application/json'   --data '{"resourceType":"TOPIC", "resourceName":"*", "patternType":"LITERAL", "principal":"User:<service-acct>", "operation":"ALL", "permission":"ALLOW"}'
-   ```
-
-1. Then execute the your tool like `kafka-topics.sh --bootstrap-server <bootstrap-host>:443 --command-config app-services.properties --topic foo --create --partitions 9`
-1. if you created separate service account using above instructions, edit the `app-services.properties` file and update the username and password with `clientID` and `clientSecret`
+1. run `tool_access.sh <cluster name>`.  This will generate the certificate / truststore and `app-services.properties` file. 
+   It will also create a service account and grant GROUP and TOPIC permissions.  The bootstrap host will be displayed upon completion, and is also in the properties file as bootstrap.servers.
+1. Execute your tool like `kafka-topics.sh --bootstrap-server <bootstrap-host>:443 --command-config app-services.properties --topic foo --create --partitions 9`
+1. If you want to use a different service account, you may edit the `app-services.properties` file and update the username and password with `clientID` and `clientSecret`
 
 ### Running E2E Test Suite (experimental)
 

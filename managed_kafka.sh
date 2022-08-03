@@ -140,6 +140,7 @@ certgen() {
 
     KAFKA_RESOURCE=$(get ${KAFKA_ID})
     KAFKA_USERNAME=$(echo ${KAFKA_RESOURCE} | jq -r .name)
+    BOOTSTRAP_SERVER_HOST=$(echo ${KAFKA_RESOURCE} | jq -r .bootstrap_server_host)
     CRT_PEM=$(mktemp)
     KAFKA_INSTANCE_NAMESPACE='kafka-'$(echo ${KAFKA_RESOURCE} | jq -r .id  | tr '[:upper:]' '[:lower:]')
     TRUSTSTORE=truststore.jks
@@ -177,7 +178,8 @@ certgen() {
     echo 'ssl.truststore.location = '${PWD}'/truststore.jks' >> app-services.properties
     echo 'ssl.truststore.password = password' >> app-services.properties
     echo 'sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="'${SA_CLIENT_ID}'" password="'${SA_CLIENT_SECRET}'";' >> app-services.properties
-
+    echo 'bootstrap.servers='${BOOTSTRAP_SERVER_HOST} >> app-services.properties
+    
     echo "Certificate generation complete. Please use app-services.properties as the --command-config flag when using kafka bin scripts."
 }
 

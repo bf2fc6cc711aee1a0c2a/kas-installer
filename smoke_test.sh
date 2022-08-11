@@ -20,9 +20,8 @@ function cleanup()
     if [[ "${CREATED_MK_ID:-}" ]] ; then
         ${DIR_NAME}/managed_kafka.sh --delete ${CREATED_MK_ID}
     elif [[ "${SMOKE_TOPIC:-}" ]] ; then
-        TOPIC_DELETE_RESPONSE=$(curl -skXDELETE -H "Authorization: Bearer ${ACCESS_TOKEN}" "${ADMIN_SERVER_URL}/api/v1/topics/${SMOKE_TOPIC}")
-        ACL_DELETE_RESPONSE=$(curl -skXDELETE -H "Authorization: Bearer ${OWNER_TOKEN}" \
-            "${ADMIN_SERVER_URL}/api/v1/acls?principal=User:${SA_CLIENT_ID}")
+        curl -skXDELETE -H "Authorization: Bearer ${ACCESS_TOKEN}" "${ADMIN_SERVER_URL}/api/v1/topics/${SMOKE_TOPIC}" || true
+        curl -skXDELETE -H "Authorization: Bearer ${OWNER_TOKEN}"  "${ADMIN_SERVER_URL}/api/v1/acls?principal=User:${SA_CLIENT_ID}" || true
     fi
 
     if [[ "${SA_ID:-}" ]] ; then

@@ -132,9 +132,14 @@ deploy_kasfleetmanager() {
       fi
   fi
 
-  if [ -z "$( grep 'KUBE_CONFIG' $SECRET_PARAMS || true; )" ]; then
+  if [ -z "$( grep 'KUBE_CONFIG' ${SECRET_PARAMS} || true; )" ]; then
       echo "adding default KUBE_CONFIG to ${SECRET_PARAMS}"
       echo "KUBE_CONFIG='$(${OC} config view --minify --raw | ${BASE64} -w0)'" >> ${SECRET_PARAMS}
+  fi
+
+  if [ -z "$( grep 'IMAGE_PULL_DOCKER_CONFIG' ${SECRET_PARAMS} || true; )" ]; then
+      echo "adding default IMAGE_PULL_DOCKER_CONFIG to ${SECRET_PARAMS}"
+      echo "IMAGE_PULL_DOCKER_CONFIG='$(${OC} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.data.\.dockerconfigjson}")'" >> ${SECRET_PARAMS}
   fi
 
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml \
@@ -146,7 +151,6 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_CRT="${SSO_TRUSTED_CA}" \
     -p KAFKA_TLS_CERT="${KAFKA_TLS_CERT}" \
     -p KAFKA_TLS_KEY="${KAFKA_TLS_KEY}" \
-    -p IMAGE_PULL_DOCKER_CONFIG=$(${OC} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.data.\.dockerconfigjson}") \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Deploying KAS Fleet Manager Envoy ConfigMap..."
@@ -232,7 +236,7 @@ deploy_kasfleetmanager() {
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Waiting until KAS Fleet Manager Deployment is available..."
-  ${KUBECTL} wait --timeout=90s --for=condition=available deployment/kas-fleet-manager --namespace=${KAS_FLEET_MANAGER_NAMESPACE}
+  ${KUBECTL} wait --timeout=120s --for=condition=available deployment/kas-fleet-manager --namespace=${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Deploying KAS Fleet Manager OCP Route..."
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}

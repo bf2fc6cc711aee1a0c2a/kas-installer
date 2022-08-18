@@ -59,6 +59,9 @@ case ${1} in
         GRANT_TYPE='client_credentials'
         CLIENT_ID=${1}
         CLIENT_SECRET=${2}
+        if [ "${SSO_PROVIDER_TYPE:-}" = "redhat_sso" ] && [ -n "${REDHAT_SSO_SCOPE:-}" ] ; then
+            SCOPES="&scope=${REDHAT_SSO_SCOPE}"
+        fi
         ;;
 esac
 

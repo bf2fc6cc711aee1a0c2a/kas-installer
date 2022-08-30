@@ -6,11 +6,6 @@ source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
 
 setvars() {
     AUTH_URL="${SSO_REALM_URL}"
-    MAS_AUTH_URL_ARG=""
-
-    if [ "${MAS_SSO_REALM}" = 'rhoas' ] ; then
-        MAS_AUTH_URL_ARG="--mas-auth-url=${AUTH_URL}"
-    fi
 
     API_GATEWAY="$(oc get route -n kas-fleet-manager-${USER} kas-fleet-manager -o json | jq -r '"https://"+.spec.host')"
 
@@ -53,7 +48,6 @@ login() {
      --insecure \
      --client-id ${CLIENT_ID} \
      --auth-url ${AUTH_URL} \
-     ${MAS_AUTH_URL_ARG} \
      --api-gateway ${API_GATEWAY}
 
 }
@@ -61,9 +55,6 @@ login() {
 dryrun() {
     setvars
     echo "     --auth-url ${AUTH_URL}  "
-    if [ -n "${MAS_AUTH_URL_ARG}" ]; then
-        echo "     ${MAS_AUTH_URL_ARG}  "
-    fi
     echo "     --api-gateway ${API_GATEWAY} "
 }
 

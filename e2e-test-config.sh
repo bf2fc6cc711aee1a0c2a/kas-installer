@@ -50,10 +50,19 @@ if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] ; then
 else
     REDHAT_SSO_URI=${REDHAT_SSO_HOSTNAME}
     REDHAT_SSO_REALM=${REDHAT_SSO_REALM}
-    REDHAT_SSO_REDIRECT_URI='https://console.stage.redhat.com'
     REDHAT_SSO_CLIENT_ID='cloud-services'
     REDHAT_SSO_LOGIN_FORM_ID='#rh-password-verification-form'
-    OPENSHIFT_IDENTITY_REDIRECT_URI_ENV='https://console.stage.redhat.com/beta/application-services'
+
+    if [ "${REDHAT_SSO_HOSTNAME:-}" = "sso.redhat.com" ] ; then
+        REDHAT_SSO_REDIRECT_URI='https://console.redhat.com'
+        OPENSHIFT_IDENTITY_REDIRECT_URI_ENV='https://console.redhat.com/beta/application-services'
+    elif [ "${REDHAT_SSO_HOSTNAME:-}" = "sso.stage.redhat.com" ] ; then
+        REDHAT_SSO_REDIRECT_URI='https://console.stage.redhat.com'
+        OPENSHIFT_IDENTITY_REDIRECT_URI_ENV='https://console.stage.redhat.com/beta/application-services'
+    else
+        echo "Invalid value for REDHAT_SSO_HOSTNAME: '${REDHAT_SSO_HOSTNAME}'" > /dev/stderr
+        exit 1
+    fi
 
     for var in $(compgen -ve); do
         if [[ ${var} == E2E_USER_* ]]; then

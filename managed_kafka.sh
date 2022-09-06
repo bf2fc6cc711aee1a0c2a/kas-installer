@@ -149,8 +149,16 @@ certgen() {
 
     rm -f ${TRUSTSTORE} || true
 
+    echo "Adding ${KAFKA_USERNAME}-cluster-ca-cert certificate to truststore"
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${CRT_PEM}
     keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass:env TRUSTSTORE_PASSWORD -noprompt -alias mk${KAFKA_ID} -file ${CRT_PEM}
+
+    if [ -n "${KAFKA_TLS_CERT}" ] ; then
+        echo "Adding configured KAFKA_TLS_CERT certificate to truststore"
+        echo "${KAFKA_TLS_CERT}" > ${CRT_PEM}
+        keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass:env TRUSTSTORE_PASSWORD -noprompt -alias mk${KAFKA_ID}-tlscert -file ${CRT_PEM}
+        rm ${CRT_PEM}
+    fi
 
     echo "Adding JVM platform trust to truststore in order to enable OAuth use-cases.."
     i=0
@@ -179,7 +187,7 @@ certgen() {
     echo 'ssl.truststore.password = password' >> app-services.properties
     echo 'sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="'${SA_CLIENT_ID}'" password="'${SA_CLIENT_SECRET}'";' >> app-services.properties
     echo 'bootstrap.servers='${BOOTSTRAP_SERVER_HOST} >> app-services.properties
-    
+
     echo "Certificate generation complete. Please use app-services.properties as the --command-config flag when using kafka bin scripts."
 }
 

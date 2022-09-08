@@ -206,6 +206,11 @@ deploy_kasfleetmanager() {
       echo 'KAFKA_OWNERS=[ "'${REDHAT_SSO_CLIENT_ID}'" ]' >> ${SERVICE_PARAMS}
   fi
 
+  if [ -n "$(${KUBECTL} get deployment kas-fleet-manager --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ] ; then
+      echo "Scaling down existing kas-fleet-manager deployment to apply changes"
+      ${KUBECTL} scale deployment/kas-fleet-manager --replicas=0
+  fi
+
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
     --param-file=${SERVICE_PARAMS} \
     -p ENVIRONMENT="${OCM_ENV}" \
@@ -273,20 +278,24 @@ disable_observability_operator_extras() {
     sleep 3
   done
 
-  echo "Patching Observability CR to disable: Observatorium, PagerDuty, DeadmanSnitch, Smtp"
-  OBSERVABILITY_MERGE_PATCH_CONTENT=$(cat << EOF
-{
-  "spec": {
-    "selfContained": {
-      "disablePagerDuty": true,
-      "disableObservatorium": true,
-      "disableDeadmansSnitch": true,
-      "disableSmtp": true
-    }
-  }
-}
-EOF
-)
+  OBSERVABILITY_MERGE_PATCH_CONTENT="${OBSERVABILITY_CR_MERGE_PATCH_CONTENT:-}"
+
+  if [ -n "${OBSERVABILITY_MERGE_PATCH_CONTENT}" ] ; then
+    echo "Patching Observability CR with custom content: ${OBSERVABILITY_MERGE_PATCH_CONTENT}"
+  else
+    echo "Patching Observability CR to disable: Observatorium, PagerDuty, DeadmanSnitch, Smtp"
+    OBSERVABILITY_MERGE_PATCH_CONTENT='{
+      "spec": {
+        "selfContained": {
+          "disablePagerDuty": true,
+          "disableObservatorium": true,
+          "disableDeadmansSnitch": true,
+          "disableSmtp": true
+        }
+      }
+    }'
+  fi
+
   while [ "$(${KUBECTL} patch Observability observability-stack --type=merge --patch "${OBSERVABILITY_MERGE_PATCH_CONTENT}" -n ${OBSERVABILITY_OPERATOR_K8S_NAMESPACE} || echo 'false')" = 'false' ] ; do
     echo "Failed to patch Observability CR, retrying"
     sleep 2

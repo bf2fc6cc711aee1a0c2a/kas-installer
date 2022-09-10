@@ -120,7 +120,7 @@ setup_environment() {
     YQ=$(which yq)
     mkdir -p "${DIR_NAME}/tmp"
     # Temporary directory for the tool binaries
-    TMPDIR=$(mktemp --directory --tmpdir=${DIR_NAME}/tmp fsobundle.XXX)
+    TMPDIR=$(mktemp --directory --tmpdir=${DIR_NAME}/tmp fsobundle.XXX 2>/dev/null || mktemp -d -t 'fsobundle.XXX')
 }
 
 initialize_inputs() {

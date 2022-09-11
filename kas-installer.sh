@@ -57,6 +57,18 @@ read_kas_installer_env_file() {
   fi
 }
 
+check_observability_token() {
+  echo "Checking validity of OBSERVABILITY_CONFIG_ACCESS_TOKEN"
+  curl --silent \
+    --head \
+    --header "Accept: application/vnd.github+json" \
+    --header "Authorization: Bearer ${OBSERVABILITY_CONFIG_ACCESS_TOKEN}" \
+    ${OBSERVABILITY_CONFIG_REPO} \
+    --fail > /dev/null \
+  || ( echo "failed to get observability config repo contents with OBSERVABILITY_CONFIG_ACCESS_TOKEN, check expiry and permissions" && exit 1 )
+  echo "OBSERVABILITY_CONFIG_ACCESS_TOKEN valid"
+}
+
 generate_kas_fleet_manager_env_config() {
   echo "Generating KAS Fleet Manager configuration env file '${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE} ...'"
   # Make sure KAS Fleet Manager env file is empty
@@ -169,6 +181,7 @@ deploy_observatorium() {
 # Main body of the script starts here
 
 read_kas_installer_env_file
+check_observability_token
 
 # Deploy and configure MAS SSO
 if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] || [ -z "${MAS_SSO_BASE_URL:-}" ] ; then

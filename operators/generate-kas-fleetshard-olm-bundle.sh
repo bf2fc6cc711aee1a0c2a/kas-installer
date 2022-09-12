@@ -333,7 +333,7 @@ generate_olm_bundle() {
 
 validate_olm_bundle() {
     local BUNDLE=${1}
-    OPERATOR_SDK=$(which operator-sdk)
+    OPERATOR_SDK=$(which operator-sdk || true)
     if [ -n "${OPERATOR_SDK}" ] ; then
         ${OPERATOR_SDK} bundle validate "${BUNDLE}" --select-optional name=operatorhub
     else

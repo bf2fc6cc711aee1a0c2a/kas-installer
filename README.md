@@ -237,6 +237,11 @@ With this configuration, you will likely also want to provide a certificate and 
 the [custom TLS instructions](#custom-tls), or by directly providing values for `KAFKA_TLS_CERT` and `KAFKA_TLS_KEY`
 in the `kas-installer.env` file or environment.
 
+### Observability Operator
+The version of the Observability Operator deployed by kas-fleet-manager can be configured with the following parameters in `kas-fleet-manager-service-template-params`:
+  * OBSERVABILITY_OPERATOR_INDEX_IMAGE
+  * OBSERVABILITY_OPERATOR_STARTING_CSV
+
 ## SSO Providers
 
 Configuration of kas-fleet-manager's SSO providers is done by setting the `SSO_PROVIDER_TYPE` configuration variable. When not set, the default provider is `mas_sso`. To use RH SSO,

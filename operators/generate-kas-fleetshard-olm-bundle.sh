@@ -109,6 +109,8 @@ else
 fi
 
 GIT="$(which git)"
+# set docker env variable to force it build images for linux/amd64 platform
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
 
 main() {
     setup_environment

@@ -176,7 +176,7 @@ if [ "${SSO_PROVIDER_TYPE}" = "mas_sso" ] || [ -z "${MAS_SSO_BASE_URL:-}" ] ; th
 fi
 
 # Deploy and configure Observatorium
-if [ "${INSTALL_OBSERVATORIUM:-"n"}" = "y" ]; then
+if [ "${INSTALL_OBSERVATORIUM:-"n"}" = "y" ] || [ "${SKIP_OBSERVATORIUM:-"n"}" = "n" ]; then
     deploy_observatorium
 fi
 

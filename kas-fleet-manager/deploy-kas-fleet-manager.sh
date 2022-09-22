@@ -334,7 +334,19 @@ await_kas_fleetshard_agent() {
 
   echo "Waiting until ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} CR is ready"
   ${OC} wait ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} --for=condition=Ready --timeout=180s
-  echo "ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} is ready."
+
+  if [ "${?}" != "0" ] ; then
+    MKA=$(${OC} get ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} -o json)
+    MKA_READY_CONDITION_MESSAGE="$(echo "${MKA}" | jq -r '.status.conditions | select(.[].type == "Ready")[0] | .message')"
+
+    if [ -n "${MKA_READY_CONDITION_MESSAGE}" ] ; then
+      echo "ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} failed to become ready: ${MKA_READY_CONDITION_MESSAGE}"
+    else
+      echo "ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} failed to become ready (message not available)"
+    fi
+  else
+    echo "ManagedKafkaAgents/${MANAGED_KAFKA_AGENT_NAME} is ready."
+  fi
 }
 
 ## Main body of the script starts here

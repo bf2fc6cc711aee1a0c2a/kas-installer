@@ -153,7 +153,7 @@ certgen() {
     oc get secret -o yaml ${KAFKA_USERNAME}-cluster-ca-cert -n ${KAFKA_INSTANCE_NAMESPACE} -o json | jq -r '.data."ca.crt"' | base64 --decode  > ${CRT_PEM}
     keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass:env TRUSTSTORE_PASSWORD -noprompt -alias mk${KAFKA_ID} -file ${CRT_PEM}
 
-    if [ -n "${KAFKA_TLS_CERT}" ] ; then
+    if [ ! -z "${KAFKA_TLS_CERT:-}" ] ; then
         echo "Adding configured KAFKA_TLS_CERT certificate to truststore"
         echo "${KAFKA_TLS_CERT}" > ${CRT_PEM}
         keytool -import -trustcacerts -keystore ${TRUSTSTORE} -storepass:env TRUSTSTORE_PASSWORD -noprompt -alias mk${KAFKA_ID}-tlscert -file ${CRT_PEM}

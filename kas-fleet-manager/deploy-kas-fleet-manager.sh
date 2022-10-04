@@ -197,12 +197,12 @@ deploy_kasfleetmanager() {
 
   if [ -z "$( grep 'CLUSTER_LIST' $SERVICE_PARAMS || true; )" ]; then
       echo "adding default CLUSTER_LIST to ${SERVICE_PARAMS}"
-      echo 'CLUSTER_LIST=[{"name": "'$(${OC} config view --minify --raw -o json | jq -r '.contexts[0].name')'","provider_type": "'${PROVIDER_TYPE}'","cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'","cloud_provider": "aws","region": "'${DATA_PLANE_CLUSTER_REGION}'","multi_az": true,"schedulable": true,"kafka_instance_limit": 5,"supported_instance_type": "standard,developer","status": "'${CLUSTER_STATUS}'","cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"}]'  >> ${SERVICE_PARAMS}
+      echo 'CLUSTER_LIST=[{"name": "'$(${OC} config view --minify --raw -o json | jq -r '.contexts[0].name')'","provider_type": "'${PROVIDER_TYPE}'","cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'","cloud_provider": "'${DATA_PLANE_CLOUD_PROVIDER}'","region": "'${DATA_PLANE_CLUSTER_REGION}'","multi_az": true,"schedulable": true,"kafka_instance_limit": 5,"supported_instance_type": "standard,developer","status": "'${CLUSTER_STATUS}'","cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"}]'  >> ${SERVICE_PARAMS}
   fi
 
   if [ -z "$( grep 'SUPPORTED_CLOUD_PROVIDERS' $SERVICE_PARAMS || true; )" ]; then
       echo "adding default SUPPORTED_CLOUD_PROVIDERS to ${SERVICE_PARAMS}"
-      echo 'SUPPORTED_CLOUD_PROVIDERS=[{name: aws, default: true, regions: [{name: "'${DATA_PLANE_CLUSTER_REGION}'", default: true, supported_instance_type: {standard: {}, developer: {}}}]}]'  >> ${SERVICE_PARAMS}
+      echo 'SUPPORTED_CLOUD_PROVIDERS=[{name: '${DATA_PLANE_CLOUD_PROVIDER}', default: true, regions: [{name: "'${DATA_PLANE_CLUSTER_REGION}'", default: true, supported_instance_type: {standard: {}, developer: {}}}]}]'  >> ${SERVICE_PARAMS}
   fi
 
   if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then

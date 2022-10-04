@@ -5,6 +5,7 @@ set -euo pipefail
 DIR_NAME="$(dirname $0)"
 source "${DIR_NAME}/utils/common.sh"
 source ${DIR_NAME}/kas-installer.env
+source ${DIR_NAME}/kas-installer-defaults.env
 MK_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1"
 
 OS=$(uname)
@@ -12,6 +13,8 @@ OS=$(uname)
 OPERATION='<NONE>'
 OPERATION_PATH='/kafkas'
 CREATE_NAME='<NONE>'
+CREATE_PROVIDER=''
+CREATE_REGION=''
 CREATE_PLAN='standard.x1'
 REQUEST_BODY=''
 OP_KAFKA_ID='<NONE>'
@@ -55,9 +58,42 @@ access_token() {
 create() {
     local KAFKA_NAME=${1}
     local KAFKA_PLAN=${2}
+    local KAFKA_PROVIDER=${3}
+    local KAFKA_REGION=${4}
+
+    if [ -z "${KAFKA_PROVIDER}" ]; then
+        local PROVIDERS=$(curl -sXGET -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}/cloud_providers)
+        local PROVIDER_COUNT=$(echo "${PROVIDERS}" | jq -r .total)
+
+        if [ "${PROVIDER_COUNT}" -gt "1" ] ; then
+            echo "Multiple cloud providers available. Value must be provided with '--provider option'" >>/dev/stderr
+            exit 1
+        fi
+
+        KAFKA_PROVIDER=$(echo "${PROVIDERS}" | jq -r .items[0].id)
+    fi
+
+    if [ -z "${KAFKA_REGION}" ]; then
+        local REGIONS=$(curl -sXGET -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}/cloud_providers/${KAFKA_PROVIDER}/regions)
+        local REGION_COUNT=$(echo "${REGIONS}" | jq -r .total)
+
+        if [ "${REGION_COUNT}" -eq "0" ] ; then
+            echo "No regions available for provider '${KAFKA_PROVIDER}'" >>/dev/stderr
+            exit 1
+        fi
+
+        if [ "${REGION_COUNT}" -gt "1" ] ; then
+            echo "Multiple regions available for provider '${KAFKA_REGION}'. Value must be provided with '--region option'" >>/dev/stderr
+            exit 1
+        fi
+
+        KAFKA_REGION=$(echo "${REGIONS}" | jq -r .items[0].id)
+    fi
+
+    echo "Creating Kafka instance '${KAFKA_NAME}' in '${KAFKA_PROVIDER}' region '${KAFKA_REGION}' with plan '${KAFKA_PLAN}'" >>/dev/stderr
 
     local RESPONSE=$(curl -sXPOST -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}${OPERATION_PATH}?async=true \
-      -d '{ "region": "'${REGION:-us-east-1}'", "cloud_provider": "aws", "name": "'${KAFKA_NAME}'", "plan": "'${KAFKA_PLAN}'" }')
+      -d '{ "region": "'${KAFKA_REGION}'", "cloud_provider": "'${KAFKA_PROVIDER}'", "name": "'${KAFKA_NAME}'", "plan": "'${KAFKA_PLAN}'" }')
 
     local KIND=$(echo ${RESPONSE} | jq -r .kind)
 
@@ -209,6 +245,14 @@ while [[ $# -gt 0 ]]; do
         CREATE_PLAN="${2:?${key} requires a name argument}"
         shift 2
         ;;
+    "--provider" )
+        CREATE_PROVIDER="${2:?${key} requires a name argument}"
+        shift 2
+        ;;
+    "--region" )
+        CREATE_REGION="${2:?${key} requires a name argument}"
+        shift 2
+        ;;
     "--list" )
         OPERATION='list'
         shift
@@ -259,7 +303,7 @@ fi
 
 case "${OPERATION}" in
     "create" )
-        create ${CREATE_NAME} "${CREATE_PLAN}"
+        create ${CREATE_NAME} "${CREATE_PLAN}" "${CREATE_PROVIDER}" "${CREATE_REGION}"
         ;;
     "list" )
         list

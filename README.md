@@ -187,6 +187,10 @@ The default installation configurations will deploy kas-fleet-manager with a sin
 provider name and region may be configured in the environment using the `CLOUD_PROVIDER` and `REGION` variables. See
 the `kas-installer-defaults.env` for the default values.
 
+Depending on the cloud provider configured, additional provider-specific configuration may be required, for example
+`GCP_API_CREDENTIALS` for the `gcp` `CLOUD_PROVIDER`. Please see the documentation corresponding to the version of
+kas-fleet-manager in use for details.
+
 ### Deploying to multiple clusters/regions
 In order to allow clients to deploy Kafka clusters to multiple clusters and/or regions, the following parameters must be customized:
 

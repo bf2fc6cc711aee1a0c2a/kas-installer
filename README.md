@@ -389,7 +389,7 @@ To use the Kafka Cluster that is created with the `managed_kafka.sh` script with
 
 ### Running E2E Test Suite (experimental)
 
-1. Install all cluster components using `kas-installer.sh`
+1. Install all cluster components using `kas-installer.sh`, ensure you enable `MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED` as documented in [service-customization](#service-customization)
 1. Clone the [e2e-test-suite][e2e_test_suite] repository locally and change directory to the test suite project root
 1. Generate the test suite configuration with `${KAS_INSTALLER_DIR}/e2e-test-config.sh > config.json`. When using `kas-installer.sh`
    with the [`redhat_sso` provider type](#sso-providers), the user accounts to be used by the E2E tests must be preconfigured. The

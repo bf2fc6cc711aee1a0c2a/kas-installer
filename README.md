@@ -255,6 +255,10 @@ The kas-fleet-manager will use MAS-SSO as an identity provider for its admin API
 may be provided by setting `ADMIN_API_SSO_BASE_URL`, `ADMIN_API_SSO_REALM`, and `ADMIN_API_SSO_ENDPOINT_URI` in your
 `kas-installer.env` configuration, or in the environment. See `kas-installer-defaults.env` for the default values.
 
+Users that need to configure a different set of client roles to authorize the admin API operation should use the `ADMIN_AUTHZ_CONFIG`
+variable to override the defaults. This variable can be set using [fleet manager parameter customization](#fleet-manager-parameter-customization).
+See the `ADMIN_AUTHZ_CONFIG` parameter in kas-fleet-manager's `templates/service-template.yml` file for the default value.
+
 A token for use with the admin API endpoints by calling `./get_access_token.sh --sre-admin` (this is used internally by
 `managed_kafka.sh` when the `--admin` flag is provided). By default, the script is configured for use with a local MAS-SSO
 instance which has a client pre-configured for this purpose, `kafka-admin`.

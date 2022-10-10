@@ -50,10 +50,10 @@ case ${1} in
         fi
         ;;
     "--sre-admin" )
-        SSO_REALM_URL=${MAS_SSO_BASE_URL}/auth/realms/rhoas-kafka-sre
+        SSO_REALM_URL="${ADMIN_API_SSO_BASE_URL}${ADMIN_API_SSO_ENDPOINT_URI}"
         GRANT_TYPE='client_credentials'
-        CLIENT_ID='kafka-admin'
-        CLIENT_SECRET='kafka-admin'
+        CLIENT_ID="${ADMIN_API_CLIENT_ID}"
+        CLIENT_SECRET="${ADMIN_API_CLIENT_SECRET}"
         ;;
     *) # Assume client ID and secret were provided
         GRANT_TYPE='client_credentials'

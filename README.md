@@ -249,6 +249,18 @@ the variable may be set to `redhat_sso` and additional configuration can be prov
 `REDHAT_SSO_CLIENT_ID` (required), and `REDHAT_SSO_CLIENT_SECRET` (required). See the description for each variable in the [kas-installer-defaults.env](kas-installer-defaults.env)
 file for more information.
 
+### kas-fleet-manager admin API SSO
+
+The kas-fleet-manager will use MAS-SSO as an identity provider for its admin API endpoints by default. An alternate IdP
+may be provided by setting `ADMIN_API_SSO_BASE_URL`, `ADMIN_API_SSO_REALM`, and `ADMIN_API_SSO_ENDPOINT_URI` in your
+`kas-installer.env` configuration, or in the environment. See `kas-installer-defaults.env` for the default values.
+
+A token for use with the admin API endpoints by calling `./get_access_token.sh --sre-admin` (this is used internally by
+`managed_kafka.sh` when the `--admin` flag is provided). By default, the script is configured for use with a local MAS-SSO
+instance which has a client pre-configured for this purpose, `kafka-admin`.
+To provide a custom service account for use with the admin endpoints, provide values for the `ADMIN_API_CLIENT_ID` and
+`ADMIN_API_CLIENT_SECRET` configuration values.
+
 ### MAS SSO Resources
 
 MAS SSO (must always available to support kas-fleet-manager admin operations) may optionally be installed with modified
@@ -382,7 +394,7 @@ The `managed_kafka.sh` script supports creating, listing, and deleting Kafka clu
 
 To use the Kafka Cluster that is created with the `managed_kafka.sh` script with command line tools like `kafka-topics.sh` or `kafka-console-consumer.sh` do the following.
 
-1. run `tool_access.sh <cluster name>`.  This will generate the certificate / truststore and `app-services.properties` file. 
+1. run `tool_access.sh <cluster name>`.  This will generate the certificate / truststore and `app-services.properties` file.
    It will also create a service account and grant GROUP and TOPIC permissions.  The bootstrap host will be displayed upon completion, and is also in the properties file as bootstrap.servers.
 1. Execute your tool like `kafka-topics.sh --bootstrap-server <bootstrap-host>:443 --command-config app-services.properties --topic foo --create --partitions 9`
 1. If you want to use a different service account, you may edit the `app-services.properties` file and update the username and password with `clientID` and `clientSecret`

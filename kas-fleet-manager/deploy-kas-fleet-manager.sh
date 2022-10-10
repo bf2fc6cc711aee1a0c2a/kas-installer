@@ -190,6 +190,11 @@ deploy_kasfleetmanager() {
 
   echo "REDHAT_SSO_BASE_URL='${REDHAT_SSO_BASE_URL}'" >> ${SERVICE_PARAMS}
 
+  echo "Setting Admin API SSO configuration to ${ADMIN_API_SSO_BASE_URL} with realm ${ADMIN_API_SSO_REALM}"
+  echo "ADMIN_API_SSO_BASE_URL=${ADMIN_API_SSO_BASE_URL}" >> ${SERVICE_PARAMS}
+  echo "ADMIN_API_SSO_ENDPOINT_URI=${ADMIN_API_SSO_ENDPOINT_URI}" >> ${SERVICE_PARAMS}
+  echo "ADMIN_API_SSO_REALM=${ADMIN_API_SSO_REALM}" >> ${SERVICE_PARAMS}
+
   if [ -z "$( grep 'CLUSTER_LIST' $SERVICE_PARAMS || true; )" ]; then
       echo "adding default CLUSTER_LIST to ${SERVICE_PARAMS}"
       echo 'CLUSTER_LIST=[{"name": "'$(${OC} config view --minify --raw -o json | jq -r '.contexts[0].name')'","provider_type": "'${PROVIDER_TYPE}'","cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'","cloud_provider": "aws","region": "'${DATA_PLANE_CLUSTER_REGION}'","multi_az": true,"schedulable": true,"kafka_instance_limit": 5,"supported_instance_type": "standard,developer","status": "'${CLUSTER_STATUS}'","cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"}]'  >> ${SERVICE_PARAMS}
@@ -201,7 +206,6 @@ deploy_kasfleetmanager() {
   fi
 
   if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
-
       echo "ENABLE_KAFKA_OWNER='true'" >> ${SERVICE_PARAMS}
       echo 'KAFKA_OWNERS=[ "'${REDHAT_SSO_CLIENT_ID}'" ]' >> ${SERVICE_PARAMS}
   fi

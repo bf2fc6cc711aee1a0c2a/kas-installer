@@ -182,8 +182,17 @@ To create a `standard.x2` (or other non-default types) instance type, the `plan`
 managed_kafka.sh --create mykafka --plan standard.x2
 ```
 
-### Deploying to multiple clusters/zones
-In order to allow clients to deploy Kafka clusters to multiple clusters and/or zones, the following parameters must be customized:
+### Deploying to a single provider and region
+The default installation configurations will deploy kas-fleet-manager with a single cloud provider and region. The
+provider name and region may be configured in the environment using the `CLOUD_PROVIDER` and `REGION` variables. See
+the `kas-installer-defaults.env` for the default values.
+
+Depending on the cloud provider configured, additional provider-specific configuration may be required, for example
+`GCP_API_CREDENTIALS` for the `gcp` `CLOUD_PROVIDER`. Please see the documentation corresponding to the version of
+kas-fleet-manager in use for details.
+
+### Deploying to multiple clusters/regions
+In order to allow clients to deploy Kafka clusters to multiple clusters and/or regions, the following parameters must be customized:
 
    * KUBE_CONFIG in `kas-fleet-manager-secrets-template-params` (standalone only)
    * SUPPORTED_CLOUD_PROVIDERS in `kas-fleet-manager-service-template-params`
@@ -295,7 +304,7 @@ Custom-built components are supported for kas-fleet-manager and kas-fleetshard.
 
 ## Using rhoas CLI
 
-Use `./rhoas_login.sh` as a short cut to login to the CLI.  Login using the username you specified as RH_USERNAME in the env file.  The password is the same as the RH_USERNAME value.
+Use `./rhoas_login.sh` as a short cut to login to the CLI.  Login using the username you specified as `RH_USERNAME` in the env file.  The password is the same as the `RH_USERNAME` value.
 Alternatively (and likely preferably), use `./login-all.sh` which makes sure you are also logged to your OpenShift Dedicated cluster.
 
 There are a couple of things that are expected not to work when using the RHOAS CLI with a kas-installer installed instance.  These are noted below.
@@ -387,7 +396,7 @@ The `service_account.sh` script supports creating, listing, and deleting service
 
 The `managed_kafka.sh` script supports creating, listing, and deleting Kafka clusters.
 
-1. To create a cluster, run `managed_kafka.sh --create <cluster name>`. Progress will be printed as the cluster is prepared and provisioned.
+1. To create a cluster, run `managed_kafka.sh --create <cluster name>`. Progress will be printed as the cluster is prepared and provisioned. If kas-fleet-manager has been configured with more than one cloud provider or region, the `--provider` and/or `--region` arguments must be provided to the `managed_kafka.sh` script. Otherwise, the script will discover the single provider and region using the fleet manager's cloud provider endpoints.
 1. To list existing clusters, run `managed_kafka.sh --list`.
 1. To remove an existing cluster, run `managed_kafka.sh --delete <cluster ID>`.
 1. To patch an existing cluster (for instance changing a strimzi version), run ` managed_kafka.sh --admin --patch  <cluster ID> '{ "strimzi_version": "strimzi-cluster-operator.v0.23.0-3" }'`

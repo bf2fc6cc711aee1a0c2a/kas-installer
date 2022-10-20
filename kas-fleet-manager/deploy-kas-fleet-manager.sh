@@ -158,6 +158,7 @@ deploy_kasfleetmanager() {
 
   echo "Deploying KAS Fleet Manager..."
   OCM_ENV="development"
+  CLUSTER_STATUS="cluster_provisioned"
 
   SERVICE_PARAMS=${DIR_NAME}/kas-fleet-manager-params.env
   > ${SERVICE_PARAMS}
@@ -165,13 +166,11 @@ deploy_kasfleetmanager() {
   if [ -n "${OCM_SERVICE_TOKEN}" ] ; then
       PROVIDER_TYPE="ocm"
       ENABLE_OCM_MOCK="false"
-      CLUSTER_STATUS="cluster_provisioned"
       echo 'AMS_URL="https://api.stage.openshift.com"' >> ${SERVICE_PARAMS}
       echo 'OCM_URL="https://api.stage.openshift.com"' >> ${SERVICE_PARAMS}
   else
       PROVIDER_TYPE="standalone"
       ENABLE_OCM_MOCK="true"
-      CLUSTER_STATUS="ready"
   fi
 
   if [ -n "${KAS_FLEET_MANAGER_SERVICE_TEMPLATE_PARAMS:-}" ]; then

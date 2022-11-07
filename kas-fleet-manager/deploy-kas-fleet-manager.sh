@@ -211,7 +211,7 @@ deploy_kasfleetmanager() {
 
   if [ -n "$(${KUBECTL} get deployment kas-fleet-manager --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ] ; then
       echo "Scaling down existing kas-fleet-manager deployment to apply changes"
-      ${KUBECTL} scale deployment/kas-fleet-manager --replicas=0
+      ${KUBECTL} scale deployment/kas-fleet-manager --replicas=0 -n ${KAS_FLEET_MANAGER_NAMESPACE}
   fi
 
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \

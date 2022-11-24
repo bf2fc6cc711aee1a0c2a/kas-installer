@@ -7,15 +7,15 @@ set -euo pipefail
 DIR_NAME="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 KI_CONFIG="${DIR_NAME}/../kas-installer.env"
 
-source ${KI_CONFIG}
-
 KAS_FLEETSHARD_GIT_URL=
 KAS_FLEETSHARD_GIT_REF='main'
 KAS_FLEETSHARD_IMAGE_REGISTRY="quay.io"
 KAS_FLEETSHARD_IMAGE_ORG="${USER}"
+KAS_FLEETSHARD_IMAGE_TAG='latest'
 KAS_FLEETSHARD_OLM_BUNDLE_REPO="kas-fleetshard-operator-index"
 KAS_FLEETSHARD_OLM_BUNDLE_VERSION=
 UPDATE_KAS_INSTALLER_ENV='false'
+BUILD_ENGINE='docker'
 
 function usage() {
     echo "
@@ -31,9 +31,13 @@ function usage() {
                         Default: ${KAS_FLEETSHARD_IMAGE_REGISTRY}
     --image-group       Image group/organization to push the generated kas-fleetshard images.
                         Default: ${KAS_FLEETSHARD_IMAGE_ORG}
+    --image-tag         Tag for the image registry.
+                        Default: ${KAS_FLEETSHARD_IMAGE_TAG}
     --bundle-repo       Image repository name for the for the generated OLM bundle index image
                         Default: ${KAS_FLEETSHARD_OLM_BUNDLE_REPO}
     --update-config     When set, the kas-installer.env file will be updated to use the generated OLM bundle index image
+    --build-engine      Tool for build container images. Examples: buildah, docker, podman.
+                        Default: ${BUILD_ENGINE}
     --help              Display this help text
     "
 }
@@ -61,6 +65,11 @@ while [[ ${#} -gt 0 ]]; do
         shift
         shift
         ;;
+    "--image-tag" )
+        KAS_FLEETSHARD_IMAGE_TAG="${2}"
+        shift
+        shift
+        ;;
     "--bundle-repo" )
         KAS_FLEETSHARD_OLM_BUNDLE_REPO="${2}"
         shift
@@ -73,6 +82,11 @@ while [[ ${#} -gt 0 ]]; do
         ;;
     "--update-config" )
         UPDATE_KAS_INSTALLER_ENV="true"
+        shift
+        ;;
+    "--build-engine" )
+        BUILD_ENGINE="${2}"
+        shift
         shift
         ;;
     "--help" )
@@ -106,6 +120,10 @@ else
     SORT=sort
     HEAD=head
     TEE=tee
+fi
+
+if [ "${UPDATE_KAS_INSTALLER_ENV}" = "true" ]; then
+    source ${KI_CONFIG}
 fi
 
 GIT="$(which git)"
@@ -165,7 +183,7 @@ initialize_inputs() {
             -Dquarkus.jib.base-jvm-image='registry.access.redhat.com/ubi8/openjdk-11-runtime' \
             -Dquarkus.container-image.registry=${KAS_FLEETSHARD_IMAGE_REGISTRY} \
             -Dquarkus.container-image.group=${KAS_FLEETSHARD_IMAGE_ORG} \
-            -Dquarkus.container-image.tag='latest' \
+            -Dquarkus.container-image.tag="${KAS_FLEETSHARD_IMAGE_TAG}" \
             -Dquarkus.container-image.insecure='true' \
             -Dquarkus.container-image.username="${IMAGE_REPOSITORY_USERNAME}" \
             -Dquarkus.container-image.password="${IMAGE_REPOSITORY_PASSWORD}" \
@@ -313,8 +331,8 @@ generate_olm_bundle() {
     ${YQ} ea -i '.spec.install.spec.deployments[1].spec.template.metadata.labels = { "name": "kas-fleetshard-sync" }' "${CSV_FILE}"
 
     # Update image references
-    OPERATOR_IMAGE_PULL_URL="${KAS_FLEETSHARD_IMAGE_REGISTRY}/${KAS_FLEETSHARD_IMAGE_ORG}/kas-fleetshard-operator:latest"
-    SYNC_IMAGE_PULL_URL="${KAS_FLEETSHARD_IMAGE_REGISTRY}/${KAS_FLEETSHARD_IMAGE_ORG}/kas-fleetshard-sync:latest"
+    OPERATOR_IMAGE_PULL_URL="${KAS_FLEETSHARD_IMAGE_REGISTRY}/${KAS_FLEETSHARD_IMAGE_ORG}/kas-fleetshard-operator:${KAS_FLEETSHARD_IMAGE_TAG}"
+    SYNC_IMAGE_PULL_URL="${KAS_FLEETSHARD_IMAGE_REGISTRY}/${KAS_FLEETSHARD_IMAGE_ORG}/kas-fleetshard-sync:${KAS_FLEETSHARD_IMAGE_TAG}"
 
     ${YQ} ea -i '.spec.install.spec.deployments[0].spec.template.spec.containers[0].image = "'${OPERATOR_IMAGE_PULL_URL}'"' "${CSV_FILE}"
     ${YQ} ea -i '.spec.install.spec.deployments[1].spec.template.spec.containers[0].image = "'${SYNC_IMAGE_PULL_URL}'"' "${CSV_FILE}"
@@ -348,11 +366,12 @@ build_bundle_images() {
     BUNDLE_IMAGE="${KAS_FLEETSHARD_IMAGE_REGISTRY}/${KAS_FLEETSHARD_IMAGE_ORG}/kas-fleetshard-operator-bundle:${KAS_FLEETSHARD_OLM_BUNDLE_VERSION}"
     INDEX_IMAGE="${KAS_FLEETSHARD_IMAGE_REGISTRY}/${KAS_FLEETSHARD_IMAGE_ORG}/${KAS_FLEETSHARD_OLM_BUNDLE_REPO}:${KAS_FLEETSHARD_OLM_BUNDLE_VERSION}"
 
-    docker login -u ${IMAGE_REPOSITORY_USERNAME} -p ${IMAGE_REPOSITORY_PASSWORD} ${KAS_FLEETSHARD_IMAGE_REGISTRY}
-    docker build -t "${BUNDLE_IMAGE}" .
-    docker push "${BUNDLE_IMAGE}"
-    opm index add --bundles "${BUNDLE_IMAGE}" --tag "${INDEX_IMAGE}" -u docker
-    docker push "${INDEX_IMAGE}"
+    ${BUILD_ENGINE} login -u ${IMAGE_REPOSITORY_USERNAME} -p ${IMAGE_REPOSITORY_PASSWORD} ${KAS_FLEETSHARD_IMAGE_REGISTRY}
+    ${BUILD_ENGINE} build -t ${BUNDLE_IMAGE} .
+    ${BUILD_ENGINE} push "${BUNDLE_IMAGE}"
+    opm index add --bundles "${BUNDLE_IMAGE}" --tag "${INDEX_IMAGE}" --generate -d ./index.Dockerfile
+    ${BUILD_ENGINE} build -f ./index.Dockerfile -t "${INDEX_IMAGE}" .
+    ${BUILD_ENGINE} push "${INDEX_IMAGE}"
 
     if [ "${UPDATE_KAS_INSTALLER_ENV}" = "true" ]; then
         if grep '^KAS_FLEETSHARD_OLM_INDEX_IMAGE=' ${KI_CONFIG} > /dev/null ; then

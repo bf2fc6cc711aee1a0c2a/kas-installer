@@ -44,7 +44,8 @@ clone_kasfleetmanager_code_repository() {
         ${GIT} fetch origin && \
         ${GIT} checkout ${KAS_FLEET_MANAGER_GIT_REF} && \
         ${GIT} symbolic-ref -q HEAD && \
-        ${GIT} pull --ff-only || echo "Skipping 'pull' for detached HEAD")
+          ${GIT} reset --hard origin/${KAS_FLEET_MANAGER_GIT_REF} || \
+          echo "Skipping 'pull' for detached HEAD")
     else
       echo "KAS Fleet Manager code directory is current, not refreshing"
     fi

@@ -1,0 +1,340 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: keycloak-realms
+
+parameters:
+- name: RH_USERNAME
+  value: 'kas-installer-user'
+- name: RH_USER_ID
+  value: '0000000'
+- name: RH_ORG_ID
+  value: '0000000'
+
+objects:
+  - apiVersion: k8s.keycloak.org/v2alpha1
+    kind: KeycloakRealmImport
+    metadata:
+      name: rhoas
+      labels:
+        app: mas-sso
+    spec:
+      keycloakCRName: sso-keycloak
+      realm:
+        id: rhoas
+        realm: rhoas
+        displayName: rhoas
+        description: 'kas-installer: rhoas'
+        enabled: true
+        ssoSessionIdleTimeout: 864000
+        ssoSessionMaxLifespan: 864000
+        roles:
+          realm:
+            - name: kas_fleetshard_operator
+              attributes: {}
+          client:
+            kas-fleet-manager: []
+            kas-fleetshard-agent: []
+            kas-installer-client: []
+            rhoas-cli-prod: []
+            strimzi-ui: []
+
+        users:
+          - username: service-account-kas-fleet-manager
+            enabled: true
+            serviceAccountClientId: kas-fleet-manager
+            realmRoles:
+              - default-roles-rhoas
+            clientRoles:
+              realm-management:
+                - manage-clients
+                - manage-realm
+                - manage-users
+
+          - username: service-account-kas-fleetshard-agent
+            enabled: true
+            serviceAccountClientId: kas-fleetshard-agent
+            attributes:
+              kas-fleetshard-operator-cluster-id:
+                - dev-dataplane-cluster
+            realmRoles:
+              - default-roles-rhoas
+              - kas_fleetshard_operator
+
+          - username: ${RH_USERNAME}
+            credentials:
+            - type: "password"
+              value: "${RH_USERNAME}"
+            enabled: True
+            clientRoles:
+              'realm-management': [ 'view-users' ]
+            attributes:
+              "account-id": [ "${RH_USER_ID}" ]
+              "rh-user-id": [ "${RH_USER_ID}" ]
+              "rh-org-id": [ "${RH_ORG_ID}" ]
+              "preferred_username": [ "${RH_USERNAME}" ]
+
+        clients:
+          - clientId: kas-fleet-manager
+            name: kas-fleet-manager
+            description: 'kas-installer: kas-fleet-manager'
+            secret: kas-fleet-manager
+            directAccessGrantsEnabled: false
+            serviceAccountsEnabled: true
+            publicClient: false
+            protocol: openid-connect
+
+          - clientId: kas-fleetshard-agent
+            name: kas-fleetshard-agent
+            description: 'kas-installer: kas-fleetshard-agent'
+            enabled: true
+            secret: kas-fleetshard-agent
+            publicClient: false
+            protocol: openid-connect
+            directAccessGrantsEnabled: false
+            serviceAccountsEnabled: true
+            attributes:
+              kas-fleetshard-operator-cluster-id: dev-dataplane-cluster
+            protocolMappers:
+              - name: kas-fleetshard-operator-cluster-id
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  user.attribute: kas-fleetshard-operator-cluster-id
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: kas-fleetshard-operator-cluster-id
+                  userinfo.token.claim: "true"
+
+          - clientId: kas-installer-client
+            description: 'kas-installer: kas-installer-client'
+            secret: kas-installer-client
+            clientAuthenticatorType: client-secret
+            protocol: openid-connect
+            serviceAccountsEnabled: false
+            standardFlowEnabled: false
+            directAccessGrantsEnabled: true
+            protocolMappers:
+            - name: account-id
+              protocol: openid-connect
+              protocolMapper: oidc-usermodel-attribute-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                user.attribute: account-id
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: account_id
+                jsonType.label: String
+            - name: rh-user-id
+              protocol: openid-connect
+              protocolMapper: oidc-usermodel-attribute-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                user.attribute: rh-user-id
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: rh-user-id
+                jsonType.label: String
+            - name: rh-org-id
+              protocol: openid-connect
+              protocolMapper: oidc-usermodel-attribute-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                user.attribute: rh-org-id
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: rh-org-id
+                jsonType.label: String
+            - name: preferred_username
+              protocol: openid-connect
+              protocolMapper: oidc-usermodel-attribute-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                user.attribute: preferred_username
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: preferred_username
+                jsonType.label: String
+            - name: is_org_admin
+              protocol: openid-connect
+              protocolMapper: oidc-hardcoded-claim-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: is_org_admin
+                claim.value: 'true'
+                jsonType.label: boolean
+
+          - clientId: rhoas-cli-prod
+            description: 'kas-installer: rhoas-cli-prod'
+            protocol: openid-connect
+            publicClient: true
+            standardFlowEnabled: true
+            redirectUris: ["*"]
+            webOrigins: ["*"]
+            protocolMappers:
+            - name: account-id
+              protocol: openid-connect
+              protocolMapper: oidc-usermodel-attribute-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                user.attribute: account-id
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: account_id
+                jsonType.label: String
+            - name: rh-user-id
+              protocol: openid-connect
+              protocolMapper: oidc-usermodel-attribute-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                user.attribute: rh-user-id
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: rh-user-id
+                jsonType.label: String
+            - name: rh-org-id
+              protocol: openid-connect
+              protocolMapper: oidc-usermodel-attribute-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                user.attribute: rh-org-id
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: rh-org-id
+                jsonType.label: String
+            - name: preferred_username
+              protocol: openid-connect
+              protocolMapper: oidc-usermodel-attribute-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                user.attribute: preferred_username
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: preferred_username
+                jsonType.label: String
+            - name: is_org_admin
+              protocol: openid-connect
+              protocolMapper: oidc-hardcoded-claim-mapper
+              consentRequired: false
+              config:
+                userinfo.token.claim: 'true'
+                id.token.claim: 'true'
+                access.token.claim: 'true'
+                claim.name: is_org_admin
+                claim.value: 'true'
+                jsonType.label: boolean
+
+          - clientId: strimzi-ui
+            description: 'kas-installer: strimzi-ui'
+            protocol: openid-connect
+            publicClient: true
+            standardFlowEnabled: true
+            redirectUris: ["*"]
+            webOrigins: ["*"]
+            protocolMappers:
+              - name: account-id
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: 'true'
+                  user.attribute: account-id
+                  id.token.claim: 'true'
+                  access.token.claim: 'true'
+                  claim.name: account_id
+                  jsonType.label: String
+              - name: rh-user-id
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: 'true'
+                  user.attribute: rh-user-id
+                  id.token.claim: 'true'
+                  access.token.claim: 'true'
+                  claim.name: rh-user-id
+                  jsonType.label: String
+              - name: rh-org-id
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: 'true'
+                  user.attribute: rh-org-id
+                  id.token.claim: 'true'
+                  access.token.claim: 'true'
+                  claim.name: rh-org-id
+                  jsonType.label: String
+
+  - apiVersion: k8s.keycloak.org/v2alpha1
+    kind: KeycloakRealmImport
+    metadata:
+      name: rhoas-kafka-sre
+      labels:
+        app: mas-sso
+    spec:
+      keycloakCRName: sso-keycloak
+      realm:
+        id: rhoas-kafka-sre
+        realm: rhoas-kafka-sre
+        displayName: rhoas-kafka-sre
+        description: 'kas-installer: rhoas-kafka-sre'
+        enabled: true
+        roles:
+          realm:
+            - name: kas-fleet-manager-admin-full
+              composite: false
+              clientRole: false
+              containerId: rhoas-kafka-sre
+              attributes: {}
+          client:
+            kafka-admin: []
+            kas-fleet-manager: []
+
+        users:
+          - username: service-account-kafka-admin
+            enabled: true
+            serviceAccountClientId: kafka-admin
+            realmRoles:
+              - default-roles-rhoas-kafka-sre
+              - kas-fleet-manager-admin-full
+
+          - username: service-account-kas-fleet-manager
+            enabled: true
+            serviceAccountClientId: kas-fleet-manager
+            realmRoles:
+              - default-roles-rhoas-kafka-sre
+            clientRoles:
+              realm-management:
+                - manage-clients
+
+        clients:
+          - clientId: kafka-admin
+            description: "kas-installer: kafka-admin"
+            secret: kafka-admin
+            name: kafka-admin
+            serviceAccountsEnabled: true
+            protocol: openid-connect
+            publicClient: false
+            clientAuthenticatorType: client-secret
+
+          - clientId: kas-fleet-manager
+            description: "kas-installer: kas-fleet-manager"
+            secret: kas-fleet-manager
+            clientAuthenticatorType: client-secret
+            protocol: openid-connect
+            serviceAccountsEnabled: true
+            standardFlowEnabled: false

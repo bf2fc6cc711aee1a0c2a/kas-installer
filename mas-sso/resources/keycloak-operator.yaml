@@ -1,0 +1,33 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: keycloak-operator
+
+parameters:
+- name: NAMESPACE
+  required: true
+- name: SUBSCRIPTION_SOURCE
+  value: 'community-operators'
+- name: SUBSCRIPTION_SOURCE_NAMESPACE
+  value: 'openshift-marketplace'
+
+objects:
+- apiVersion: operators.coreos.com/v1
+  kind: OperatorGroup
+  metadata:
+    name: keycloak-operator-group
+  spec:
+    targetNamespaces:
+      - ${NAMESPACE}
+
+- apiVersion: operators.coreos.com/v1alpha1
+  kind: Subscription
+  metadata:
+    name: keycloak-operator
+  spec:
+    channel: fast
+    installPlanApproval: Automatic
+    name: keycloak-operator
+    source: ${SUBSCRIPTION_SOURCE}
+    sourceNamespace: ${SUBSCRIPTION_SOURCE_NAMESPACE}

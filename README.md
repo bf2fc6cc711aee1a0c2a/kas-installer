@@ -10,6 +10,7 @@ in a single K8s cluster.
 - [Installation Modes](#installation-modes)
   - [Standalone Mode](#standalone)
   - [OCM Mode](#ocm)
+  - [Enterprise Mode](#enterprise)
 - [Fleet Manager Parameter Customization](#fleet-manager-parameter-customization)
   - [Instance Types](#instance-types)
 - [SSO Providers](#sso-providers)
@@ -106,6 +107,29 @@ used by setting `OCM_SERVICE_TOKEN` to your [OCM offline token](https://console.
 In OCM mode, it may take up to 10 minutes after the `kas-installer.sh` completes before the addon installations are ready. Until ready,
 the fleet-manager API will reject new Kafka requests.
 
+### Enterprise
+
+Enable by setting `ENTERPRISE_ENABLED='true'` either via kas-installer.env or the environment.
+
+Enterprise is a variation of OCM mode that allows for simple installation of only the control plane components, MAS SSO and
+kas-fleet-manager. Following installation this mode, the fleet manager's cluster list is (unless overridden) an empty list
+and no data plane clusters are created or reconciled initially.
+
+In this mode, users must register their own data plane clusters using the `rhoas` CLI's `dedicated register-cluster` command with arguments
+`--cluster-mgmt-api-url` set to `https://api.stage.openshift.com` and `--access-token` set to a production `ocm token` value. Assuming
+an active `ocm` session, the following command will register a new data plane cluster, making it available for placement of new Kafka instances.
+
+```shell
+rhoas dedicated register-cluster -v --cluster-mgmt-api-url https://api.stage.openshift.com --access-token ${OCM_PRODUCTION_TOKEN}
+```
+
+See the [using rhoas CLI](#using-rhoas-cli) for more information on how to login and use `rhoas` with kas-installer.
+
+**NOTE:**
+Registering a data plane cluster with kas-fleet-manager requires the KFM client to be an organization admin (JWT claim `is_org_admin: true`).
+If you are not an org admin in either RH SSO or RH SSO stage, you must configure `SSO_PROVIDER_TYPE='mas_sso'` and login to `rhoas` using your
+`RH_USERNAME` as username and password for this functionality to work.
+
 ## Fleet Manager Parameter Customization
 
 ### Service Customization
@@ -171,6 +195,9 @@ echo "KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG='$(echo "${MY_CUSTOM_SUBSCRIPT
 echo "REGISTERED_USERS_PER_ORGANISATION='[]'"
 # Custom organization quota (allows deployment of standard instances), disabled/commented here
 #echo "REGISTERED_USERS_PER_ORGANISATION='$(echo "${MY_CUSTOM_ORG_QUOTA}" | yq e -o=json -I=0)'"
+
+# Example of how to allow registration of enterprise clusters for an organization not listed in kas-fleet-manager's default list
+echo "ENTERPRISE_CLUSTER_REGISTRATION_ALLOWED_ORGANIZATIONS='[ 12345678 ]'"
 
 ```
 

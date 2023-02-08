@@ -5,6 +5,12 @@ set -euo pipefail
 DIR_NAME="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 source "${DIR_NAME}/utils/common.sh"
 
+rm -vf \
+  ${DIR_NAME}/certs/san.ext \
+  ${DIR_NAME}/certs/server-key.pem \
+  ${DIR_NAME}/certs/server-req.pem \
+  ${DIR_NAME}/certs/server-cert.pem
+
 KI_CONFIG="${DIR_NAME}/kas-installer.env"
 source ${KI_CONFIG}
 
@@ -17,12 +23,6 @@ if ! [ -f ${DIR_NAME}/certs/ca-key.pem ] ; then
       -key ${DIR_NAME}/certs/ca-key.pem \
       -out ${DIR_NAME}/certs/ca-cert.pem
 fi
-
-rm -vf \
-  ${DIR_NAME}/certs/san.ext \
-  ${DIR_NAME}/certs/server-key.pem \
-  ${DIR_NAME}/certs/server-req.pem \
-  ${DIR_NAME}/certs/server-cert.pem
 
 echo "subjectAltName = DNS:*.kas.${K8S_CLUSTER_DOMAIN},DNS:*.kafka.bf2.dev,DNS:prod.foo.redhat.com" > ${DIR_NAME}/certs/san.ext
 

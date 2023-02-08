@@ -40,6 +40,13 @@ read_kas_installer_env_file() {
     exit 1
   fi
 
+  if [ "${ENTERPRISE_ENABLED,,}" = "true" ] ; then
+    if [ -z "${OCM_SERVICE_TOKEN}" ] ; then
+      echo "OCM token is required when ENTERPRISE_ENABLED = true"
+      exit 1
+    fi
+  fi
+
   if [ -z "${KAS_FLEETSHARD_OPERATOR_NAMESPACE:-}" ] ; then
     if [ -n "${OCM_SERVICE_TOKEN}" ] ; then
       KAS_FLEETSHARD_OPERATOR_NAMESPACE='redhat-kas-fleetshard-operator-qe'
@@ -142,6 +149,8 @@ generate_kas_fleet_manager_env_config() {
   echo "DATA_PLANE_CLOUD_PROVIDER=${CLOUD_PROVIDER}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "DATA_PLANE_CLUSTER_REGION=${REGION}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
   echo "DATA_PLANE_CLUSTER_DNS_NAME=apps.${K8S_CLUSTER_DOMAIN}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+
+  echo "ENTERPRISE_ENABLED=${ENTERPRISE_ENABLED}" >> ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
 }
 
 deploy_kas_fleet_manager() {

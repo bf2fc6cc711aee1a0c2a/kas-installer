@@ -196,8 +196,13 @@ deploy_kasfleetmanager() {
   echo "ADMIN_API_SSO_REALM=${ADMIN_API_SSO_REALM}" >> ${SERVICE_PARAMS}
 
   if [ -z "$( grep 'CLUSTER_LIST' $SERVICE_PARAMS || true; )" ]; then
-      echo "adding default CLUSTER_LIST to ${SERVICE_PARAMS}"
-      echo 'CLUSTER_LIST=[{"name": "'$(${OC} config view --minify --raw -o json | jq -r '.contexts[0].name')'","provider_type": "'${PROVIDER_TYPE}'","cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'","cloud_provider": "'${DATA_PLANE_CLOUD_PROVIDER}'","region": "'${DATA_PLANE_CLUSTER_REGION}'","multi_az": true,"schedulable": true,"kafka_instance_limit": 5,"supported_instance_type": "standard,developer","status": "'${CLUSTER_STATUS}'","cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"}]'  >> ${SERVICE_PARAMS}
+      if [ "${ENTERPRISE_ENABLED,,}" = "true" ] ; then
+        echo "ENTERPRISE ENABLED: adding EMPTY default CLUSTER_LIST to ${SERVICE_PARAMS}"
+        echo 'CLUSTER_LIST=[]'  >> ${SERVICE_PARAMS}
+      else
+        echo "adding default CLUSTER_LIST to ${SERVICE_PARAMS}"
+        echo 'CLUSTER_LIST=[{"name": "'$(${OC} config view --minify --raw -o json | jq -r '.contexts[0].name')'","provider_type": "'${PROVIDER_TYPE}'","cluster_id": "'${DATA_PLANE_CLUSTER_CLUSTER_ID}'","cloud_provider": "'${DATA_PLANE_CLOUD_PROVIDER}'","region": "'${DATA_PLANE_CLUSTER_REGION}'","multi_az": true,"schedulable": true,"kafka_instance_limit": 5,"supported_instance_type": "standard,developer","status": "'${CLUSTER_STATUS}'","cluster_dns": "'${DATA_PLANE_CLUSTER_DNS_NAME}'"}]'  >> ${SERVICE_PARAMS}
+      fi
   fi
 
   if [ -z "$( grep 'SUPPORTED_CLOUD_PROVIDERS' $SERVICE_PARAMS || true; )" ]; then
@@ -359,8 +364,13 @@ read_kasfleetmanager_env_file
 create_kas_fleet_manager_namespace
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager
-disable_observability_operator_extras
-await_kas_fleetshard_agent
+
+if [ "${ENTERPRISE_ENABLED,,}" = "true" ] ; then
+  echo "ENTERPRISE ENABLED: skipping Observability CR modifications and kas-fleetshard readiness checks"
+else
+  disable_observability_operator_extras
+  await_kas_fleetshard_agent
+fi
 
 cd ${ORIGINAL_DIR}
 

@@ -153,6 +153,15 @@ MY_CUSTOM_ORG_QUOTA='
   max_allowed_instances: 10
   any_user: true
   registered_users: []
+  granted_quota:
+  - instance_type_id: standard
+    kafka_billing_models:
+      - id: standard
+        max_allowed_instances: 10
+      - id: enterprise
+        max_allowed_instances: 10
+      - id: eval
+        max_allowed_instances: 10
 '
 
 # Serialize to a single line as JSON (subset of YAML) to standard output

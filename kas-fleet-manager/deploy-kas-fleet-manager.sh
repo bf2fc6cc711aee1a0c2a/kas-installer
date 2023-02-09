@@ -27,6 +27,7 @@ DIR_NAME="$(dirname $0)"
 
 KAS_FLEET_MANAGER_CODE_DIR="${DIR_NAME}/kas-fleet-manager-source"
 KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="${DIR_NAME}/kas-fleet-manager-deploy.env"
+SERVICE_PARAMS=${DIR_NAME}/kas-fleet-manager-params.env
 
 OBSERVABILITY_OPERATOR_K8S_NAMESPACE="managed-application-services-observability"
 OBSERVABILITY_OPERATOR_DEPLOYMENT_NAME="observability-operator-controller-manager"
@@ -161,7 +162,6 @@ deploy_kasfleetmanager() {
   OCM_ENV="development"
   CLUSTER_STATUS="cluster_provisioned"
 
-  SERVICE_PARAMS=${DIR_NAME}/kas-fleet-manager-params.env
   > ${SERVICE_PARAMS}
 
   if [ -n "${OCM_SERVICE_TOKEN}" ] ; then
@@ -365,8 +365,8 @@ create_kas_fleet_manager_namespace
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager
 
-if [ "${ENTERPRISE_ENABLED,,}" = "true" ] ; then
-  echo "ENTERPRISE ENABLED: skipping Observability CR modifications and kas-fleetshard readiness checks"
+if [ "$( grep 'CLUSTER_LIST=\[[ ]*\]' $SERVICE_PARAMS || true; )" ] ; then
+  echo "Empty CLUSTER_LIST - skipping data plane Observability CR modifications and kas-fleetshard readiness checks"
 else
   disable_observability_operator_extras
   await_kas_fleetshard_agent

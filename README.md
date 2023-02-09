@@ -109,7 +109,8 @@ the fleet-manager API will reject new Kafka requests.
 
 ### Enterprise
 
-Enable by setting `ENTERPRISE_ENABLED='true'` either via kas-installer.env or the environment.
+In addition to the configurations required by [OCM Mode](#ocm), Enterprise mode is enabled by setting `ENTERPRISE_ENABLED='true'`
+either via kas-installer.env or the environment.
 
 Enterprise is a variation of OCM mode that allows for simple installation of only the control plane components, MAS SSO and
 kas-fleet-manager. Following installation this mode, the fleet manager's cluster list is (unless overridden) an empty list

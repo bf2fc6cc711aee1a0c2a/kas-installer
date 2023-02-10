@@ -56,6 +56,11 @@ fi
 BOOTSTRAP_HOST=$(echo ${MK_SMOKE} | jq -r .bootstrap_server_host)
 ADMIN_SERVER_URL=$(echo ${MK_SMOKE} | jq -r .admin_api_server_url)
 
+if [ "${ADMIN_SERVER_URL}" == "null" ] ; then
+    echo "Admin server url not yet available, unable to complete smoke test"
+    exit 1
+fi
+
 SMOKE_TOPIC="smoke_topic-$(${DATE} +%Y%j%H%M)"
 
 curl -f -skXPOST -H'Content-type: application/json' \

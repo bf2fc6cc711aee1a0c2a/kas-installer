@@ -17,6 +17,7 @@ CREATE_PROVIDER=''
 CREATE_REGION=''
 CREATE_PLAN='standard.x1'
 REQUEST_BODY=''
+OP_WAIT='false'
 OP_KAFKA_ID='<NONE>'
 ACCESS_TOKEN=''
 REFRESH_EXPIRED_TOKENS='false'
@@ -152,6 +153,7 @@ patch() {
 
 delete() {
     local KAFKA_ID=${1}
+    local WAIT_COMPLETED=${2}
 
     local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $(access_token)" -w '\n\n%{http_code}' ${MK_BASE_URL}${OPERATION_PATH}/${KAFKA_ID}?async=true)
     local BODY=$(echo "${RESPONSE}" | head -n 1)
@@ -162,8 +164,20 @@ delete() {
     if [ ${CODE} -ge 400 ] ; then
         # Pretty print
         echo "${BODY}" | jq
+        exit 1
     else
         echo "Kafka instance '${KAFKA_ID}' accepted for deletion"
+        if [ "${WAIT_COMPLETED}" = "true" ] ; then
+            local KAFKA_RESOURCE=$(get ${KAFKA_ID})
+            local KAFKA_STATUS=$(echo ${KAFKA_RESOURCE} | jq -r .status || true)
+
+            while [ "${KAFKA_STATUS}" != "null" ]; do
+                echo "Kafka instance '${KAFKA_ID}' not yet removed: ${KAFKA_STATUS}" >>/dev/stderr
+                sleep 10
+                KAFKA_RESOURCE=$(get ${KAFKA_ID})
+                KAFKA_STATUS=$(echo ${KAFKA_RESOURCE} | jq -r .status || true)
+            done
+        fi
     fi
 }
 
@@ -285,6 +299,10 @@ while [[ $# -gt 0 ]]; do
         ACCESS_TOKEN="${2}"
         shift 2
         ;;
+    "--wait" )
+        OP_WAIT="true"
+        shift
+        ;;
     *) # unknown option
         shift
         ;;
@@ -315,7 +333,7 @@ case "${OPERATION}" in
         patch ${OP_KAFKA_ID} "${REQUEST_BODY}"
         ;;
     "delete" )
-        delete ${OP_KAFKA_ID}
+        delete ${OP_KAFKA_ID} ${OP_WAIT}
         ;;
     "certgen" )
         certgen "${OP_KAFKA_ID}" ${CERTGEN_ARGS[@]+"${CERTGEN_ARGS[@]}"}

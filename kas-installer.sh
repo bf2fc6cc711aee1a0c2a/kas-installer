@@ -46,22 +46,6 @@ read_kas_installer_env_file() {
       exit 1
     fi
   fi
-
-  if [ -z "${KAS_FLEETSHARD_OPERATOR_NAMESPACE:-}" ] ; then
-    if [ -n "${OCM_SERVICE_TOKEN}" ] ; then
-      KAS_FLEETSHARD_OPERATOR_NAMESPACE='redhat-kas-fleetshard-operator-qe'
-    else
-      KAS_FLEETSHARD_OPERATOR_NAMESPACE='redhat-kas-fleetshard-operator'
-    fi
-  fi
-
-  if [ -z "${STRIMZI_OPERATOR_NAMESPACE:-}" ] ; then
-    if [ -n "${OCM_SERVICE_TOKEN}" ] ; then
-      STRIMZI_OPERATOR_NAMESPACE='redhat-managed-kafka-operator-qe'
-    else
-      STRIMZI_OPERATOR_NAMESPACE='redhat-managed-kafka-operator'
-    fi
-  fi
 }
 
 check_observability_token() {

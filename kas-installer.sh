@@ -40,7 +40,7 @@ read_kas_installer_env_file() {
     exit 1
   fi
 
-  if [ "${ENTERPRISE_ENABLED,,}" = "true" ] ; then
+  if [ "${ENTERPRISE_ENABLED}" = "true" ] ; then
     if [ -z "${OCM_SERVICE_TOKEN}" ] ; then
       echo "OCM token is required when ENTERPRISE_ENABLED = true"
       exit 1

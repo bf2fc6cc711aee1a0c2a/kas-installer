@@ -196,7 +196,7 @@ deploy_kasfleetmanager() {
   echo "ADMIN_API_SSO_REALM=${ADMIN_API_SSO_REALM}" >> ${SERVICE_PARAMS}
 
   if [ -z "$( grep 'CLUSTER_LIST' $SERVICE_PARAMS || true; )" ]; then
-      if [ "${ENTERPRISE_ENABLED,,}" = "true" ] ; then
+      if [ "${ENTERPRISE_ENABLED}" = "true" ] ; then
         echo "ENTERPRISE ENABLED: adding EMPTY default CLUSTER_LIST to ${SERVICE_PARAMS}"
         echo 'CLUSTER_LIST=[]'  >> ${SERVICE_PARAMS}
       else

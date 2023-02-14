@@ -11,6 +11,8 @@ in a single K8s cluster.
   - [Standalone Mode](#standalone)
   - [OCM Mode](#ocm)
   - [Enterprise Mode](#enterprise)
+    - [Registering a Cluster](#registering-a-cluster)
+    - [De-Registering a Cluster](#de-registering-a-cluster)
 - [Fleet Manager Parameter Customization](#fleet-manager-parameter-customization)
   - [Instance Types](#instance-types)
 - [SSO Providers](#sso-providers)
@@ -116,6 +118,8 @@ Enterprise is a variation of OCM mode that allows for simple installation of onl
 kas-fleet-manager. Following installation this mode, the fleet manager's cluster list is (unless overridden) an empty list
 and no data plane clusters are created or reconciled initially.
 
+#### Registering a Cluster
+
 In this mode, users must register their own data plane clusters using the `rhoas` CLI's `dedicated register-cluster` command with arguments
 `--cluster-mgmt-api-url` set to `https://api.stage.openshift.com` and `--access-token` set to a production `ocm token` value. Assuming
 an active `ocm` session, the following command will register a new data plane cluster, making it available for placement of new Kafka instances.
@@ -130,6 +134,17 @@ See the [using rhoas CLI](#using-rhoas-cli) for more information on how to login
 Registering a data plane cluster with kas-fleet-manager requires the KFM client to be an organization admin (JWT claim `is_org_admin: true`).
 If you are not an org admin in either RH SSO or RH SSO stage, you must configure `SSO_PROVIDER_TYPE='mas_sso'` and login to `rhoas` using your
 `RH_USERNAME` as username and password for this functionality to work.
+
+#### De-Registering a Cluster
+
+Enterprise/dedicated clusters may be de-registered using the `deregister_cluster.sh` script. This process will remove all Kafka instances from
+the cluster first, de-register it from kas-fleet-manager, and finally removal all remaining dataplane components such as CRDs and ingress
+resources specific to Managed Kafka. When there is only a single dedicated cluster registered, no cluster ID parameter needs to be given to
+`deregister_cluster.sh`. Otherwise, when multiple are registered, the ID to de-register is required.
+
+**NOTE:**
+Using the `uninstall.sh` script will automatically delete all Kafka instances and de-register all registered clusters known to the installed
+kas-fleet-manager prior to uninstalling the Managed Kafka resources.
 
 ## Fleet Manager Parameter Customization
 

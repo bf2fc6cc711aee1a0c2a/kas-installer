@@ -27,7 +27,7 @@ if [ -z "${CLUSTER_ID}" ] ; then
     fi
 fi
 
-for MKID in $(${DIR_NAME}/managed_kafka.sh --list | jq -r '.items[] | select(.cluster_id == "'${CLUSTER_ID}'") | .id') ; do
+for MKID in $(${DIR_NAME}/managed_kafka.sh --list --search "cluster_id = ${CLUSTER_ID}" | jq -r '.items[] | .id') ; do
     echo "Removing Kafka instance ${MKID}"
     ${DIR_NAME}/managed_kafka.sh --delete ${MKID} --wait
 done

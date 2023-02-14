@@ -16,21 +16,25 @@ fi
 KAS_FLEET_MANAGER_DIR="${DIR_NAME}/kas-fleet-manager"
 source "${KAS_FLEET_MANAGER_DIR}/kas-fleet-manager-deploy.env"
 
-# Remove all Kafka instances
-for MKID in $(${DIR_NAME}/managed_kafka.sh --list | jq -r '.items[] | .id' 2>/dev/null || echo "") ; do
-    echo "Removing Kafka instance ${MKID}"
-    ${DIR_NAME}/managed_kafka.sh --delete ${MKID} --wait
-done
+if [ -z "$(${OC} get namespace/${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
+    echo "namespace/${KAS_FLEET_MANAGER_NAMESPACE} is already removed"
+else
+    # Remove all Kafka instances
+    for MKID in $(${DIR_NAME}/managed_kafka.sh --list | jq -r '.items[] | .id' 2>/dev/null || echo "") ; do
+        echo "Removing Kafka instance ${MKID}"
+        ${DIR_NAME}/managed_kafka.sh --delete ${MKID} --wait
+    done
 
-ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
-CLUSTERS_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/clusters"
+    ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
+    CLUSTERS_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/clusters"
 
-# Deregister all dedicated clusters
-for CID in $(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" ${CLUSTERS_BASE_URL} | jq -r '.items[] | .id' 2>/dev/null || echo "") ; do
-    ${DIR_NAME}/deregister_cluster.sh "${CID}"
-done
+    # Deregister all dedicated clusters
+    for CID in $(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" ${CLUSTERS_BASE_URL} | jq -r '.items[] | .id' 2>/dev/null || echo "") ; do
+        ${DIR_NAME}/deregister_cluster.sh "${CID}"
+    done
 
-${KUBECTL} delete namespace ${KAS_FLEET_MANAGER_NAMESPACE} || true
+    ${KUBECTL} delete namespace ${KAS_FLEET_MANAGER_NAMESPACE} || true
+fi
 
 if [ "${SKIP_SSO:-"n"}" = "y" ] ; then
     echo "Skipping removal of MAS SSO"

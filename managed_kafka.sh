@@ -17,6 +17,8 @@ CREATE_PROVIDER=''
 CREATE_REGION=''
 CREATE_PLAN='standard.x1'
 REQUEST_BODY=''
+LIST_SEARCH=''
+OP_WAIT='false'
 OP_KAFKA_ID='<NONE>'
 ACCESS_TOKEN=''
 REFRESH_EXPIRED_TOKENS='false'
@@ -131,8 +133,31 @@ create() {
 }
 
 list() {
-    local RESPONSE=$(curl -sXGET -H "Authorization: Bearer $(access_token)" ${MK_BASE_URL}${OPERATION_PATH})
-    echo ${RESPONSE}
+    local SEARCH_EXPRESSION="${1}"
+    local RESPONSE=$(curl -s --get -H "Authorization: Bearer $(access_token)" --data-urlencode search="${SEARCH_EXPRESSION}" ${MK_BASE_URL}${OPERATION_PATH})
+    IFS=, read KIND CURR_PAGE PAGE_SIZE ITEM_TOTL < <(echo "${RESPONSE}" | jq -r '[ .kind, .page, .size, .total  ] | @csv')
+
+    if [ "${KIND}" != "KafkaRequestList" ] || [ "${ITEM_TOTL}" == "0" ] ; then
+        echo "${RESPONSE}"
+        return
+    fi
+
+    (( LAST_PAGE = (ITEM_TOTL + PAGE_SIZE - 1 ) / PAGE_SIZE ))
+
+    local RESULT_FILE=$(mktemp)
+    local WORK_FILE=$(mktemp)
+    echo "${RESPONSE}" > ${RESULT_FILE}
+
+    for (( PAGE = 2; PAGE <= LAST_PAGE ; PAGE++ )) ; do
+        RESPONSE=$(curl -s --get -H "Authorization: Bearer $(access_token)" --data-urlencode search="${SEARCH_EXPRESSION}" -d page=${PAGE} ${MK_BASE_URL}${OPERATION_PATH})
+        echo "${RESPONSE}" > ${WORK_FILE}
+        # Merge this page's items array with the items in the result file and update the page size to be the total
+        jq --argjson total "${ITEM_TOTL}" -s '.[0].items = ( [ .[].items ] | flatten) | .[0].size = $total | .[0]' ${RESULT_FILE} ${WORK_FILE} > ${RESULT_FILE}.tmp
+        mv ${RESULT_FILE}.tmp ${RESULT_FILE}
+    done
+
+    cat ${RESULT_FILE}
+    rm -f ${RESULT_FILE} ${WORK_FILE}
 }
 
 get() {
@@ -152,6 +177,7 @@ patch() {
 
 delete() {
     local KAFKA_ID=${1}
+    local WAIT_COMPLETED=${2}
 
     local RESPONSE=$(curl -sXDELETE -H "Authorization: Bearer $(access_token)" -w '\n\n%{http_code}' ${MK_BASE_URL}${OPERATION_PATH}/${KAFKA_ID}?async=true)
     local BODY=$(echo "${RESPONSE}" | head -n 1)
@@ -162,8 +188,20 @@ delete() {
     if [ ${CODE} -ge 400 ] ; then
         # Pretty print
         echo "${BODY}" | jq
+        exit 1
     else
         echo "Kafka instance '${KAFKA_ID}' accepted for deletion"
+        if [ "${WAIT_COMPLETED}" = "true" ] ; then
+            local KAFKA_RESOURCE=$(get ${KAFKA_ID})
+            local KAFKA_STATUS=$(echo ${KAFKA_RESOURCE} | jq -r .status || true)
+
+            while [ "${KAFKA_STATUS}" != "null" ]; do
+                echo "Kafka instance '${KAFKA_ID}' not yet removed: ${KAFKA_STATUS}" >>/dev/stderr
+                sleep 10
+                KAFKA_RESOURCE=$(get ${KAFKA_ID})
+                KAFKA_STATUS=$(echo ${KAFKA_RESOURCE} | jq -r .status || true)
+            done
+        fi
     fi
 }
 
@@ -257,6 +295,10 @@ while [[ $# -gt 0 ]]; do
         OPERATION='list'
         shift
         ;;
+    "--search" )
+        LIST_SEARCH="${2:?${key} requires a search expression}"
+        shift 2
+        ;;
     "--get" )
         OPERATION='get'
         OP_KAFKA_ID="${2:?${key} requires a kafka id}"
@@ -285,6 +327,10 @@ while [[ $# -gt 0 ]]; do
         ACCESS_TOKEN="${2}"
         shift 2
         ;;
+    "--wait" )
+        OP_WAIT="true"
+        shift
+        ;;
     *) # unknown option
         shift
         ;;
@@ -306,7 +352,7 @@ case "${OPERATION}" in
         create ${CREATE_NAME} "${CREATE_PLAN}" "${CREATE_PROVIDER}" "${CREATE_REGION}"
         ;;
     "list" )
-        list
+        list "${LIST_SEARCH}"
         ;;
     "get" )
         get ${OP_KAFKA_ID}
@@ -315,7 +361,7 @@ case "${OPERATION}" in
         patch ${OP_KAFKA_ID} "${REQUEST_BODY}"
         ;;
     "delete" )
-        delete ${OP_KAFKA_ID}
+        delete ${OP_KAFKA_ID} ${OP_WAIT}
         ;;
     "certgen" )
         certgen "${OP_KAFKA_ID}" ${CERTGEN_ARGS[@]+"${CERTGEN_ARGS[@]}"}

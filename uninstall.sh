@@ -5,9 +5,8 @@ set -euo pipefail
 DIR_NAME="$(dirname $0)"
 
 source "${DIR_NAME}/utils/common.sh"
-
-KAS_INSTALLER_ENV_FILE="kas-installer.env"
-source ${KAS_INSTALLER_ENV_FILE}
+source "${DIR_NAME}/kas-installer.env"
+source "${DIR_NAME}/kas-installer-defaults.env"
 
 if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "uninstall"; then
     echo "Exiting ${0}"
@@ -15,10 +14,27 @@ if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "uninstall"; then
 fi
 
 KAS_FLEET_MANAGER_DIR="${DIR_NAME}/kas-fleet-manager"
-KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="${KAS_FLEET_MANAGER_DIR}/kas-fleet-manager-deploy.env"
-source ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+source "${KAS_FLEET_MANAGER_DIR}/kas-fleet-manager-deploy.env"
 
-${KUBECTL} delete namespace ${KAS_FLEET_MANAGER_NAMESPACE} || true
+if [ -z "$(${OC} get namespace/${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
+    echo "namespace/${KAS_FLEET_MANAGER_NAMESPACE} is already removed"
+else
+    # Remove all Kafka instances
+    for MKID in $(${DIR_NAME}/managed_kafka.sh --list | jq -r '.items[] | .id' 2>/dev/null || echo "") ; do
+        echo "Removing Kafka instance ${MKID}"
+        ${DIR_NAME}/managed_kafka.sh --delete ${MKID} --wait
+    done
+
+    ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
+    CLUSTERS_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/clusters"
+
+    # Deregister all dedicated clusters
+    for CID in $(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" ${CLUSTERS_BASE_URL} | jq -r '.items[] | .id' 2>/dev/null || echo "") ; do
+        ${DIR_NAME}/deregister_cluster.sh "${CID}"
+    done
+
+    ${KUBECTL} delete namespace ${KAS_FLEET_MANAGER_NAMESPACE} || true
+fi
 
 if [ "${SKIP_SSO:-"n"}" = "y" ] ; then
     echo "Skipping removal of MAS SSO"
@@ -28,6 +44,9 @@ else
     ${KUBECTL} delete keycloakrealms --all -n mas-sso || true
     ${KUBECTL} delete keycloaks -l app=mas-sso --all-namespaces || true
     ${KUBECTL} delete namespace mas-sso || true
+
+    # remove all CRDs
+    ${KUBECTL} delete crd -l operators.coreos.com/mas-sso-operator.mas-sso=''
 fi
 
 if [ "${SKIP_OBSERVATORIUM:-"n"}" = "y" ] ; then
@@ -40,35 +59,25 @@ fi
 
 if [ "${SKIP_KAS_FLEETSHARD:-"n"}" = "y" ]; then
     echo "Skipping removal of Strimzi and Fleetshard operators"
-else
+elif [ -z "$(grep 'CLUSTER_LIST=\[[ ]*\]' ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-params.env || true)" ] ; then
+    # Remove statically-configured cluster
+
     if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
         FLEETSHARD_AGENT_CLIENT_ID=$(${OC} get secret addon-kas-fleetshard-operator-parameters -n ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} -o json | jq -r '.data."sso-client-id"' | base64 -d || echo "")
     fi
 
-    if [ -n "${OCM_CLUSTER_ID-""}" ] ; then
-        if [ -n "${OCM}" ] ; then
-            ${OCM} delete "/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons/kas-fleetshard-operator-qe" || true
-            ${OCM} delete "/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons/managed-kafka-qe" || true
-        fi
+    OCM_MODE='false'
+
+    if [ -n "${OCM_SERVICE_TOKEN-""}" ] && [ -n "${OCM_CLUSTER_ID-""}" ] ; then
+        OCM_MODE='true'
     fi
 
-    (cd ${DIR_NAME}/operators && ./uninstall-all.sh)
-    ${KUBECTL} delete namespace ${KAS_FLEETSHARD_OPERATOR_NAMESPACE} || true
-    ${KUBECTL} delete namespace ${STRIMZI_OPERATOR_NAMESPACE} || true
+    delete_dataplane_resources ${OCM_MODE} 'false' "${OCM_CLUSTER_ID}"
 
     if [ -n "${FLEETSHARD_AGENT_CLIENT_ID:-}" ] ; then
         echo "Deleting fleetshard agent service account: ${FLEETSHARD_AGENT_CLIENT_ID}"
         ${DIR_NAME}/service_account.sh --delete "${FLEETSHARD_AGENT_CLIENT_ID}"
     fi
+else
+    echo "Empty CLUSTER_LIST - skipping statically-configured data plane cleanup"
 fi
-
-OBSERVABILITY_NS=managed-application-services-observability
-${KUBECTL} delete observabilities observability-stack -n ${OBSERVABILITY_NS} || true
-${KUBECTL} delete csv --all -n ${OBSERVABILITY_NS} || true
-${KUBECTL} delete subscription --all -n ${OBSERVABILITY_NS} || true
-${KUBECTL} delete catalogsource --all -n ${OBSERVABILITY_NS} || true
-${KUBECTL} delete operatorgroup --all -n ${OBSERVABILITY_NS} || true
-${KUBECTL} delete namespace ${OBSERVABILITY_NS} || true
-for pc in $(${KUBECTL} get priorityclass -o=json | jq -r '.items[] | select(.metadata.labels["olm.owner.namespace"] == "'${OBSERVABILITY_NS}'") | .metadata.name'); do
-    ${KUBECTL} delete priorityclass ${pc}
-done

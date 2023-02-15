@@ -4,24 +4,41 @@ KAS Installer allows the deployment and configuration of Managed Kafka Service
 in a single K8s cluster.
 
 ## Contents
-- [Prerequisites](#prerequisites)
-- [Description](#description)
-- [Usage](#usage)
-- [Installation Modes](#installation-modes)
-  - [Standalone Mode](#standalone)
-  - [OCM Mode](#ocm)
-  - [Enterprise Mode](#enterprise)
-    - [Registering a Cluster](#registering-a-cluster)
-    - [De-Registering a Cluster](#de-registering-a-cluster)
-- [Fleet Manager Parameter Customization](#fleet-manager-parameter-customization)
-  - [Instance Types](#instance-types)
-- [SSO Providers](#sso-providers)
-- [Custom Components](#custom-components)
-- [Using rhoas CLI](#using-rhoas-cli)
-- [Running the User Interface](#running-the-user-interface)
-- [Custom TLS](#custom-tls)
-- [Legacy Scripts](#legacy-scripts)
-- [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
+- [kas-installer](#kas-installer)
+  - [Contents](#contents)
+  - [Prerequisites](#prerequisites)
+  - [Description](#description)
+  - [Usage](#usage)
+    - [Deploy Managed Kafka Service](#deploy-managed-kafka-service)
+  - [Installation Modes](#installation-modes)
+    - [Standalone](#standalone)
+    - [OCM](#ocm)
+    - [Enterprise](#enterprise)
+      - [Registering a Cluster](#registering-a-cluster)
+      - [De-Registering a Cluster](#de-registering-a-cluster)
+  - [Fleet Manager Parameter Customization](#fleet-manager-parameter-customization)
+    - [Service Customization](#service-customization)
+    - [Secret Customization](#secret-customization)
+    - [Instance Types](#instance-types)
+    - [Deploying to a single provider and region](#deploying-to-a-single-provider-and-region)
+    - [Deploying to multiple clusters/regions](#deploying-to-multiple-clustersregions)
+      - [SUPPORTED\_CLOUD\_PROVIDERS](#supported_cloud_providers)
+      - [CLUSTER\_LIST](#cluster_list)
+      - [KUBE\_CONFIG (standalone only)](#kube_config-standalone-only)
+    - [Custom Domain for the Data Plane](#custom-domain-for-the-data-plane)
+  - [Custom Components](#custom-components)
+  - [Using rhoas CLI](#using-rhoas-cli)
+    - [Service Account Maintenace](#service-account-maintenace)
+    - [Kafka Instance Maintenance](#kafka-instance-maintenance)
+      - [Kafka topics / consumergroups / ACL](#kafka-topics--consumergroups--acl)
+  - [Running the User Interface](#running-the-user-interface)
+  - [Custom TLS](#custom-tls)
+  - [Legacy scripts](#legacy-scripts)
+    - [Service Account Maintenance](#service-account-maintenance)
+    - [Generate an Access Token](#generate-an-access-token)
+    - [Kafka Instance Maintenance](#kafka-instance-maintenance-1)
+    - [Access the Kafka Cluster using command line tools](#access-the-kafka-cluster-using-command-line-tools)
+    - [Running E2E Test Suite (experimental)](#running-e2e-test-suite-experimental)
 
 ## Prerequisites
 
@@ -211,10 +228,6 @@ echo "KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG='$(echo "${MY_CUSTOM_SUBSCRIPT
 echo "REGISTERED_USERS_PER_ORGANISATION='[]'"
 # Custom organization quota (allows deployment of standard instances), disabled/commented here
 #echo "REGISTERED_USERS_PER_ORGANISATION='$(echo "${MY_CUSTOM_ORG_QUOTA}" | yq e -o=json -I=0)'"
-
-# Example of how to allow registration of enterprise clusters for an organization not listed in kas-fleet-manager's default list
-echo "ENTERPRISE_CLUSTER_REGISTRATION_ALLOWED_ORGANIZATIONS='[ 12345678 ]'"
-
 ```
 
 ### Secret Customization

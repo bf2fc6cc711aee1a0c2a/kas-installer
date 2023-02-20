@@ -39,14 +39,17 @@ fi
 if [ "${SKIP_SSO:-"n"}" = "y" ] ; then
     echo "Skipping removal of MAS SSO"
 else
-    ${KUBECTL} delete keycloakusers -l app=mas-sso --all-namespaces || true
-    ${KUBECTL} delete keycloakclients -l app=mas-sso --all-namespaces || true
-    ${KUBECTL} delete keycloakrealms --all -n mas-sso || true
-    ${KUBECTL} delete keycloaks -l app=mas-sso --all-namespaces || true
+    ${KUBECTL} delete keycloakusers.keycloak.org -l app=mas-sso --all-namespaces || true
+    ${KUBECTL} delete keycloakclients.keycloak.org -l app=mas-sso --all-namespaces || true
+    ${KUBECTL} delete keycloakrealms.keycloak.org --all -n mas-sso || true
+    ${KUBECTL} delete keycloaks.keycloak.org -l app=mas-sso --all-namespaces || true
     ${KUBECTL} delete namespace mas-sso || true
-
     # remove all CRDs
     ${KUBECTL} delete crd -l operators.coreos.com/mas-sso-operator.mas-sso=''
+
+    ${KUBECTL} delete keycloaks.k8s.keycloak.org -l app=mas-sso -n mas-sso || true
+    ${KUBECTL} delete keycloakrealmimports.k8s.keycloak.org -l app=mas-sso -n mas-sso || true
+    ${KUBECTL} delete crd -l operators.coreos.com/keycloak-operator.mas-sso=''
 fi
 
 if [ "${SKIP_OBSERVATORIUM:-"n"}" = "y" ] ; then

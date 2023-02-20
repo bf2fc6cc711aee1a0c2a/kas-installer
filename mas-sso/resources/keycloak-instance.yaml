@@ -1,0 +1,57 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: sso-keycloak
+
+parameters:
+- name: HOSTNAME
+  required: true
+
+objects:
+- apiVersion: route.openshift.io/v1
+  # Remove this route when Keycloak v21 is available
+  kind: Route
+  metadata:
+    name: sso-keycloak-ingress-edge
+    namespace: mas-sso
+    labels:
+      app: keycloak
+  spec:
+    host: ${HOSTNAME}
+    to:
+      kind: Service
+      name: sso-keycloak-service
+      weight: 100
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+    wildcardPolicy: None
+
+- apiVersion: k8s.keycloak.org/v2alpha1
+  kind: Keycloak
+  metadata:
+    name: sso-keycloak
+    labels:
+      app: mas-sso
+  spec:
+    instances: 1
+    db:
+      vendor: postgres
+      host: postgresql-db
+      usernameSecret:
+        name: keycloak-db-secret
+        key: username
+      passwordSecret:
+        name: keycloak-db-secret
+        key: password
+    http:
+      httpEnabled: true
+    hostname:
+      hostname: ${HOSTNAME}
+    # Remove `ingress` disabled when Keycloak v21 is available
+    ingress:
+      enabled: false
+    additionalOptions:
+      - name: http-relative-path
+        value: '/auth'

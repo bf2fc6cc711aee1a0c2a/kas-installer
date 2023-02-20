@@ -157,7 +157,9 @@ install_mas_sso() {
       export MAS_SSO_KEYCLOAK_RESOURCES
   fi
 
-  if [ "${SKIP_SSO:-"n"}" = "n" ] || [ "$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}' 2>/dev/null)" = "" ] ; then
+  MAS_SSO_ROUTE=$($OC get route -l app=keycloak -n ${MAS_SSO_NAMESPACE} -o json | jq -r '.items[].spec.host' 2>/dev/null)
+
+  if [ "${SKIP_SSO:-"n"}" = "n" ] || [ "${MAS_SSO_ROUTE}" = "" ] ; then
     echo "MAS SSO route not found or SKIP_SSO not configured, installing MAS SSO ..."
     ${DIR_NAME}/mas-sso/mas-sso-installer.sh
     echo "MAS SSO deployed"
@@ -165,7 +167,7 @@ install_mas_sso() {
     echo "Skipping MAS SSO installation"
   fi
 
-  export MAS_SSO_ROUTE=$($OC get route keycloak -n $MAS_SSO_NAMESPACE --template='{{ .spec.host }}')
+  export MAS_SSO_ROUTE=$($OC get route -l app=keycloak -n ${MAS_SSO_NAMESPACE} -o json | jq -r '.items[].spec.host')
   export MAS_SSO_CERTS=$(echo "" | $OPENSSL s_client -servername $MAS_SSO_ROUTE -connect $MAS_SSO_ROUTE:443 -prexit 2>/dev/null | $OPENSSL x509)
 }
 

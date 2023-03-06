@@ -40,6 +40,13 @@ objects:
         containers:
           - name: postgresql-db
             image: postgres:15
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ "ALL" ]
+              seccompProfile:
+                type: "RuntimeDefault"
             env:
               - name: POSTGRES_PASSWORD
                 value: postgrespass

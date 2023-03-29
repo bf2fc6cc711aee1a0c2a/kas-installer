@@ -238,7 +238,6 @@ deploy_kasfleetmanager() {
     -p SERVICE_PUBLIC_HOST_URL="https://kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}" \
     -p DATAPLANE_CLUSTER_SCALING_TYPE="manual" \
     -p REPLICAS=1 \
-    -p DEX_URL="http://dex-dex.apps.${K8S_CLUSTER_DOMAIN}" \
     -p TOKEN_ISSUER_URL="${SSO_REALM_URL}" \
     -p ENABLE_OCM_MOCK="${ENABLE_OCM_MOCK}" \
     -p OBSERVABILITY_CONFIG_REPO="${OBSERVABILITY_CONFIG_REPO}" \

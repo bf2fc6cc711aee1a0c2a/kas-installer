@@ -39,6 +39,9 @@ function usage() {
                         Default: unset
     --build-engine      Tool for build container images. Examples: buildah, docker, podman.
                         Default: ${BUILD_ENGINE}
+    --patch-file        JSON patch file to be applied to the kas-fleetshard operator's OLM ClusterServiceVersion after
+                        all defaults have been generated.
+                        Default: none
     --help              Display this help text
     "
 }
@@ -82,6 +85,11 @@ while [[ ${#} -gt 0 ]]; do
         ;;
     "--build-engine" )
         BUILD_ENGINE="${2}"
+        shift
+        shift
+        ;;
+    "--patch-file" )
+        KAS_FLEETSHARD_OLM_BUNDLE_PATCHES="${2}"
         shift
         shift
         ;;
@@ -143,6 +151,14 @@ generate_olm_bundle() {
     PROJECT_VERSION="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -f ${KAS_FLEETSHARD_CODE_DIR}/pom.xml | tr '[:upper:]' '[:lower:]')"
     KAS_FLEETSHARD_OLM_BUNDLE_VERSION=${KAS_FLEETSHARD_OLM_BUNDLE_VERSION:-"${BUILDDT}-${PROJECT_VERSION}"}
 
+    PATCH_FILE=$(mktemp)
+
+    if [ -f "${KAS_FLEETSHARD_OLM_BUNDLE_PATCHES:-}" ] ; then
+        cp "${KAS_FLEETSHARD_OLM_BUNDLE_PATCHES}" "${PATCH_FILE}"
+    else
+        echo "[]" > "${PATCH_FILE}"
+    fi
+
     (cd ${KAS_FLEETSHARD_CODE_DIR} && \
         mvn clean package -Pquickly && \
         mvn package \
@@ -161,6 +177,7 @@ generate_olm_bundle() {
             -Dquarkus.kubernetes.image-pull-policy='Always' \
             -Dquarkus.profile='prod' \
             -Dkas.bundle.version="${KAS_FLEETSHARD_OLM_BUNDLE_VERSION}" \
+            -Dkas.bundle.patch-file="${PATCH_FILE}" \
             -Dkas.bundle.patch='[{
                 "op": "add",
                 "path": "/spec/install/spec/deployments/0/spec/template/spec/imagePullSecrets",
@@ -175,6 +192,8 @@ generate_olm_bundle() {
             -Dkas.index.image-group="${KAS_FLEETSHARD_IMAGE_ORG}" \
             -Dkas.index.image="${KAS_FLEETSHARD_OLM_BUNDLE_REPO}" \
             -Dkas.index.build-engine="${BUILD_ENGINE}")
+
+    rm "${PATCH_FILE}"
 
     validate_olm_bundle ${KAS_FLEETSHARD_CODE_DIR}/bundle/target/bundle
     INDEX_IMAGE="${KAS_FLEETSHARD_IMAGE_REGISTRY}/${KAS_FLEETSHARD_IMAGE_ORG}/${KAS_FLEETSHARD_OLM_BUNDLE_REPO}:${KAS_FLEETSHARD_OLM_BUNDLE_VERSION}"

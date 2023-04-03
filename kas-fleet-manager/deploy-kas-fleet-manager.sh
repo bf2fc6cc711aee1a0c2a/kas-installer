@@ -92,18 +92,20 @@ create_kasfleetmanager_pull_credentials() {
   if [ -z "$(${KUBECTL} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ]; then
     echo "KAS Fleet Manager image pull secret does not exist. Creating it..."
     ${OC} create secret docker-registry ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} \
+      -n ${KAS_FLEET_MANAGER_NAMESPACE} \
       --docker-server=${PULL_SECRET_REGISTRY} \
       --docker-username=${IMAGE_REPOSITORY_USERNAME} \
       --docker-password=${IMAGE_REPOSITORY_PASSWORD}
 
     KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT="kas-fleet-manager"
-    ${OC} secrets link ${KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} --for=pull
+    ${OC} secrets link ${KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${KAS_FLEET_MANAGER_NAMESPACE} --for=pull
   fi
 }
 
 deploy_kasfleetmanager() {
   echo "Deploying KAS Fleet Manager Database..."
-  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/db-template.yml | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
+  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/db-template.yml -n ${KAS_FLEET_MANAGER_NAMESPACE} \
+    | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
   echo "Waiting until KAS Fleet Manager Database is ready..."
   ${OC} wait DeploymentConfig/kas-fleet-manager-db -n ${KAS_FLEET_MANAGER_NAMESPACE} --for=condition=available --timeout=180s
 
@@ -145,7 +147,7 @@ deploy_kasfleetmanager() {
       echo "IMAGE_PULL_DOCKER_CONFIG='$(${OC} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.data.\.dockerconfigjson}")'" >> ${SECRET_PARAMS}
   fi
 
-  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml \
+  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/secrets-template.yml -n ${KAS_FLEET_MANAGER_NAMESPACE} \
     --param-file=${SECRET_PARAMS} \
     -p OCM_SERVICE_CLIENT_ID="" \
     -p OCM_SERVICE_CLIENT_SECRET="" \
@@ -220,7 +222,7 @@ deploy_kasfleetmanager() {
       ${KUBECTL} scale deployment/kas-fleet-manager --replicas=0 -n ${KAS_FLEET_MANAGER_NAMESPACE}
   fi
 
-  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml \
+  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml -n ${KAS_FLEET_MANAGER_NAMESPACE} \
     --param-file=${SERVICE_PARAMS} \
     -p ENVIRONMENT="${OCM_ENV}" \
     -p IMAGE_REGISTRY=${IMAGE_REGISTRY} \
@@ -252,7 +254,7 @@ deploy_kasfleetmanager() {
   ${KUBECTL} wait --timeout=120s --for=condition=available deployment/kas-fleet-manager --namespace=${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Deploying KAS Fleet Manager OCP Route..."
-  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
+  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml -n ${KAS_FLEET_MANAGER_NAMESPACE} | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 }
 
 read_kasfleetmanager_env_file() {
@@ -312,23 +314,15 @@ disable_observability_operator_extras() {
 }
 
 create_namespace() {
-    INPUT_NAMESPACE="$1"
-    if [ -z "$(${OC} get project/${INPUT_NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
-      echo "K8s namespace ${INPUT_NAMESPACE} does not exist. Creating it..."
-      ${OC} new-project ${INPUT_NAMESPACE}
-    fi
-}
+    INPUT_NAMESPACE="${1}"
 
-delete_namespace() {
-    INPUT_NAMESPACE="$1"
-    if [ ! -z "$(${OC} get project/${INPUT_NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
-      echo "Deleting K8s namespace ${INPUT_NAMESPACE} ..."
-      ${OC} delete project ${INPUT_NAMESPACE}
+    if [ -z "$(${OC} get namespace/${INPUT_NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
+        echo "K8s namespace ${INPUT_NAMESPACE} does not exist. Creating it..."
+        ${OC} create namespace ${INPUT_NAMESPACE}
     fi
 }
 
 create_kas_fleet_manager_namespace() {
-  KAS_FLEET_MANAGER_NAMESPACE=${KAS_FLEET_MANAGER_NAMESPACE}
     create_namespace ${KAS_FLEET_MANAGER_NAMESPACE}
 }
 

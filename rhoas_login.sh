@@ -1,8 +1,8 @@
 #!/bin/bash
 
-DIR_NAME="$(dirname $0)"
+DIR_NAME="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 source ${DIR_NAME}/kas-installer.env
-source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
+source ${DIR_NAME}/kas-installer-runtime.env
 
 setvars() {
     AUTH_URL="${SSO_REALM_URL}"

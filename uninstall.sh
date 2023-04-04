@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-DIR_NAME="$(dirname $0)"
+DIR_NAME="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 source "${DIR_NAME}/utils/common.sh"
 source "${DIR_NAME}/kas-installer.env"
@@ -13,8 +13,7 @@ if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "uninstall"; then
     exit 1
 fi
 
-KAS_FLEET_MANAGER_DIR="${DIR_NAME}/kas-fleet-manager"
-source "${KAS_FLEET_MANAGER_DIR}/kas-fleet-manager-deploy.env"
+source ${DIR_NAME}/kas-installer-runtime.env
 
 if [ -z "$(${OC} get namespace/${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
     echo "namespace/${KAS_FLEET_MANAGER_NAMESPACE} is already removed"

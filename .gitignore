@@ -1,4 +1,5 @@
 kas-installer.env
+kas-installer-runtime.env
 kas-fleet-manager-service-template-params
 kas-fleet-manager-secrets-template-params
 kas-fleet-manager/kas-fleet-manager-deploy.env

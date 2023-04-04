@@ -21,12 +21,9 @@ else
   BASE64=$(which base64)
 fi
 
-ORIGINAL_DIR=$(pwd)
-
-DIR_NAME="$(dirname $0)"
-
+DIR_NAME="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 KAS_FLEET_MANAGER_CODE_DIR="${DIR_NAME}/kas-fleet-manager-source"
-KAS_FLEET_MANAGER_DEPLOY_ENV_FILE="${DIR_NAME}/kas-fleet-manager-deploy.env"
+KAS_INSTALLER_RUNTIME_ENV_FILE="${DIR_NAME}/../kas-installer-runtime.env"
 SERVICE_PARAMS=${DIR_NAME}/kas-fleet-manager-params.env
 
 OBSERVABILITY_OPERATOR_K8S_NAMESPACE="managed-application-services-observability"
@@ -257,13 +254,13 @@ deploy_kasfleetmanager() {
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml -n ${KAS_FLEET_MANAGER_NAMESPACE} | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 }
 
-read_kasfleetmanager_env_file() {
-  if [ ! -e "${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}" ]; then
-    echo "Required KAS Fleet Manager deployment .env file '${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}' does not exist"
+read_kasinstaller_env_file() {
+  if [ ! -e "${KAS_INSTALLER_RUNTIME_ENV_FILE}" ]; then
+    echo "Required kas-installer runtime .env file '${KAS_INSTALLER_RUNTIME_ENV_FILE}' does not exist"
     exit 1
   fi
 
-  . ${KAS_FLEET_MANAGER_DEPLOY_ENV_FILE}
+  . ${KAS_INSTALLER_RUNTIME_ENV_FILE}
   PULL_SECRET_REGISTRY=${IMAGE_REGISTRY}
 }
 
@@ -353,7 +350,7 @@ await_kas_fleetshard_agent() {
 
 ## Main body of the script starts here
 
-read_kasfleetmanager_env_file
+read_kasinstaller_env_file
 create_kas_fleet_manager_namespace
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager
@@ -364,7 +361,5 @@ else
   disable_observability_operator_extras
   await_kas_fleetshard_agent
 fi
-
-cd ${ORIGINAL_DIR}
 
 exit 0

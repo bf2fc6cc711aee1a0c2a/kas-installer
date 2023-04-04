@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR_NAME="$(dirname $0)"
+DIR_NAME="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 OS=$(uname)
 
 if [ "$OS" = 'Darwin' ]; then
@@ -13,7 +13,7 @@ fi
 
 source ${DIR_NAME}/kas-installer.env
 source ${DIR_NAME}/kas-installer-defaults.env
-source ${DIR_NAME}/kas-fleet-manager/kas-fleet-manager-deploy.env
+source ${DIR_NAME}/kas-installer-runtime.env
 
 GRANT_TYPE=''
 USER_PARAMS=''

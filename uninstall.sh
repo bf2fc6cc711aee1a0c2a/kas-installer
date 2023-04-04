@@ -35,6 +35,12 @@ else
     ${KUBECTL} delete namespace ${KAS_FLEET_MANAGER_NAMESPACE} || true
 fi
 
+if [ -z "$(${OC} get namespace/${COS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
+    echo "namespace/${COS_FLEET_MANAGER_NAMESPACE} is already removed"
+else
+    ${KUBECTL} delete namespace ${COS_FLEET_MANAGER_NAMESPACE} || true
+fi
+
 if [ "${SKIP_SSO:-"n"}" = "y" ] ; then
     echo "Skipping removal of MAS SSO"
 else

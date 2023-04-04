@@ -53,13 +53,13 @@ clone_kasfleetmanager_code_repository() {
     (cd ${KAS_FLEET_MANAGER_CODE_DIR} && ${GIT} checkout ${KAS_FLEET_MANAGER_GIT_REF})
   fi
 
-  if [ "${IMAGE_BUILD}" = "true" ] ; then
-      IMAGE_REGISTRY='image-registry.openshift-image-registry.svc:5000'
-      IMAGE_REPOSITORY=${KAS_FLEET_MANAGER_NAMESPACE}/kas-fleet-manager
+  if [ "${KAS_FLEET_MANAGER_IMAGE_BUILD}" = "true" ] ; then
+      KAS_FLEET_MANAGER_IMAGE_REGISTRY='image-registry.openshift-image-registry.svc:5000'
+      KAS_FLEET_MANAGER_IMAGE_REPOSITORY=${KAS_FLEET_MANAGER_NAMESPACE}/kas-fleet-manager
 
       (cd ${KAS_FLEET_MANAGER_CODE_DIR} && \
-        make image/build/push/internal NAMESPACE=${KAS_FLEET_MANAGER_NAMESPACE} IMAGE_TAG=${IMAGE_TAG} && \
-        ${DOCKER:-docker} image rm -f "$(${OC} get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/${IMAGE_REPOSITORY}:${IMAGE_TAG}")
+        make image/build/push/internal NAMESPACE=${KAS_FLEET_MANAGER_NAMESPACE} KAS_FLEET_MANAGER_IMAGE_TAG=${KAS_FLEET_MANAGER_IMAGE_TAG} && \
+        ${DOCKER:-docker} image rm -f "$(${OC} get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/${KAS_FLEET_MANAGER_IMAGE_REPOSITORY}:${KAS_FLEET_MANAGER_IMAGE_TAG}")
   fi
 }
 
@@ -90,9 +90,9 @@ create_kasfleetmanager_pull_credentials() {
     echo "KAS Fleet Manager image pull secret does not exist. Creating it..."
     ${OC} create secret docker-registry ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} \
       -n ${KAS_FLEET_MANAGER_NAMESPACE} \
-      --docker-server=${PULL_SECRET_REGISTRY} \
-      --docker-username=${IMAGE_REPOSITORY_USERNAME} \
-      --docker-password=${IMAGE_REPOSITORY_PASSWORD}
+      --docker-server=${KAS_FLEET_MANAGER_IMAGE_REGISTRY} \
+      --docker-username=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY_USERNAME} \
+      --docker-password=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY_PASSWORD}
 
     KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT="kas-fleet-manager"
     ${OC} secrets link ${KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${KAS_FLEET_MANAGER_NAMESPACE} --for=pull
@@ -222,9 +222,9 @@ deploy_kasfleetmanager() {
   ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/service-template.yml -n ${KAS_FLEET_MANAGER_NAMESPACE} \
     --param-file=${SERVICE_PARAMS} \
     -p ENVIRONMENT="${OCM_ENV}" \
-    -p IMAGE_REGISTRY=${IMAGE_REGISTRY} \
-    -p IMAGE_REPOSITORY=${IMAGE_REPOSITORY} \
-    -p IMAGE_TAG=${IMAGE_TAG} \
+    -p IMAGE_REGISTRY=${KAS_FLEET_MANAGER_IMAGE_REGISTRY} \
+    -p IMAGE_REPOSITORY=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY} \
+    -p IMAGE_TAG=${KAS_FLEET_MANAGER_IMAGE_TAG} \
     -p IMAGE_PULL_POLICY="Always" \
     -p JWKS_VERIFY_INSECURE=true \
     -p JWKS_URL="${JWKS_URL}" \
@@ -261,7 +261,6 @@ read_kasinstaller_env_file() {
   fi
 
   . ${KAS_INSTALLER_RUNTIME_ENV_FILE}
-  PULL_SECRET_REGISTRY=${IMAGE_REGISTRY}
 }
 
 wait_for_observability_operator_deployment_availability() {

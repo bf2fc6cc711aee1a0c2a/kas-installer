@@ -6,7 +6,8 @@ DIR_NAME="$(dirname $0)"
 source "${DIR_NAME}/utils/common.sh"
 source ${DIR_NAME}/kas-installer.env
 source ${DIR_NAME}/kas-installer-defaults.env
-MK_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1"
+source ${DIR_NAME}/kas-installer-runtime.env
+MK_BASE_URL="https://${MAS_FLEET_MANAGEMENT_DOMAIN}/api/kafkas_mgmt/v1"
 
 OS=$(uname)
 

@@ -7,7 +7,7 @@ source ${DIR_NAME}/kas-installer-runtime.env
 setvars() {
     AUTH_URL="${SSO_REALM_URL}"
 
-    API_GATEWAY="$(oc get route -n kas-fleet-manager-${USER} kas-fleet-manager -o json | jq -r '"https://"+.spec.host')"
+    API_GATEWAY="$(oc get route -n ${KAS_FLEET_MANAGER_NAMESPACE} kas-fleet-manager -o json | jq -r '"https://"+.spec.host')"
 
     if [ "${SSO_PROVIDER_TYPE:-}" = "redhat_sso" ] && [ "${REDHAT_SSO_HOSTNAME:-}" = "sso.stage.redhat.com" ] ; then
         CLIENT_ID='rhoas-cli-stage'

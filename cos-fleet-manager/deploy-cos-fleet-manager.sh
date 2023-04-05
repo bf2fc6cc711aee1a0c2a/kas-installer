@@ -205,7 +205,7 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_BASE_URL="${MAS_SSO_BASE_URL}" \
     -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
     -p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
-    -p SERVICE_PUBLIC_HOST_URL="https://cos-fleet-manager-${COS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}" \
+    -p SERVICE_PUBLIC_HOST_URL="https://${MAS_FLEET_MANAGEMENT_DOMAIN}" \
     -p REPLICAS=1 \
     -p TOKEN_ISSUER_URL="${SSO_REALM_URL}" \
     -p ENABLE_OCM_MOCK="${ENABLE_OCM_MOCK}" \
@@ -218,7 +218,9 @@ deploy_kasfleetmanager() {
   ${KUBECTL} wait --timeout=120s --for=condition=available deployment/cos-fleet-manager --namespace=${COS_FLEET_MANAGER_NAMESPACE}
 
   echo "Deploying COS Fleet Manager OCP Route..."
-  ${OC} process -f ${COS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml -n ${COS_FLEET_MANAGER_NAMESPACE} | ${OC} apply -f - -n ${COS_FLEET_MANAGER_NAMESPACE}
+  ${OC} process -f ${COS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml -n ${COS_FLEET_MANAGER_NAMESPACE} | \
+    jq '.items[0].spec.host = "'"${MAS_FLEET_MANAGEMENT_DOMAIN}"'" | .items[0].spec.path = "/api/connector_mgmt"' | \
+    ${OC} apply -f - -n ${COS_FLEET_MANAGER_NAMESPACE}
 }
 
 read_kasinstaller_env_file() {

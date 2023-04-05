@@ -5,6 +5,7 @@ set -euo pipefail
 DIR_NAME="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 KI_CONFIG="${DIR_NAME}/../kas-installer.env"
 source ${KI_CONFIG}
+source "${DIR_NAME}/../kas-installer-runtime.env"
 source "${DIR_NAME}/../utils/common.sh"
 source "${DIR_NAME}/ui-common.sh"
 
@@ -18,7 +19,7 @@ fi
 
 REPO=kas-installer
 MAS_SSO_SERVER_URL="https://$(${OC} get route keycloak -n mas-sso --template='{{ .spec.host }}')/auth"
-KAS_API_BASE_PATH="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}"
+KAS_API_BASE_PATH="https://${MAS_FLEET_MANAGEMENT_DOMAIN}"
 GIT=$(which git)
 
 mkdir -p ${DIR_NAME}/workspace

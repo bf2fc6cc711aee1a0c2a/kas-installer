@@ -13,7 +13,7 @@ if ! cluster_domain_check "${K8S_CLUSTER_DOMAIN}" "uninstall"; then
     exit 1
 fi
 
-source ${DIR_NAME}/kas-installer-runtime.env
+source "${DIR_NAME}/kas-installer-runtime.env"
 
 if [ -z "$(${OC} get namespace/${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
     echo "namespace/${KAS_FLEET_MANAGER_NAMESPACE} is already removed"
@@ -25,7 +25,7 @@ else
     done
 
     ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
-    CLUSTERS_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/clusters"
+    CLUSTERS_BASE_URL="https://${MAS_FLEET_MANAGEMENT_DOMAIN}/api/kafkas_mgmt/v1/clusters"
 
     # Deregister all dedicated clusters
     for CID in $(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" ${CLUSTERS_BASE_URL} | jq -r '.items[] | .id' 2>/dev/null || echo "") ; do

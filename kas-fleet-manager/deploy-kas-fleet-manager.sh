@@ -234,7 +234,7 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_REALM="${MAS_SSO_REALM}" \
     -p OSD_IDP_MAS_SSO_REALM="${OSD_IDP_MAS_SSO_REALM}" \
     -p ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="false" \
-    -p SERVICE_PUBLIC_HOST_URL="https://kas-fleet-manager-${KAS_FLEET_MANAGER_NAMESPACE}.apps.${K8S_CLUSTER_DOMAIN}" \
+    -p SERVICE_PUBLIC_HOST_URL="https://${MAS_FLEET_MANAGEMENT_DOMAIN}" \
     -p DATAPLANE_CLUSTER_SCALING_TYPE="manual" \
     -p REPLICAS=1 \
     -p TOKEN_ISSUER_URL="${SSO_REALM_URL}" \
@@ -251,7 +251,10 @@ deploy_kasfleetmanager() {
   ${KUBECTL} wait --timeout=120s --for=condition=available deployment/kas-fleet-manager --namespace=${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Deploying KAS Fleet Manager OCP Route..."
-  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml -n ${KAS_FLEET_MANAGER_NAMESPACE} | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
+  ${OC} process -f ${KAS_FLEET_MANAGER_CODE_DIR}/templates/route-template.yml -n ${KAS_FLEET_MANAGER_NAMESPACE} | \
+    jq '.items[0].spec.host = "'"${MAS_FLEET_MANAGEMENT_DOMAIN}"'" | .items[0].spec.path = "/api/kafkas_mgmt"' | \
+    ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
+
 }
 
 read_kasinstaller_env_file() {

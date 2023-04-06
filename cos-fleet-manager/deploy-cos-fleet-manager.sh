@@ -35,7 +35,7 @@ clone_kasfleetmanager_code_repository() {
     CURRENT_GIT=$(cd "${COS_FLEET_MANAGER_CODE_DIR}" && echo "$(${GIT} remote get-url origin):$(${GIT} rev-parse HEAD)")
 
     if [ "${CURRENT_GIT}" != "${CONFIGURED_GIT}" ] ; then
-      echo "Refreshing KAS Fleet Manager code directory (current ${CURRENT_GIT} != configured ${CONFIGURED_GIT})"
+      echo "Refreshing COS Fleet Manager code directory (current ${CURRENT_GIT} != configured ${CONFIGURED_GIT})"
       # Checkout the configured git ref and pull only if not in detached HEAD state (rc of symbolic-ref == 0)
       (cd ${COS_FLEET_MANAGER_CODE_DIR} && \
         ${GIT} remote set-url origin ${COS_FLEET_MANAGER_GIT_URL}
@@ -45,10 +45,10 @@ clone_kasfleetmanager_code_repository() {
           ${GIT} reset --hard origin/${COS_FLEET_MANAGER_GIT_REF} || \
           echo "Skipping 'pull' for detached HEAD")
     else
-      echo "KAS Fleet Manager code directory is current, not refreshing"
+      echo "COS Fleet Manager code directory is current, not refreshing"
     fi
   else
-    echo "KAS Fleet Manager code directory does not exist. Cloning it..."
+    echo "COS Fleet Manager code directory does not exist. Cloning it..."
     ${GIT} clone "${COS_FLEET_MANAGER_GIT_URL}" ${COS_FLEET_MANAGER_CODE_DIR}
     (cd ${COS_FLEET_MANAGER_CODE_DIR} && ${GIT} checkout ${COS_FLEET_MANAGER_GIT_REF})
   fi
@@ -58,7 +58,8 @@ clone_kasfleetmanager_code_repository() {
       COS_FLEET_MANAGER_IMAGE_REPOSITORY=${COS_FLEET_MANAGER_NAMESPACE}/cos-fleet-manager
 
       (cd ${COS_FLEET_MANAGER_CODE_DIR} && \
-        make image/build/push/internal NAMESPACE=${COS_FLEET_MANAGER_NAMESPACE} COS_FLEET_MANAGER_IMAGE_TAG=${COS_FLEET_MANAGER_IMAGE_TAG} && \
+        make docker/login/internal && \
+        make image/build/push/internal NAMESPACE=${COS_FLEET_MANAGER_NAMESPACE} IMAGE_TAG=${COS_FLEET_MANAGER_IMAGE_TAG} && \
         ${DOCKER:-docker} image rm -f "$(${OC} get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/${COS_FLEET_MANAGER_IMAGE_REPOSITORY}:${COS_FLEET_MANAGER_IMAGE_TAG}")
   fi
 }
@@ -78,7 +79,7 @@ EOF
 )
 
   if [ -z "$(${KUBECTL} get sa ${COS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${COS_FLEET_MANAGER_NAMESPACE})" ]; then
-    echo "KAS Fleet Manager service account does not exist. Creating it..."
+    echo "COS Fleet Manager service account does not exist. Creating it..."
     echo -n "${COS_FLEET_MANAGER_SA_YAML}" | ${OC} apply -f - -n ${COS_FLEET_MANAGER_NAMESPACE}
   fi
 }

@@ -58,7 +58,7 @@ clone_kasfleetmanager_code_repository() {
       KAS_FLEET_MANAGER_IMAGE_REPOSITORY=${KAS_FLEET_MANAGER_NAMESPACE}/kas-fleet-manager
 
       (cd ${KAS_FLEET_MANAGER_CODE_DIR} && \
-        make image/build/push/internal NAMESPACE=${KAS_FLEET_MANAGER_NAMESPACE} KAS_FLEET_MANAGER_IMAGE_TAG=${KAS_FLEET_MANAGER_IMAGE_TAG} && \
+        make image/build/push/internal NAMESPACE=${KAS_FLEET_MANAGER_NAMESPACE} IMAGE_TAG=${KAS_FLEET_MANAGER_IMAGE_TAG} && \
         ${DOCKER:-docker} image rm -f "$(${OC} get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/${KAS_FLEET_MANAGER_IMAGE_REPOSITORY}:${KAS_FLEET_MANAGER_IMAGE_TAG}")
   fi
 }

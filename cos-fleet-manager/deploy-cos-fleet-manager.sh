@@ -114,8 +114,8 @@ deploy_kasfleetmanager() {
   > ${SECRET_PARAMS}
 
   if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
-    echo "REDHAT_SSO_CLIENT_ID='${REDHAT_SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
-    echo "REDHAT_SSO_CLIENT_SECRET='${REDHAT_SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
+    echo "SSO_CLIENT_ID='${REDHAT_SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
+    echo "SSO_CLIENT_SECRET='${REDHAT_SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
   else
     echo "MAS_SSO_CLIENT_ID='${MAS_SSO_CLIENT_ID}'" >> ${SECRET_PARAMS}
     echo "MAS_SSO_CLIENT_SECRET='${MAS_SSO_CLIENT_SECRET}'" >> ${SECRET_PARAMS}
@@ -184,11 +184,6 @@ deploy_kasfleetmanager() {
   echo "ADMIN_API_SSO_BASE_URL=${ADMIN_API_SSO_BASE_URL}" >> ${SERVICE_PARAMS}
   echo "ADMIN_API_SSO_ENDPOINT_URI=${ADMIN_API_SSO_ENDPOINT_URI}" >> ${SERVICE_PARAMS}
   echo "ADMIN_API_SSO_REALM=${ADMIN_API_SSO_REALM}" >> ${SERVICE_PARAMS}
-
-  if [ "${SSO_PROVIDER_TYPE}" = "redhat_sso" ] ; then
-      echo "ENABLE_KAFKA_OWNER='true'" >> ${SERVICE_PARAMS}
-      echo 'KAFKA_OWNERS=[ "'${REDHAT_SSO_CLIENT_ID}'" ]' >> ${SERVICE_PARAMS}
-  fi
 
   if [ -n "$(${KUBECTL} get deployment cos-fleet-manager --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${COS_FLEET_MANAGER_NAMESPACE})" ] ; then
       echo "Scaling down existing cos-fleet-manager deployment to apply changes"

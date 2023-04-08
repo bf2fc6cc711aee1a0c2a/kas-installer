@@ -6,10 +6,11 @@ DIR_NAME="$(dirname $0)"
 source "${DIR_NAME}/utils/common.sh"
 source "${DIR_NAME}/kas-installer.env"
 source "${DIR_NAME}/kas-installer-defaults.env"
+source "${DIR_NAME}/kas-installer-runtime.env"
 
 CLUSTER_ID="${1:-""}"
 ACCESS_TOKEN="$(${DIR_NAME}/get_access_token.sh --owner 2>/dev/null)"
-CLUSTERS_BASE_URL="https://kas-fleet-manager-kas-fleet-manager-${USER}.apps.${K8S_CLUSTER_DOMAIN}/api/kafkas_mgmt/v1/clusters"
+CLUSTERS_BASE_URL="https://${MAS_FLEET_MANAGEMENT_DOMAIN}/api/kafkas_mgmt/v1/clusters"
 
 if [ -z "${CLUSTER_ID}" ] ; then
     CLUSTERS=$(curl -sXGET -H "Authorization: Bearer ${ACCESS_TOKEN}" ${CLUSTERS_BASE_URL})

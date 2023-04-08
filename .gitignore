@@ -8,7 +8,7 @@ cos-fleet-manager/cos-fleet-manager-deploy.env
 cos-fleet-manager/cos-fleet-manager-params.env
 cos-fleet-manager/cos-fleet-manager-secrets.env
 cos-fleet-manager/cos-fleet-manager-source
-cos-fleet-manager/cos-tools
+bin/cos-tools
 
 kas-fleet-manager/kas-fleet-manager-deploy.env
 kas-fleet-manager/kas-fleet-manager-params.env
@@ -24,3 +24,4 @@ truststore.jks
 app-services.properties
 service_account.json
 /certs/
+/connector.json

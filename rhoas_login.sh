@@ -3,21 +3,19 @@
 DIR_NAME="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 source ${DIR_NAME}/kas-installer.env
 source ${DIR_NAME}/kas-installer-runtime.env
+CLIENT_ID=''
 
 setvars() {
     AUTH_URL="${SSO_REALM_URL}"
 
     API_GATEWAY="$(oc get route -n ${KAS_FLEET_MANAGER_NAMESPACE} kas-fleet-manager -o json | jq -r '"https://"+.spec.host')"
 
-    if [ "${SSO_PROVIDER_TYPE:-}" = "redhat_sso" ] && [ "${REDHAT_SSO_HOSTNAME:-}" = "sso.stage.redhat.com" ] ; then
+    if [ -n "${CLIENT_ID}" ] ; then
+        continue
+    elif [ "${SSO_PROVIDER_TYPE:-}" = "redhat_sso" ] && [ "${REDHAT_SSO_HOSTNAME:-}" = "sso.stage.redhat.com" ] ; then
         CLIENT_ID='rhoas-cli-stage'
     else
         CLIENT_ID='rhoas-cli-prod'
-    fi
-
-    if [ ${?} != 0 ] ; then
-        echo "Failed to retrieve kas-fleet-manager URL"
-        exit 1
     fi
 }
 
@@ -44,12 +42,18 @@ login() {
 
     setvars
 
+    if [ -n "${OFFLINE_TOKEN}" ] ; then
+        TOKEN_PARAM="--token ${OFFLINE_TOKEN}"
+    else
+        TOKEN_PARAM=''
+    fi
+
     rhoas login \
      --insecure \
      --client-id ${CLIENT_ID} \
      --auth-url ${AUTH_URL} \
-     --api-gateway ${API_GATEWAY}
-
+     --api-gateway ${API_GATEWAY} \
+     ${TOKEN_PARAM}
 }
 
 dryrun() {
@@ -70,6 +74,14 @@ while [[ $# -gt 0 ]]; do
     "--login" )
         OPERATION='login'
         shift
+        ;;
+    "--token" )
+        OFFLINE_TOKEN=${2}
+        shift; shift;
+        ;;
+    "--client-id" )
+        CLIENT_ID=${2}
+        shift; shift;
         ;;
     *) # default operation
         OPERATION="$key"

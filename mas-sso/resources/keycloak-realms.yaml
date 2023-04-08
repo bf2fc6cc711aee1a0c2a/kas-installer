@@ -110,7 +110,7 @@ objects:
 
           - clientId: kas-installer-client
             description: 'kas-installer: kas-installer-client'
-            secret: kas-installer-client
+            publicClient: true
             clientAuthenticatorType: client-secret
             protocol: openid-connect
             serviceAccountsEnabled: false

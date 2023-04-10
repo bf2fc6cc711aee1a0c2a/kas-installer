@@ -7,7 +7,6 @@ source ${DIR_NAME}/../utils/common.sh
 source ${DIR_NAME}/../kas-installer.env
 source ${DIR_NAME}/../kas-installer-defaults.env
 source ${DIR_NAME}/../kas-installer-runtime.env
-COS_TOOLS="${DIR_NAME}/cos-tools"
 
 ACTION=''
 CLUSTER_ID=''
@@ -40,11 +39,6 @@ if [ -z "${ACTION}" ] || ! [[ "${ACTION}" =~ ^(install|uninstall)$ ]] ; then
     exit 1
 fi
 
-if ! [ -d "${COS_TOOLS}" ] ; then
-    echo "cos-tools not found, cloning to ${COS_TOOLS}..."
-    ${GIT} clone https://github.com/bf2fc6cc711aee1a0c2a/cos-tools.git "${COS_TOOLS}"
-fi
-
 MODE=''
 
 if [ -n "${OCM_SERVICE_TOKEN-""}" ] && [ -n "${OCM_CLUSTER_ID-""}" ] && [ "${CONNECTORS_ADDON_STANDALONE:-"false"}" != "true" ] ; then
@@ -53,7 +47,16 @@ else
     MODE='standalone'
 fi
 
+CURRENT_RHOAS_USER=$(rhoas whoami || true)
+
+if [ -z "${CURRENT_RHOAS_USER}" ] ; then
+    exit 1
+fi
+
 if [ "${ACTION}" == 'install' ] ; then
+    ADDON_LITERAL_PARAMS=$(rhoas connector cluster addon-parameters --id "${CLUSTER_ID}" -o json | \
+        jq -r 'map("--from-literal=\(.id)=\(.value|tostring)") | join(" ")')
+
     if [ "${MODE}" == "standalone" ] ; then
         NAMESPACE='redhat-openshift-connectors'
 
@@ -62,10 +65,15 @@ if [ "${ACTION}" == 'install' ] ; then
             ${OC} create namespace ${NAMESPACE}
         fi
 
-        ${DIR_NAME}/cos_tool.sh "${COS_TOOLS}/bin/create-cluster-secret" \
-          "${CLUSTER_ID}" \
-          "addon-connectors-operator-parameters" \
-          "${NAMESPACE}"
+        if [ -n "$(${OC} get secret addon-connectors-operator-parameters -n ${NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
+            ${OC} delete secret addon-connectors-operator-parameters -n ${NAMESPACE}
+        fi
+
+        ${OC} create secret generic "addon-connectors-operator-parameters" ${ADDON_LITERAL_PARAMS} -n "${NAMESPACE}"
+
+        if [ -n "$(${OC} get secret addon-pullsecret -n ${NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
+            ${OC} delete secret addon-pullsecret -n ${NAMESPACE}
+        fi
 
         ${OC} create secret docker-registry "addon-pullsecret" -n ${NAMESPACE} \
           --docker-server=${COS_FLEET_MANAGER_IMAGE_REGISTRY} \
@@ -92,13 +100,8 @@ spec:
   pause: false" | ${OC} apply -f -
 
     elif [ "${MODE}" == "ocm" ] ; then
-        ACCESS_TOKEN=$(${DIR_NAME}/../get_access_token.sh --owner 2>/dev/null)
-
-        literals=$(curl -L --insecure --oauth2-bearer "${ACCESS_TOKEN}" -S -s https://"${MAS_FLEET_MANAGEMENT_DOMAIN}"/api/connector_mgmt/v1/kafka_connector_clusters/"${CLUSTER_ID}"/addon_parameters \
-            | jq -r 'map("--from-literal=\(.id)=\(.value|tostring)") | join(" ")')
-
-        ${OC} create secret generic "add-secret" ${literals} --dry-run="client" -o yaml | \
-            jq  '.data | to_entries | map({ id: .key , value: (.value | @base64d) }) | { addon: { id: "connectors-operator" }, parameters: { items : . }}' \
+        ${OC} create secret generic "add-secret" ${ADDON_LITERAL_PARAMS} --dry-run="client" -o yaml | \
+            jq '.data | to_entries | map({ id: .key , value: (.value | @base64d) }) | { addon: { id: "connectors-operator" }, parameters: { items : . }}' | \
             ${OCM} post "/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons"
     fi
 else

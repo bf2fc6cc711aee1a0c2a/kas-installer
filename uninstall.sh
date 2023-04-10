@@ -18,6 +18,17 @@ source "${DIR_NAME}/kas-installer-runtime.env"
 if [ -z "$(${OC} get namespace/${KAS_FLEET_MANAGER_NAMESPACE} -o jsonpath="{.metadata.name}" --ignore-not-found)" ]; then
     echo "namespace/${KAS_FLEET_MANAGER_NAMESPACE} is already removed"
 else
+    # Remove all connector clusters
+    for MCID in $(rhoas connector cluster list -o json | jq -r '.items // [] | .[] | .id') ; do
+        echo "Removing Connector cluster: ${MCID}"
+        rhoas connector cluster delete --id "${MCID}" --yes
+        sleep 5
+        while [ -n "$(rhoas connector cluster list -o json | jq -r '.items // [] | .[] | select(.id == "'"${MCID}"'") | .id')" ] ; do
+            echo "Waiting for Connector cluster ${MCID} to be deleted"
+            sleep 5
+        done
+    done
+
     # Remove all Kafka instances
     for MKID in $(${DIR_NAME}/managed_kafka.sh --list | jq -r '.items[] | .id' 2>/dev/null || echo "") ; do
         echo "Removing Kafka instance ${MKID}"

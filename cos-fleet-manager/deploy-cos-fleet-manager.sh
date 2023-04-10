@@ -161,11 +161,9 @@ deploy_kasfleetmanager() {
   > ${SERVICE_PARAMS}
 
   if [ -n "${OCM_SERVICE_TOKEN}" ] ; then
-      PROVIDER_TYPE="ocm"
       ENABLE_OCM_MOCK="false"
       echo 'OCM_URL="https://api.stage.openshift.com"' >> ${SERVICE_PARAMS}
   else
-      PROVIDER_TYPE="standalone"
       ENABLE_OCM_MOCK="true"
   fi
 

@@ -7,11 +7,16 @@ CLIENT_ID=''
 
 setvars() {
     AUTH_URL="${SSO_REALM_URL}"
-
-    API_GATEWAY="$(oc get route -n ${KAS_FLEET_MANAGER_NAMESPACE} kas-fleet-manager -o json | jq -r '"https://"+.spec.host')"
+    API_GATEWAY="https://${MAS_FLEET_MANAGEMENT_DOMAIN}"
 
     if [ -n "${CLIENT_ID}" ] ; then
         continue
+    elif [ "${SSO_PROVIDER_TYPE:-}" = "mas_sso" ] ; then
+        CLIENT_ID='kas-installer-client'
+
+        if [ -z "${OFFLINE_TOKEN:-}" ] ; then
+            OFFLINE_TOKEN=$(${DIR_NAME}/bin/get_token.sh refresh_token --owner)
+        fi
     elif [ "${SSO_PROVIDER_TYPE:-}" = "redhat_sso" ] && [ "${REDHAT_SSO_HOSTNAME:-}" = "sso.stage.redhat.com" ] ; then
         CLIENT_ID='rhoas-cli-stage'
     else

@@ -1,7 +1,7 @@
 # kas-installer
 
-KAS Installer allows the deployment and configuration of Managed Kafka Service
-in a single K8s cluster.
+KAS Installer allows the deployment and configuration of Managed Kafka and
+Managed Connector Services in a single OpenShift cluster.
 
 ## Contents
 - [kas-installer](#kas-installer)
@@ -82,9 +82,11 @@ KAS Installer deploys and configures the following components that are part of
 Managed Kafka Service:
 * MAS SSO
 * KAS Fleet Manager
+* COS Fleet Manager
 * Observability Operator (via KAS Fleet Manager)
 * sharded-nlb IngressController
 * KAS Fleet Shard and Strimzi Operators (via KAS Fleet Manager)
+* COS Fleet Shard operators (via connectors-operator Addon)
 
 It deploys and configures the components to the cluster set in
 the user's kubeconfig file.
@@ -98,14 +100,16 @@ same cluster set in the user's kubeconfig file.
 1. Create and fill the KAS installer configuration file `kas-installer.env`. Minimally, the
    values identified as [required] in [kas-installer-defaults.env](kas-installer-defaults.env) must be configured.
 1. make sure you have run `oc login --server=<api cluster url|https://api.xxx.openshiftapps.com:6443>` to your target OSD cluster. You will be asked a password or a token
-1. Run the KAS installer `kas-installer.sh` to deploy and configure Managed
-   Kafka Service
-1. Run `uninstall.sh` to remove KAS from the cluster.  You should remove any deployed Kafkas before runnig this script.
+1. Run the KAS installer `kas-installer.sh` to deploy and configure the Managed
+   Kafka and Managed Connector Services
+1. Run `uninstall.sh` to remove KAS and COS from the cluster.  You should remove any deployed Kafkas before running this script.
 
 **Troubleshooting:** If the installer crashed due to configuration error in `kas-installer.env`, you often can rerun the installer after fixing the config issue.
 It is not necessary to run uninstall before retrying.
 
-## Installation Modes
+## Managed Kafka Installation Modes
+
+Installation mode applies only to the kas-fleet-manager. The cos-fleet-manager has a single install mode.
 
 ### Standalone
 
@@ -142,7 +146,7 @@ In this mode, users must register their own data plane clusters using the `rhoas
 an active `ocm` session, the following command will register a new data plane cluster, making it available for placement of new Kafka instances.
 
 ```shell
-rhoas dedicated register-cluster -v --cluster-mgmt-api-url https://api.stage.openshift.com --access-token ${OCM_PRODUCTION_TOKEN}
+rhoas kafka oc register-cluster -v --cluster-mgmt-api-url https://api.stage.openshift.com --access-token ${OCM_PRODUCTION_TOKEN}
 ```
 
 See the [using rhoas CLI](#using-rhoas-cli) for more information on how to login and use `rhoas` with kas-installer.
@@ -162,6 +166,22 @@ resources specific to Managed Kafka. When there is only a single dedicated clust
 **NOTE:**
 Using the `uninstall.sh` script will automatically delete all Kafka instances and de-register all registered clusters known to the installed
 kas-fleet-manager prior to uninstalling the Managed Kafka resources.
+
+## Managed Connectors Cluster Registration
+
+Registration of a connectors cluster may be done using a combination of the `rhoas` command line tool and the `bin/cos_addon.sh` script. Note, that
+in order to create and install a cluster for connectors, the OSD cluster must already have the data plane components for Managed Kafka installed.
+
+Until modifications have been made to the connectors-operator Addon to remove components conflicting with KAS, the Addon must be installed using a
+custom OLM index (specified by `CONNECTORS_OPERATOR_OLM_INDEX_IMAGE` in `kas-installer-defaults.env`). This "standalone" installation functionality
+creates an `Addon` CR directly without using the OCM API.
+
+For example:
+```shell
+rhoas connector cluster create --name my-connectors-cluster
+
+./bin/cos_addon.sh install <'id' from `rhoas connector cluster create` command> --standalone
+```
 
 ## Fleet Manager Parameter Customization
 
@@ -234,6 +254,14 @@ echo "REGISTERED_USERS_PER_ORGANISATION='[]'"
 Similar to the `kas-fleet-manager-service-template-params` previously described, the `kas-installer.sh` process will check for the presence of an executable named `kas-fleet-manager-secrets-template-params` in
 the project root. When available, it will be executed with the expection that key/value pairs will be output to stdout. The output
 will be used when processing the kas-fleet-manager's [secrets-template.yml](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/templates/secrets-template.yml).
+
+### Connectors Fleet Manager Parameter Customization
+
+Parameter customization for the cos-fleet-manager works the same as it does for the kas-fleet-manager. For connectors, the two parameter scripts must be named
+`cos-fleet-manager-service-template-params` and `cos-fleet-manager-secrets-template-params`. See the cos-fleet-manager's
+[service-template.yml](https://github.com/bf2fc6cc711aee1a0c2a/cos-fleet-manager/blob/main/templates/service-template.yml) and
+[secrets-template.yml](https://github.com/bf2fc6cc711aee1a0c2a/cos-fleet-manager/blob/main/templates/secrets-template.yml) files for more information
+on the allowed parameters and acceptable formatting.
 
 ### Instance Types
 The default kas-fleet-manager configuration enables the deployment of two instance types, `standard` and `developer`. Permission
@@ -318,7 +346,7 @@ The version of the Observability Operator deployed by kas-fleet-manager can be c
 
 ## SSO Providers
 
-Configuration of kas-fleet-manager's SSO providers is done by setting the `SSO_PROVIDER_TYPE` configuration variable. When not set, the default provider is `mas_sso`. To use RH SSO,
+Configuration of kas-fleet-manager's and cos-fleet-manager's SSO provider is done by setting the `SSO_PROVIDER_TYPE` configuration variable. When not set, the default provider is `mas_sso`. To use RH SSO,
 the variable may be set to `redhat_sso` and additional configuration can be provided for `REDHAT_SSO_HOSTNAME` (default sso.stage.redhat.com), `REDHAT_SSO_REALM` (default `redhat-external`),
 `REDHAT_SSO_CLIENT_ID` (required), and `REDHAT_SSO_CLIENT_SECRET` (required). See the description for each variable in the [kas-installer-defaults.env](kas-installer-defaults.env)
 file for more information.
@@ -371,6 +399,19 @@ Custom-built components are supported for kas-fleet-manager and kas-fleetshard.
 
 Use `./rhoas_login.sh` as a short cut to login to the CLI.  Login using the username you specified as `RH_USERNAME` in the env file.  The password is the same as the `RH_USERNAME` value.
 Alternatively (and likely preferably), use `./login-all.sh` which makes sure you are also logged to your OpenShift Dedicated cluster.
+
+The `./rhoas_login.sh` script may also be used with a refresh or offline token, more suited for scripted use of `rhoas`.
+When using the `mas_sso` SSO provider, the token may be provided as follows.
+
+```shell
+./rhoas_login.sh --client-id kas-installer-client --token $(./bin/get_token.sh refresh_token --owner)
+```
+
+Alternatively, when `redhat_sso` is used, the OCM refresh/offline token may be provided.
+
+```shell
+./rhoas_login.sh --token ${MY_OCM_OFFLINE_TOKEN}
+```
 
 There are a couple of things that are expected not to work when using the RHOAS CLI with a kas-installer installed instance.  These are noted below.
 

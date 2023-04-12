@@ -51,7 +51,7 @@ function delete_dataplane_resources() {
     DELETE_MACHINEPOOL=${2}
     CLUSTER_ID=${3}
 
-    OCM_CLUSTER=$(${OCM} get /api/clusters_mgmt/v1/clusters/${CLUSTER_ID})
+    OCM_CLUSTER=$(${OCM} get /api/clusters_mgmt/v1/clusters/${CLUSTER_ID}) || true
     VALID_OCM_CLUSTER='false'
 
     if [ "$(echo ${OCM_CLUSTER} | jq -r '.kind')" == 'Cluster' ] ; then

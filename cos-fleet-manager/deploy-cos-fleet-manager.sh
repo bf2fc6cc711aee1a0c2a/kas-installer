@@ -85,18 +85,18 @@ EOF
 }
 
 create_kasfleetmanager_pull_credentials() {
-  COS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME="cos-pull-secret"
-  if [ -z "$(${KUBECTL} get secret ${COS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${COS_FLEET_MANAGER_NAMESPACE})" ]; then
-    echo "COS Fleet Manager image pull secret does not exist. Creating it..."
+    COS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME="cos-pull-secret"
+    COS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT="cos-fleet-manager"
+
     ${OC} create secret docker-registry ${COS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} \
       -n ${COS_FLEET_MANAGER_NAMESPACE} \
+      --dry-run="client" -o yaml \
       --docker-server=${COS_FLEET_MANAGER_IMAGE_REGISTRY} \
       --docker-username=${COS_FLEET_MANAGER_IMAGE_REPOSITORY_USERNAME} \
-      --docker-password=${COS_FLEET_MANAGER_IMAGE_REPOSITORY_PASSWORD}
+      --docker-password=${COS_FLEET_MANAGER_IMAGE_REPOSITORY_PASSWORD} \
+      | ${OC} apply -f -
 
-    COS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT="cos-fleet-manager"
     ${OC} secrets link ${COS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} ${COS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${COS_FLEET_MANAGER_NAMESPACE} --for=pull
-  fi
 }
 
 deploy_kasfleetmanager() {
@@ -105,9 +105,6 @@ deploy_kasfleetmanager() {
     | ${OC} apply -f - -n ${COS_FLEET_MANAGER_NAMESPACE}
   echo "Waiting until COS Fleet Manager Database is ready..."
   ${OC} wait DeploymentConfig/cos-fleet-manager-db -n ${COS_FLEET_MANAGER_NAMESPACE} --for=condition=available --timeout=180s
-
-  create_kasfleetmanager_service_account
-  create_kasfleetmanager_pull_credentials
 
   echo "Deploying COS Fleet Manager K8s Secrets..."
   SECRET_PARAMS=${DIR_NAME}/cos-fleet-manager-secrets.env
@@ -243,6 +240,8 @@ create_kas_fleet_manager_namespace() {
 
 read_kasinstaller_env_file
 create_kas_fleet_manager_namespace
+create_kasfleetmanager_service_account
+create_kasfleetmanager_pull_credentials
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager
 

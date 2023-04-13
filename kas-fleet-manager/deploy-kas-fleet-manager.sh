@@ -85,18 +85,18 @@ EOF
 
 
 create_kasfleetmanager_pull_credentials() {
-  KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME="kas-fleet-manager-image-pull-secret"
-  if [ -z "$(${KUBECTL} get secret ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} --ignore-not-found -o jsonpath=\"{.metadata.name}\" -n ${KAS_FLEET_MANAGER_NAMESPACE})" ]; then
-    echo "KAS Fleet Manager image pull secret does not exist. Creating it..."
+    KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME="kas-fleet-manager-image-pull-secret"
+    KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT="kas-fleet-manager"
+
     ${OC} create secret docker-registry ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} \
       -n ${KAS_FLEET_MANAGER_NAMESPACE} \
+      --dry-run="client" -o yaml \
       --docker-server=${KAS_FLEET_MANAGER_IMAGE_REGISTRY} \
       --docker-username=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY_USERNAME} \
-      --docker-password=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY_PASSWORD}
+      --docker-password=${KAS_FLEET_MANAGER_IMAGE_REPOSITORY_PASSWORD} \
+        | ${OC} apply -f -
 
-    KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT="kas-fleet-manager"
     ${OC} secrets link ${KAS_FLEET_MANAGER_DEPLOYMENT_K8S_SERVICEACCOUNT} ${KAS_FLEET_MANAGER_IMAGE_PULL_SECRET_NAME} -n ${KAS_FLEET_MANAGER_NAMESPACE} --for=pull
-  fi
 }
 
 deploy_kasfleetmanager() {
@@ -105,9 +105,6 @@ deploy_kasfleetmanager() {
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
   echo "Waiting until KAS Fleet Manager Database is ready..."
   ${OC} wait DeploymentConfig/kas-fleet-manager-db -n ${KAS_FLEET_MANAGER_NAMESPACE} --for=condition=available --timeout=180s
-
-  create_kasfleetmanager_service_account
-  create_kasfleetmanager_pull_credentials
 
   echo "Deploying KAS Fleet Manager K8s Secrets..."
   SECRET_PARAMS=${DIR_NAME}/kas-fleet-manager-secrets.env
@@ -354,6 +351,8 @@ await_kas_fleetshard_agent() {
 
 read_kasinstaller_env_file
 create_kas_fleet_manager_namespace
+create_kasfleetmanager_service_account
+create_kasfleetmanager_pull_credentials
 clone_kasfleetmanager_code_repository
 deploy_kasfleetmanager
 

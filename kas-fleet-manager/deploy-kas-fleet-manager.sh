@@ -149,6 +149,7 @@ deploy_kasfleetmanager() {
     -p MAS_SSO_CRT="${SSO_TRUSTED_CA}" \
     -p KAFKA_TLS_CERT="${KAFKA_TLS_CERT}" \
     -p KAFKA_TLS_KEY="${KAFKA_TLS_KEY}" \
+    -p ACME_ISSUER_ACCOUNT_KEY="${ACME_ISSUER_ACCOUNT_KEY}" \
     | ${OC} apply -f - -n ${KAS_FLEET_MANAGER_NAMESPACE}
 
   echo "Deploying KAS Fleet Manager Envoy ConfigMap..."
